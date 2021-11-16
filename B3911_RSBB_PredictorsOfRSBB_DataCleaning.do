@@ -617,7 +617,7 @@ tab partner_ab, m
 
 ** Cognitive/Psychological factors
 
-* Cognitive tests (from FOM2/3/4 clinics) - includes logic memory, digit backwards, spot-the-word, digit symbol coding, verbal fluency and logic memory delayed tests. Will use PCA to see if all factors load together for a 'general intelligence' component.
+* Cognitive tests (from FOM2/3/4 clinics) - includes logic memory, digit backwards, spot-the-word, digit symbol coding, verbal fluency and logic memory delayed tests. Will use PCA to create a single 'general intelligence' factor.
 sum fm2cg010-fm4cg015
 
 foreach var of varlist fm2cg010-fm4cg015 {
@@ -678,83 +678,13 @@ replace logic_mem_delay = fm3cg015 if fom3_cc == 1 & logic_mem_delay == .
 replace logic_mem_delay = fm4cg015 if fom4_cc == 1 & logic_mem_delay == .
 sum fm2cg015 fm3cg015 fm4cg015 logic_mem_delay
 
-* Run PCA - First, check correlations between variables (as all should be correlated if load on to one factor - All positive, but rather variable; from 0.17 to 0.85...)
-corr logic_mem-logic_mem_delay
-graph matrix logic_mem-logic_mem_delay, half
+** Run the PCA and extract the first principal component (explains ~43% of the variation in these cognitive tests - Next component explains ~20% of the variation, so first component has strongest association by quite a large amount)
+pca logic_mem-logic_mem_delay
+predict fom_cog_factor1, score
 
-* Now run factor analysis and see if all load on to one factor - Use default principal factor method (for now - To talk to Isaac about this!)
-factor logic_mem-logic_mem_delay
-
-* Most of the variance does load on to one factor (92% of variance), which is a fair bit higher than the second factor (27%), and second factor has eigenvalue < 1 - Factor loadings for all variables highest in factor 1 (although only just in some cases) suggesting that most of these variables do group together quite well. As grouping isn't super-strong, will analyse both individual variables and first factor.
-
-* Using other methods get slightly different results - If use principal components factor method then first two factors have eigenvalues > 1
-factor logic_mem-logic_mem_delay, pcf
-
-* Iteracted factor method gives similar result to default, with only factor 1 eigenvalue > 1
-factor logic_mem-logic_mem_delay, ipf
-
-* For now, will just use the default factor method
-factor logic_mem-logic_mem_delay
-
-* Rotate factor loads - Now the proportion explained by each factor and the factor loadings change, and suggests that 2 factors explain the data better (one factor with logic memory and logic memory delayed, and another with all the other tasks)
-rotate
-
-* This could be because logic memory and logic memory delayed are pretty much the same task, so would be expected to load together - Will make results again, but this time with delayed logic memory task omitted.
-gen fom2_cc2 = 0
-replace fom2_cc2 = 1 if fm2cg010 < . & fm2cg011 < . & fm2cg012 < . & fm2cg013 < . & fm2cg014 <.
-tab fom2_cc2
-
-gen fom3_cc2 = 0
-replace fom3_cc2 = 1 if fm3cg010 < . & fm3cg011 < . & fm3cg012 < . & fm3cg013 < . & fm3cg014 <.
-tab fom3_cc2
-
-gen fom4_cc2 = 0
-replace fom4_cc2 = 1 if fm4cg010 < . & fm4cg011 < . & fm4cg012 < . & fm4cg013 < . & fm4cg014 <.
-tab fom4_cc2
-
-* Logic memory
-gen logic_mem2 = fm2cg010 if fom2_cc2 == 1
-replace logic_mem2 = fm3cg010 if fom3_cc2 == 1 & logic_mem2 == .
-replace logic_mem2 = fm4cg010 if fom4_cc2 == 1 & logic_mem2 == .
-sum fm2cg010 fm3cg010 fm4cg010 logic_mem2
-
-* Digit backwards
-gen digit_back2 = fm2cg011 if fom2_cc2 == 1
-replace digit_back2 = fm3cg011 if fom3_cc2 == 1 & digit_back2 == .
-replace digit_back2 = fm4cg011 if fom4_cc2 == 1 & digit_back2 == .
-sum fm2cg011 fm3cg011 fm4cg011 digit_back2
-
-* Spot the word
-gen spot_word2 = fm2cg012 if fom2_cc2 == 1
-replace spot_word2 = fm3cg012 if fom3_cc2 == 1 & spot_word2 == .
-replace spot_word2 = fm4cg012 if fom4_cc2 == 1 & spot_word2 == .
-sum fm2cg012 fm3cg012 fm4cg012 spot_word2
-
-* Digit symbol
-gen digit_symbol2 = fm2cg013 if fom2_cc2 == 1
-replace digit_symbol2 = fm3cg013 if fom3_cc2 == 1 & digit_symbol2 == .
-replace digit_symbol2 = fm4cg013 if fom4_cc2 == 1 & digit_symbol2 == .
-sum fm2cg013 fm3cg013 fm4cg013 digit_symbol2
-
-* Verbal fluency
-gen verbal2 = fm2cg014 if fom2_cc2 == 1
-replace verbal2 = fm3cg014 if fom3_cc2 == 1 & verbal2 == .
-replace verbal2 = fm4cg014 if fom4_cc2 == 1 & verbal2 == .
-sum fm2cg014 fm3cg014 fm4cg014 verbal2
-
-* Run the PCA again
-factor logic_mem2-verbal2
-rotate
-
-* Now all these factors load together into one single factor, so will use this instead of the method above which includes delayed logic memory (as too highly-correlated with non-delayed logic memory, so biases factors)
-
-* Create a variable of this primary factor
-predict fom_cog_factor1
 sum fom_cog_factor1
 
-* (and if omit the delayed logic memory task then all factor analysis methods give broadly the same answer of 1 key factor, which is reassuring)
-factor logic_mem2-verbal2, pcf
-factor logic_mem2-verbal2, ipf
+hist fom_cog_factor1, freq
 
 
 ** Personality (inter-personal sensitivity measure; IPSM) - Includes inter-personal awareness, need for approval, separation anxiety, timidity and fragile inner-self sub-scales; plus total inter-personal sensitivity score
