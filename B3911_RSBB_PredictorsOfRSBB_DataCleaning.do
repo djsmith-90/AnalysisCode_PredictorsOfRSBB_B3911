@@ -13,10 +13,12 @@ cd "X:\Groups\ARC\DanS\Descriptive_PredictorsOfRSBB_B3911"
 capture log close
 log using "Desc_RSBB_B3911_DataCleaning_log", replace text
 
+* Make sure no frames in memory
+clear frames
+
 use "Desc_RSBB_B3911.dta", clear
 
 numlabel, add
-
 
 
 **********************************************************************************
@@ -429,6 +431,15 @@ label values c800_grp white_lb
 tab c800_grp, m
 tab c800_grp
 
+* Also want to add in missing ethnicity data collect as part of COVID4 questionnaire
+tab c800_grp covid4m_0502, m
+
+replace c800_grp = 0 if covid4m_0502 == 1 & c800_grp == .
+replace c800_grp = 1 if covid4m_0502 == 2 & c800_grp == .
+
+tab c800_grp, m
+tab c800_grp
+
 * Marital status - Combine widowed/divorced/separated, as well as 1st and 2nd/3rd marriage
 tab a525, m
 
@@ -808,6 +819,15 @@ label values c801_grp white_lb
 tab c801_grp, m
 tab c801_grp
 
+* Also want to add in missing ethnicity data collect as part of COVID4 questionnaire
+tab c801_grp covid4p_0502, m
+
+replace c801_grp = 0 if covid4p_0502 == 1 & c801_grp == .
+replace c801_grp = 1 if covid4p_0502 == 2 & c801_grp == .
+
+tab c801_grp, m
+tab c801_grp
+
 * Marital status - Combine widowed/divorced/separated, as well as 1st and 2nd/3rd marriage
 tab pa065, m
 
@@ -1008,6 +1028,15 @@ label values c804 white_lb
 tab c804, m
 tab c804
 
+* Also want to add in missing ethnicity data collect as part of @29 questionnaire
+tab c804 YPH2012, m
+
+replace c804 = 0 if YPH2012 == 1 & c804 == .
+replace c804 = 1 if YPH2012 == 2 & c804 == .
+
+tab c804, m
+tab c804
+
 * Urban/rural status (time-point closest to RSBB questions - Jan 2020) - combine into urban vs rural
 tab jan2020ur01ind, m
 
@@ -1127,6 +1156,19 @@ tab1 q3050 q3050_binFA, m
 recode t1055 (1 = 0) (2 = 1), gen(t1055_binFA)
 tab1 t1055 t1055_binFA, m
 
+gen father_ab = t1055_binFA if t1055_binFA < .
+replace father_ab = q3050_binFA if q3050_binFA < . & father_ab == .
+replace father_ab = n8050_binFA if n8050_binFA < . & father_ab == .
+replace father_ab = j374_binFA if j374_binFA < . & father_ab == .
+replace father_ab = h400_binFA if h400_binFA < . & father_ab == .
+tab father_ab, m
+
+label define fa_lb 0 "No father absence" 1 "Yes father absence"
+numlabel fa_lb, add
+label values father_ab fa_lb
+tab father_ab, m
+tab father_ab
+
 * And age at FA
 sum n8051 q3051 t1056
 
@@ -1147,9 +1189,9 @@ replace age_FA = 0 if n8050_binFA == 0 & age_FA == .
 replace age_FA = 1 if n8050_binFA == 1 & n8051 < 5 & age_FA == .
 replace age_FA = 2 if n8050_binFA == 1 & n8051 >=5 & n8051 < . & age_FA == .
 
-label define fa_lb 0 "No father absence" 1 "FA age 0 to 4" 2 "FA age 5 or older"
-numlabel fa_lb, add
-label values age_FA fa_lb
+label define fa_age_lb 0 "No father absence" 1 "FA age 0 to 4" 2 "FA age 5 or older"
+numlabel fa_age_lb, add
+label values age_FA fa_age_lb
 tab age_FA, m
 tab age_FA
 
@@ -1426,14 +1468,119 @@ sum f8se125 f8se126
 ***********************************************************************************
 *** Next, we want to split this data into separate G0 mother, G0 partner/father and G1 study child files ready for analysis
 
+** Will use the 'frames' command for this (new to Stata v.16) so can work with multiple datasets simultaneously
 
-** G0 mother file (Drop one twin - remove mult_mums - only keep if live birth - remove data from people who withdrew consent)
+frame rename default main
 
 
-** G0 partner/father file (Drop one twin - remove mult_mums - only keep if live birth - remove data from people who withdrew consent)
+** G0 mother file (Drop one twin - remove mult_mums - remove data from people who withdrew consent)
+
+* Copy the main dataset/frame
+frame copy main mother
+frame change mother
+
+* Keep just G0 mother variables we are interested in
+keep aln mult_mum_Y ///
+d810 d813 d813_grp d816 Y3153 Y3153_cat Y3160 Y3170 Y3155 Y3155_cat ///
+Y3000 Y3040 Y3040_grp Y3080_OccNever Y3080_OccYr Y3080 ///
+mz028b Y9992 c800_grp a525_grp a005_grp jan1993ur01ind_grp b032_grp ///
+c645a c686a c755_grp logavinceq jan1993imd2010q5_M jan1993Townsendq5_M a006_grp b594_grp c432 c433 a551 a636 partner_ab ///
+logic_mem-logic_mem_delay fom_cog_factor1 b916-b921 d842 h151b 
+
+* For mult_mums who have more than one pregnancy enrolled in ALSPAC, just keep one pregnancy (plus drop ALNs where only child enrolled, not the mum)
+tab mult_mum_Y, m
+
+drop if mult_mum_Y == 1 | mult_mum_Y == .
+drop mult_mum_Y
+
+* Drop one twin
+duplicates report aln
+
+duplicates drop
+
+duplicates report aln
+
+* Remove mothers who withdrew consent
+tab d810, m
+
+drop if d810 == .a
+
+* Now save this file
+save "G0Mother_PredictorsOfRSBB_B3911.dta", replace
+
+* Close this frame and go back to main dataset
+frame change main
+frame drop mother
+
+
+** G0 partner/father file (Drop one twin - remove mult_mums - remove data from people who withdrew consent)
+
+* Copy the main dataset/frame
+frame copy main partner
+frame change partner
+
+* Keep just variables we are interested in
+keep aln mult_mum_Y ///
+pb150 pb153 pb153_grp pb155 FC3153 FC3153_cat FC3160 FC3170 FC3155 FC3155_cat ///
+FC3000 FC3040 FC3040_grp FC3080_OccNever FC3080_OccYr FC3080 ///
+pb910 FC9992 c801_grp pa065_grp pa005_grp jan1993ur01ind_grp b032_grp ///
+c666a partner_mum_edu c765_grp logavinceq jan1993imd2010q5_M jan1993Townsendq5_M a006_grp pb184_grp pb481 pb482 a551 neighbour_qual ///
+pb546-pb551 pa782 esteem_prorated 
+
+* For mult_mums who have more than one pregnancy enrolled in ALSPAC, just keep one pregnancy (for this, will assume mult mum pregnancies both have the same partner/father) - Plus drop ALNs where only child enrolled, not the mum)
+tab mult_mum_Y, m
+
+drop if mult_mum_Y == 1 | mult_mum_Y == .
+drop mult_mum_Y
+
+* Drop one twin
+duplicates report aln
+
+duplicates drop
+
+duplicates report aln
+
+* Remove data from partners/fathers and mothers who withdrew consent
+tab1 pb150 c666a, m
+
+drop if pb150 == .c
+drop if c666a == .a
+
+* Now save this file
+save "G0Partner_PredictorsOfRSBB_B3911.dta", replace
+
+* Close this frame and go back to main dataset
+frame change main
+frame drop partner
 
 
 ** G1 study child file (only keep if alive at 1 year of age - remove data from people who withdrew consent)
 
+* Copy the main dataset/frame
+frame copy main g1
+frame change g1
 
+* Keep just variables we are interested in
+keep aln qlet kz011b ///
+YPG3000 YPG3040 YPG3040_grp YPG3080_OccNever YPG3080_OccYr YPG3080 YPG3153 YPG3153_cat YPG3160 YPG3170 YPG3155 YPG3155_cat ///
+YPG8000 kz021 c804 a005_grp jan2020ur01ind_grp parent ///
+yp_edu c645a c755_grp logavinceq jan2020imd2010q5 jan2020Townsendq5 a006_grp yp_finDiffs physical_abuse_0_16yrs-ACEcat_classic_0_16yrs a551 a636 father_ab age_FA ///
+f8ws110 f8ws111 f8ws112 fh6280 FKWI1030 FKWI1050 fg7360-fg7364 f8lc125 loc_age16 FJCQ1001 f8dv440a triangles_total kr554a skuse16 autism25 kq348a tc4025e prosocial25 CCXD860a f8se125 f8se126
 
+* Remove data from G1 children and mothers who withdrew consent
+tab1 YPG3000 kr554a c804, m
+
+drop if YPG3000 == .b
+drop if c804 == .a
+
+* Now save this file
+save "G1_PredictorsOfRSBB_B3911.dta", replace
+
+* Close this frame and go back to main dataset, then clear all frames
+frame change main
+frame drop g1
+
+clear frames
+
+* Close the log file
+log close
