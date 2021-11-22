@@ -308,14 +308,14 @@ display 0.05/34
 
 ** We also want to store both estimates adjusting for age (other than for the age-only model), and also the interaction between age and the exposure, to see whether it's moderated by age. Again, this makes the set-up a bit more complicated.
 
-** Create a postfile to post results to, then start the loop - Will create two postfiles; one for coefficients and CIs, and another for likelihood ratio tests comparing model fit (first of exposure model to no exposure model, then of interaction model to no interaction model)
+** Create a postfile to post results to, then start the loop - Will create two postfiles; one for coefficients and CIs, and another for likelihood ratio tests comparing model fit (first of exposure model to no exposure model, then of interaction model to no interaction model) - NOTE: Have to store pvalues as 'double' format, else really tiny p-values get coded as '0' (as default if float format, which has minimum value of -3.40282346639e+38 [https://blog.stata.com/2012/04/02/the-penultimate-guide-to-precision/]).
 capture postclose mother_belief
 postfile mother_belief str30 exposure str30 outcome_level str40 exp_level /// 
-	n coef lci uci p coef_int lci_int uci_int p_int age_main exp_main ///
+	n coef lci uci double(p) coef_int lci_int uci_int double(p_int) age_main exp_main ///
 	using ".\G0Mother_Results\mother_belief_results.dta", replace
 
 capture postclose mother_belief_lr
-postfile mother_belief_lr str30 exposure lr_p_main lr_p_int ///
+postfile mother_belief_lr str30 exposure double(lr_p_main lr_p_int) ///
 	using ".\G0Mother_Results\mother_belief_results_lr.dta", replace
 
 foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu highSocClass income IMD townsendDep housing financeDiffs chLifeEvents_wgt chLifeEvents_total crowding neighPercept partnerAbsence logicMemory-selfEsteem {
@@ -428,10 +428,10 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		local exp_level = "NA"
 		
 		matrix res = r(table)
-		local coef = res[1,4]
-		local lci = res[5,4]
-		local uci = res[6,4]
-		local p = res[4,4]
+		local coef = res[1,5]
+		local lci = res[5,5]
+		local uci = res[6,5]
+		local p = res[4,5]
 				
 		// Now for interaction model
 		mlogit d810 c.ageAtBirth##c.`var', baseoutcome(3) rrr level(99.85)
@@ -1451,11 +1451,11 @@ tab d813_grp
 *** Now run the loop to save all the results
 capture postclose mother_relig
 postfile mother_relig str30 exposure str30 outcome_level str40 exp_level /// 
-	n coef lci uci p coef_int lci_int uci_int p_int age_main exp_main ///
+	n coef lci uci double(p) coef_int lci_int uci_int double(p_int) age_main exp_main ///
 	using ".\G0Mother_Results\mother_relig_results.dta", replace
 
 capture postclose mother_relig_lr
-postfile mother_relig_lr str30 exposure lr_p_main lr_p_int ///
+postfile mother_relig_lr str30 exposure double(lr_p_main lr_p_int) ///
 	using ".\G0Mother_Results\mother_relig_results_lr.dta", replace
 
 foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu highSocClass income IMD townsendDep housing financeDiffs chLifeEvents_wgt chLifeEvents_total crowding neighPercept partnerAbsence logicMemory-selfEsteem {
@@ -1568,10 +1568,10 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		local exp_level = "NA"
 		
 		matrix res = r(table)
-		local coef = res[1,4]
-		local lci = res[5,4]
-		local uci = res[6,4]
-		local p = res[4,4]
+		local coef = res[1,5]
+		local lci = res[5,5]
+		local uci = res[6,5]
+		local p = res[4,5]
 				
 		// Now for interaction model
 		mlogit d813_grp c.ageAtBirth##c.`var', baseoutcome(3) rrr level(99.85)
@@ -2603,11 +2603,11 @@ brant, detail
 *** Now run the loop to save all the results
 capture postclose mother_attend
 postfile mother_attend str30 exposure str30 outcome_level str40 exp_level /// 
-	n coef lci uci p coef_int lci_int uci_int p_int age_main exp_main ///
+	n coef lci uci double(p) coef_int lci_int uci_int double(p_int) age_main exp_main ///
 	using ".\G0Mother_Results\mother_attend_results.dta", replace
 
 capture postclose mother_attend_lr
-postfile mother_attend_lr str30 exposure lr_p_main lr_p_int ///
+postfile mother_attend_lr str30 exposure double(lr_p_main lr_p_int) ///
 	using ".\G0Mother_Results\mother_attend_results_lr.dta", replace
 
 foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu highSocClass income IMD townsendDep housing financeDiffs chLifeEvents_wgt chLifeEvents_total crowding neighPercept partnerAbsence logicMemory-selfEsteem {
@@ -3328,7 +3328,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			// Now onto the next reference category (2/once month)
 			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
 		
-			local outcome_level = "Min once year (ref = Not at all)"
+			local outcome_level = "Min once month (ref = Not at all)"
 		
 			matrix res = r(table)
 			local coef = res[1,17]
@@ -4158,11 +4158,11 @@ hist Y3153, freq width(1)
 *** Now run the loop to save all the results
 capture postclose mother_intrinsic
 postfile mother_intrinsic str30 exposure str30 outcome_level str40 exp_level /// 
-	n coef lci uci p coef_int lci_int uci_int p_int age_main exp_main ///
+	n coef lci uci double(p) coef_int lci_int uci_int double(p_int) age_main exp_main ///
 	using ".\G0Mother_Results\mother_intrinsic_results.dta", replace
 
 capture postclose mother_intrinsic_lr
-postfile mother_intrinsic_lr str30 exposure lr_p_main lr_p_int ///
+postfile mother_intrinsic_lr str30 exposure double(lr_p_main lr_p_int) ///
 	using ".\G0Mother_Results\mother_intrinsic_results_lr.dta", replace
 
 foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu highSocClass income IMD townsendDep housing financeDiffs chLifeEvents_wgt chLifeEvents_total crowding neighPercept partnerAbsence logicMemory-selfEsteem {
@@ -4850,11 +4850,11 @@ tab Y3153_cat
 *** Now run the loop to save all the results
 capture postclose mother_intrinsic_cat
 postfile mother_intrinsic_cat str30 exposure str30 outcome_level str40 exp_level /// 
-	n coef lci uci p coef_int lci_int uci_int p_int age_main exp_main ///
+	n coef lci uci double(p) coef_int lci_int uci_int double(p_int) age_main exp_main ///
 	using ".\G0Mother_Results\mother_intrinsic_cat_results.dta", replace
 
 capture postclose mother_intrinsic_cat_lr
-postfile mother_intrinsic_cat_lr str30 exposure lr_p_main lr_p_int ///
+postfile mother_intrinsic_cat_lr str30 exposure double(lr_p_main lr_p_int) ///
 	using ".\G0Mother_Results\mother_intrinsic_cat_results_lr.dta", replace
 
 foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu highSocClass income IMD townsendDep housing financeDiffs chLifeEvents_wgt chLifeEvents_total crowding neighPercept partnerAbsence logicMemory-selfEsteem {
@@ -6411,11 +6411,11 @@ tab Y3170_new
 *** Now run the loop to save all the results
 capture postclose mother_extrinsic_friends
 postfile mother_extrinsic_friends str30 exposure str30 outcome_level str40 exp_level /// 
-	n coef lci uci p coef_int lci_int uci_int p_int age_main exp_main ///
+	n coef lci uci double(p) coef_int lci_int uci_int double(p_int) age_main exp_main ///
 	using ".\G0Mother_Results\mother_extrinsic_friends_results.dta", replace
 
 capture postclose mother_extrinsic_friends_lr
-postfile mother_extrinsic_friends_lr str30 exposure lr_p_main lr_p_int ///
+postfile mother_extrinsic_friends_lr str30 exposure double(lr_p_main lr_p_int) ///
 	using ".\G0Mother_Results\mother_extrinsic_friends_results_lr.dta", replace
 
 foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu highSocClass income IMD townsendDep housing financeDiffs chLifeEvents_wgt chLifeEvents_total crowding neighPercept partnerAbsence logicMemory-selfEsteem {
@@ -7955,11 +7955,11 @@ postclose mother_extrinsic_friends_lr
 *** Now run the loop to save all the results
 capture postclose mother_extrinsic_prayer
 postfile mother_extrinsic_prayer str30 exposure str30 outcome_level str40 exp_level /// 
-	n coef lci uci p coef_int lci_int uci_int p_int age_main exp_main ///
+	n coef lci uci double(p) coef_int lci_int uci_int double(p_int) age_main exp_main ///
 	using ".\G0Mother_Results\mother_extrinsic_prayer_results.dta", replace
 
 capture postclose mother_extrinsic_prayer_lr
-postfile mother_extrinsic_prayer_lr str30 exposure lr_p_main lr_p_int ///
+postfile mother_extrinsic_prayer_lr str30 exposure double(lr_p_main lr_p_int) ///
 	using ".\G0Mother_Results\mother_extrinsic_prayer_results_lr.dta", replace
 
 foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu highSocClass income IMD townsendDep housing financeDiffs chLifeEvents_wgt chLifeEvents_total crowding neighPercept partnerAbsence logicMemory-selfEsteem {
@@ -9508,11 +9508,11 @@ hist Y3155, freq width(1)
 *** Now run the loop to save all the results
 capture postclose mother_DUREL
 postfile mother_DUREL str30 exposure str30 outcome_level str40 exp_level /// 
-	n coef lci uci p coef_int lci_int uci_int p_int age_main exp_main ///
+	n coef lci uci double(p) coef_int lci_int uci_int double(p_int) age_main exp_main ///
 	using ".\G0Mother_Results\mother_DUREL_results.dta", replace
 
 capture postclose mother_DUREL_lr
-postfile mother_DUREL_lr str30 exposure lr_p_main lr_p_int ///
+postfile mother_DUREL_lr str30 exposure double(lr_p_main lr_p_int) ///
 	using ".\G0Mother_Results\mother_DUREL_results_lr.dta", replace
 
 foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu highSocClass income IMD townsendDep housing financeDiffs chLifeEvents_wgt chLifeEvents_total crowding neighPercept partnerAbsence logicMemory-selfEsteem {
@@ -10200,11 +10200,11 @@ tab Y3155_cat
 *** Now run the loop to save all the results
 capture postclose mother_DUREL_cat
 postfile mother_DUREL_cat str30 exposure str30 outcome_level str40 exp_level /// 
-	n coef lci uci p coef_int lci_int uci_int p_int age_main exp_main ///
+	n coef lci uci double(p) coef_int lci_int uci_int double(p_int) age_main exp_main ///
 	using ".\G0Mother_Results\mother_DUREL_cat_results.dta", replace
 
 capture postclose mother_DUREL_cat_lr
-postfile mother_DUREL_cat_lr str30 exposure lr_p_main lr_p_int ///
+postfile mother_DUREL_cat_lr str30 exposure double(lr_p_main lr_p_int) ///
 	using ".\G0Mother_Results\mother_DUREL_cat_results_lr.dta", replace
 
 foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu highSocClass income IMD townsendDep housing financeDiffs chLifeEvents_wgt chLifeEvents_total crowding neighPercept partnerAbsence logicMemory-selfEsteem {
@@ -12150,12 +12150,1159 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 postclose mother_DUREL_cat
 postclose mother_DUREL_cat_lr
 
+* And close the log file
+log close
 
 
 ***********************************************************************************
 ***********************************************************************************
-*** Next step is to make some nice plots of these results
+***** Next step is to make some nice plots of these results
 
+**** Start with outcome of belief in God/divine power 
+use ".\G0Mother_Results\mother_belief_results_lr.dta", clear
+
+** Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+
+*** First display the p-value plots to show overall associations between exposures and outcome
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+** Start with likelihood ratio results comparing null model to model including exposure
+
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 34 exposures, will do 0.05/34)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Belief in God/divine power - Main effect") ///
+	name(belief_main, replace)
+	
+graph export ".\G0Mother_Results\belief_mainEffect_pvalues.pdf", replace
+	
+* And repeat for interaction effect (exclude 'age' here, as can't interact with itself!)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_int if exp_num != 1, ///
+		col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(2(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Belief in God/divine power - Age interaction") ///
+	name(belief_int, replace)
+	
+graph export ".\G0Mother_Results\belief_ageInteraction_pvalues.pdf", replace
+	
+** Combine these results on the same plot
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if exp_num != 1, ///
+		col(red) msize(small) msym(D)), ///, ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Belief in God/divine power") ///
+	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
+	name(belief_both, replace)
+
+graph export ".\G0Mother_Results\belief_mainAndInt_pvalues.pdf", replace
+
+graph close _all
+	
+** Add 'belief' as a variable, then save this file (as will merge with other files later on)
+gen outcome = "Belief"
+recast str30 outcome
+order outcome
+
+save ".\G0Mother_Results\belief_pvalues.dta", replace
+
+
+**** Now read in the next outcome - religious affiliation
+use ".\G0Mother_Results\mother_relig_results_lr.dta", clear
+
+** Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+
+*** First display the p-value plots to show overall associations between exposures and outcome
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+** Start with likelihood ratio results comparing null model to model including exposure
+
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 34 exposures, will do 0.05/34)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Religious affiliation - Main effect") ///
+	name(relig_main, replace)
+	
+graph export ".\G0Mother_Results\relig_mainEffect_pvalues.pdf", replace
+	
+* And repeat for interaction effect (exclude 'age' here, as can't interact with itself!)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_int if exp_num != 1, ///
+		col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(2(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Religious affiliation - Age interaction") ///
+	name(relig_int, replace)
+	
+graph export ".\G0Mother_Results\relig_ageInteraction_pvalues.pdf", replace
+	
+** Combine these results on the same plot
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if exp_num != 1, ///
+		col(red) msize(small) msym(D)), ///, ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Religious affiliation") ///
+	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
+	name(relig_both, replace)
+
+graph export ".\G0Mother_Results\relig_mainAndInt_pvalues.pdf", replace
+
+graph close _all
+	
+** Add 'belief' as a variable, then save this file
+gen outcome = "Religious affil."
+recast str30 outcome
+order outcome
+
+save ".\G0Mother_Results\relig_pvalues.dta", replace
+
+
+**** Now read in the next outcome - church attendance
+use ".\G0Mother_Results\mother_attend_results_lr.dta", clear
+
+** Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+
+*** First display the p-value plots to show overall associations between exposures and outcome
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+** Start with likelihood ratio results comparing null model to model including exposure
+
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 34 exposures, will do 0.05/34)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Church attendance - Main effect") ///
+	name(attend_main, replace)
+	
+graph export ".\G0Mother_Results\attend_mainEffect_pvalues.pdf", replace
+	
+* And repeat for interaction effect (exclude 'age' here, as can't interact with itself!)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_int if exp_num != 1, ///
+		col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(2(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Church attendance - Age interaction") ///
+	name(attend_int, replace)
+	
+graph export ".\G0Mother_Results\attend_ageInteraction_pvalues.pdf", replace
+	
+** Combine these results on the same plot
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if exp_num != 1, ///
+		col(red) msize(small) msym(D)), ///, ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Church attendance") ///
+	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
+	name(attend_both, replace)
+
+graph export ".\G0Mother_Results\attend_mainAndInt_pvalues.pdf", replace
+
+graph close _all
+	
+** Add 'belief' as a variable, then save this file
+gen outcome = "Church attendance"
+recast str30 outcome
+order outcome
+
+save ".\G0Mother_Results\attend_pvalues.dta", replace
+
+
+**** Now read in the next outcome - intrinsic religiosity
+use ".\G0Mother_Results\mother_intrinsic_results_lr.dta", clear
+
+** Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+
+*** First display the p-value plots to show overall associations between exposures and outcome
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+** Start with likelihood ratio results comparing null model to model including exposure
+
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 34 exposures, will do 0.05/34)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Intrinsic religiosity - Main effect") ///
+	name(intrin_main, replace)
+	
+graph export ".\G0Mother_Results\intrin_mainEffect_pvalues.pdf", replace
+	
+* And repeat for interaction effect (exclude 'age' here, as can't interact with itself!)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_int if exp_num != 1, ///
+		col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(2(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Intrinsic religiosity - Age interaction") ///
+	name(intrin_int, replace)
+	
+graph export ".\G0Mother_Results\intrin_ageInteraction_pvalues.pdf", replace
+	
+** Combine these results on the same plot
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if exp_num != 1, ///
+		col(red) msize(small) msym(D)), ///, ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Intrinsic religiosity") ///
+	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
+	name(intrin_both, replace)
+
+graph export ".\G0Mother_Results\intrin_mainAndInt_pvalues.pdf", replace
+
+graph close _all
+	
+** Add 'belief' as a variable, then save this file
+gen outcome = "Intrinsic relig."
+recast str30 outcome
+order outcome
+
+save ".\G0Mother_Results\intrin_pvalues.dta", replace
+
+
+**** Now read in the next outcome - extrinsic religiosity (friends)
+use ".\G0Mother_Results\mother_extrinsic_friends_results_lr.dta", clear
+
+** Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+
+*** First display the p-value plots to show overall associations between exposures and outcome
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+** Start with likelihood ratio results comparing null model to model including exposure
+
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 34 exposures, will do 0.05/34)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Extrinsic religiosity (friends) - Main effect") ///
+	name(extrinFriends_main, replace)
+	
+graph export ".\G0Mother_Results\extrinFriends_mainEffect_pvalues.pdf", replace
+	
+* And repeat for interaction effect (exclude 'age' here, as can't interact with itself!)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_int if exp_num != 1, ///
+		col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(2(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Extrinsic religiosity (friends) - Age interaction") ///
+	name(extrinFriends_int, replace)
+	
+graph export ".\G0Mother_Results\extrinFriends_ageInteraction_pvalues.pdf", replace
+	
+** Combine these results on the same plot
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if exp_num != 1, ///
+		col(red) msize(small) msym(D)), ///, ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Extrinsic religiosity (friends)") ///
+	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
+	name(extrinFriends_both, replace)
+
+graph export ".\G0Mother_Results\extrinFriends_mainAndInt_pvalues.pdf", replace
+
+graph close _all
+	
+** Add 'belief' as a variable, then save this file
+gen outcome = "Extrinsic relig. (friends)"
+recast str30 outcome
+order outcome
+
+save ".\G0Mother_Results\extrinFriends_pvalues.dta", replace
+
+
+**** Now read in the next outcome - extrinsic religiosity (prayer)
+use ".\G0Mother_Results\mother_extrinsic_prayer_results_lr.dta", clear
+
+** Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+
+*** First display the p-value plots to show overall associations between exposures and outcome
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+** Start with likelihood ratio results comparing null model to model including exposure
+
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 34 exposures, will do 0.05/34)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Extrinsic religiosity (prayer) - Main effect") ///
+	name(extrinPray_main, replace)
+	
+graph export ".\G0Mother_Results\extrinPray_mainEffect_pvalues.pdf", replace
+	
+* And repeat for interaction effect (exclude 'age' here, as can't interact with itself!)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_int if exp_num != 1, ///
+		col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(2(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Extrinsic religiosity (prayer) - Age interaction") ///
+	name(extrinPray_int, replace)
+	
+graph export ".\G0Mother_Results\extrinPray_ageInteraction_pvalues.pdf", replace
+	
+** Combine these results on the same plot
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if exp_num != 1, ///
+		col(red) msize(small) msym(D)), ///, ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Extrinsic religiosity (prayer)") ///
+	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
+	name(extrinPray_both, replace)
+
+graph export ".\G0Mother_Results\extrinPray_mainAndInt_pvalues.pdf", replace
+
+graph close _all
+	
+** Add 'belief' as a variable, then save this file
+gen outcome = "Extrinsic relig. (prayer)"
+recast str30 outcome
+order outcome
+
+save ".\G0Mother_Results\extrinPrayer_pvalues.dta", replace
+
+
+**** Now read in the final outcome - Total DUREL religiosity score
+use ".\G0Mother_Results\mother_DUREL_results_lr.dta", clear
+
+** Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+
+*** First display the p-value plots to show overall associations between exposures and outcome
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+** Start with likelihood ratio results comparing null model to model including exposure
+
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 34 exposures, will do 0.05/34)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Total DUREL religiosity score - Main effect") ///
+	name(durel_main, replace)
+	
+graph export ".\G0Mother_Results\durel_mainEffect_pvalues.pdf", replace
+	
+* And repeat for interaction effect (exclude 'age' here, as can't interact with itself!)
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_int if exp_num != 1, ///
+		col(black) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(2(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Total DUREL religiosity score - Age interaction") ///
+	name(durel_int, replace)
+	
+graph export ".\G0Mother_Results\durel_ageInteraction_pvalues.pdf", replace
+	
+** Combine these results on the same plot
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if exp_num != 1, ///
+		col(red) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Total DUREL religiosity score") ///
+	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
+	name(durel_both, replace)
+
+graph export ".\G0Mother_Results\durel_mainAndInt_pvalues.pdf", replace
+
+graph close _all
+	
+** Add 'belief' as a variable, then save this file
+gen outcome = "DUREL"
+recast str30 outcome
+order outcome
+
+save ".\G0Mother_Results\durel_pvalues.dta", replace
+
+
+*** Combine all these datasets together
+use ".\G0Mother_Results\belief_pvalues.dta", clear
+append using ".\G0Mother_Results\relig_pvalues.dta"
+append using ".\G0Mother_Results\attend_pvalues.dta"
+append using ".\G0Mother_Results\intrin_pvalues.dta"
+append using ".\G0Mother_Results\extrinFriends_pvalues.dta"
+append using ".\G0Mother_Results\extrinPrayer_pvalues.dta"
+append using ".\G0Mother_Results\extrinPrayer_pvalues.dta"
+append using ".\G0Mother_Results\durel_pvalues.dta"
+
+
+** Now look at combined results - As data come from different sources with different sample sizes the p-values wont be directly comparable, so will compare belief/religious affiliation/church attendance (from pregnancy) in one plot, and intrinsic/extrinsic/total religiosity (from the recent RSBB data collection @28) in another plot.
+
+* Pregnancy vars main effects
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_main if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num logp_main if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Belief, religion and attendance - Main effects") ///
+	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
+		3 "Church attendance") rows(1) size(small)) ///
+	name(preg_main, replace)
+
+graph export ".\G0Mother_Results\beliefReligAttend_mainEffects_pvalues.pdf", replace
+
+* Pregnancy vars interaction effects
+local bon_thresh = -log10(0.05/33)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_int if outcome == "Belief" & exp_num != 1, ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if outcome == "Religious affil." & exp_num != 1, ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if outcome == "Church attendance" & exp_num != 1, ///
+		col(blue) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(2(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Belief, religion and attendance - Age interaction") ///
+	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
+		3 "Church attendance") rows(1) size(small)) ///
+	name(preg_int, replace)
+
+graph export ".\G0Mother_Results\beliefReligAttend_ageInt_pvalues.pdf", replace
+
+* Age 28 vars main effects
+local bon_thresh = -log10(0.05/34)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main if outcome == "Intrinsic relig.", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_main if outcome == "Extrinsic relig. (friends)", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num logp_main if outcome == "Extrinsic relig. (prayer)", ///
+		col(blue) msize(small) msym(D)) ///
+	(scatter exp_num logp_main if outcome == "DUREL", ///
+		col(green) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Intrinsic, extrinsic and DUREL - Main effects") ///
+	legend(order(1 "Intrinsic religiosity" 2 "Extrinsic religiosity (friends)" ///
+		3 "Extrinsic religiosity (prayer)" 4 "DUREL religiosity") ///
+		rows(2) size(small)) ///
+	name(age28_main, replace)
+
+graph export ".\G0Mother_Results\intExtDUREL_mainEffects_pvalues.pdf", replace
+
+* Age 28 vars interaction effects
+local bon_thresh = -log10(0.05/33)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_int if outcome == "Intrinsic relig." & exp_num != 1, ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if outcome == "Extrinsic relig. (friends)" & exp_num != 1, ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if outcome == "Extrinsic relig. (prayer)" & exp_num != 1, ///
+		col(blue) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if outcome == "DUREL" & exp_num != 1, ///
+		col(green) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(2(1)34, valuelabel labsize(vsmall) angle(0)) ///
+	title("Intrinsic, extrinsic and DUREL - Age interaction") ///
+	legend(order(1 "Intrinsic religiosity" 2 "Extrinsic religiosity (friends)" ///
+		3 "Extrinsic religiosity (prayer)" 4 "DUREL religiosity") ///
+		rows(2) size(small)) ///
+	name(age28_int, replace)
+
+graph export ".\G0Mother_Results\intExtDUREL_ageInt_pvalues.pdf", replace
+
+
+** Combine all these graphs together
+graph combine preg_main preg_int age28_main age28_int, imargin(0 0 0 0) iscale(0.5)
+
+graph export ".\G0Mother_Results\allData_pvalues.pdf", replace
+
+graph close _all
+
+
+*** Next, want to plot some of the actual results
+
+** Will read the datasets in then combine together into one single dataset
+use ".\G0Mother_Results\mother_belief_results.dta", clear
+gen outcome = "Belief"
+
+append using ".\G0Mother_Results\mother_relig_results.dta"
+replace outcome = "Relig" if outcome == ""
+tab outcome, m
+
+append using ".\G0Mother_Results\mother_attend_results.dta"
+replace outcome = "Attend" if outcome == ""
+tab outcome, m
+
+append using ".\G0Mother_Results\mother_intrinsic_results.dta"
+replace outcome = "Intrinsic" if outcome == ""
+tab outcome, m
+
+append using ".\G0Mother_Results\mother_intrinsic_cat_results.dta"
+replace outcome = "Intrinsic (cat)" if outcome == ""
+tab outcome, m
+
+append using ".\G0Mother_Results\mother_extrinsic_friends_results.dta"
+replace outcome = "Extrinsic - friends" if outcome == ""
+tab outcome, m
+
+append using ".\G0Mother_Results\mother_extrinsic_prayer_results.dta"
+replace outcome = "Extrinsic - prayer" if outcome == ""
+tab outcome, m
+
+append using ".\G0Mother_Results\mother_DUREL_results.dta"
+replace outcome = "DUREL" if outcome == ""
+tab outcome, m
+
+append using ".\G0Mother_Results\mother_DUREL_cat_results.dta"
+replace outcome = "DUREL (cat)" if outcome == ""
+tab outcome, m
+
+
+** First, make a plot for the age results - As some outcomes are on different scales, will just use the results from multinomial regression for all outcomes (inc. intrinsic and total/DUREL religiosity, even though also ran linear regressions on these as well) - Having all variables on the same plot on the same scale makes things easier to visualise.
+capture drop level_num
+gen level_num = 0
+replace level_num = 1 if outcome_level == "Not sure (ref = No)"
+replace level_num = 3 if outcome_level == "Christian (ref = None)"
+replace level_num = 4 if outcome_level == "Other (ref = None)"
+replace level_num = 6 if outcome_level == "Min once year (ref = Not at al"
+replace level_num = 7 if outcome_level == "Min once month (ref = Not at a"
+replace level_num = 8 if outcome_level == "Min once week (ref = Not at al"
+replace level_num = 10 if outcome_level == "Moderate IR/4-7 (ref = lowest/"
+replace level_num = 11 if outcome_level == "High IR/8-11 (ref = lowest/3)"
+replace level_num = 12 if outcome_level == "Highest IR/12-15 (ref = lowest"
+replace level_num = 14 if outcome_level == "Not sure ER (ref = Agree)" & outcome == "Extrinsic - friends"
+replace level_num = 15 if outcome_level == "Disagree ER (ref = Agree)" & outcome == "Extrinsic - friends"
+replace level_num = 16 if outcome_level == "Not applicable ER (ref = Agree" & outcome == "Extrinsic - friends"
+replace level_num = 18 if outcome_level == "Not sure ER (ref = Agree)" & outcome == "Extrinsic - prayer"
+replace level_num = 19 if outcome_level == "Disagree ER (ref = Agree)" & outcome == "Extrinsic - prayer"
+replace level_num = 20 if outcome_level == "Not applicable ER (ref = Agree" & outcome == "Extrinsic - prayer"
+replace level_num = 22 if outcome_level == "DUREL 6-10 (ref = lowest/5)"
+replace level_num = 23 if outcome_level == "11-15 DUREL (ref = lowest/5)"
+replace level_num = 24 if outcome_level == "16-20 DUREL (ref = lowest/5)"
+replace level_num = 25 if outcome_level == "21-26 DUREL (ref = lowest/5)"
+
+label define level_lb 0 "Belief in God - Yes (ref = No)" 1 "Belief in God - Not sure (ref = No)" 3 "Religious affiliation - Christian (ref = None)" 4 "Religious affiliation - Other (ref = None)" 6 "Church attendance - Min once a year (ref = Not at all)" 7 "Church attendance - Min once a month (ref = Not at all)" 8 "Church attendance - Min once a week (ref = Not at all)" 10 "Intrinsic religiosity - Moderate (4-7 score; ref = lowest/3)" 11 "Intrinsic religiosity - High (8-11 score; ref = lowest/3)" 12 "Intrinsic religiosity - Highest (12-15 score; ref = lowest/3)" 14 "Extrinsic religiosity (friends) - Not sure (ref = Agree)" 15 "Extrinsic religiosity (friends) - Disagree (ref = Agree)" 16 "Extrinsic religiosity (friends) - Not applicable (ref = Agree)" 18 "Extrinsic religiosity (prayer) - Not sure (ref = Agree)" 19 "Extrinsic religiosity (prayer) - Disagree (ref = Agree)" 20 "Extrinsic religiosity (prayer) - Not applicable (ref = Agree)" 22 "DUREL total religiosity - 6-10 score (ref = lowest/5)" 23 "DUREL total religiosity - 11-15 score (ref = lowest/5)" 24 "DUREL total religiosity - 16-20 score (ref = lowest/5)" 25 "DUREL total religiosity - 21-26 score (ref = lowest/5)", replace
+label values level_num level_lb
+tab level_num
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "ageAtBirth", ///
+			col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "Belief" & exposure == "ageAtBirth", ///
+			horizontal col(black) msize(vtiny)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "ageAtBirth", ///
+			col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "Relig" & exposure == "ageAtBirth", ///
+			horizontal col(black) msize(vtiny)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "ageAtBirth", ///
+			col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "Attend" & exposure == "ageAtBirth", ///
+			horizontal col(black) msize(vtiny)) ///
+		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
+			exposure == "ageAt28", col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "ageAt28", horizontal col(black) msize(vtiny)) ///
+		(scatter level_num coef if outcome == "Extrinsic - friends" & ///
+			exposure == "ageAt28", col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "ageAt28", horizontal col(black) msize(vtiny)) ///
+		(scatter level_num coef if outcome == "Extrinsic - prayer" & ///
+			exposure == "ageAt28", col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "ageAt28", horizontal col(black) msize(vtiny)) ///
+		(scatter level_num coef if outcome == "DUREL (cat)" & ///
+			exposure == "ageAt28", col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "DUREL (cat)" & ///
+			exposure == "ageAt28", horizontal col(black) msize(vtiny)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Age and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
+		, valuelabel labsize(vsmall) ///
+		angle(0)) legend(off) name(age_cat, replace)
+		
+graph export ".\G0Mother_Results\ageResults.pdf", replace
+
+
+** Create plot for ethnicity (ref = white)
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "nonWhiteEthnic", ///
+			col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "Belief" & exposure == "nonWhiteEthnic", ///
+			horizontal col(black) msize(vtiny)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "nonWhiteEthnic", ///
+			col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "Relig" & exposure == "nonWhiteEthnic", ///
+			horizontal col(black) msize(vtiny)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "nonWhiteEthnic", ///
+			col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "Attend" & exposure == "nonWhiteEthnic", ///
+			horizontal col(black) msize(vtiny)) ///
+		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
+			exposure == "nonWhiteEthnic", col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "nonWhiteEthnic", horizontal col(black) msize(vtiny)) ///
+		(scatter level_num coef if outcome == "Extrinsic - friends" & ///
+			exposure == "nonWhiteEthnic", col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "nonWhiteEthnic", horizontal col(black) msize(vtiny)) ///
+		(scatter level_num coef if outcome == "Extrinsic - prayer" & ///
+			exposure == "nonWhiteEthnic", col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "nonWhiteEthnic", horizontal col(black) msize(vtiny)) ///
+		(scatter level_num coef if outcome == "DUREL (cat)" & ///
+			exposure == "nonWhiteEthnic", col(black) msize(small) msym(D)) ///
+		(rcap lci uci level_num if outcome == "DUREL (cat)" & ///
+			exposure == "nonWhiteEthnic", horizontal col(black) msize(vtiny)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio (ref = White)") ///
+		title("Other than White ethnicity and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.15 0.3 0.5 1 2 5 10 20, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
+		, valuelabel labsize(vsmall) ///
+		angle(0)) legend(off) name(ethnic_cat, replace)
+		
+graph export ".\G0Mother_Results\ethnicityResults.pdf", replace
+
+
+** Create plot for marital status (ref = never married)
+
+* As two exposure levels, need to split these up
+capture drop level_split
+gen level_split = level_num - 0.2 if exp_level == "Married (ref = Never married)"
+replace level_split = level_num + 0.2 if exp_level == "Wid/Div/Sep (ref = Never married)"
+label values level_split level_lb
+tab level_split
+
+* Min and max x-axis values
+sum lci uci if level_split < . & outcome_level != "NA"
+
+* Now make the graph
+twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+			"Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+			"Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+			"Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
+			"Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+			"Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
+			== "Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+			== "Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
+			== "Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+			== "Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
+			"Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+			"Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
+			== "Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+			== "Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
+			== "Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+			== "Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)) ///
+		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
+		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio (ref = Never married)") ///
+		title("Marital status and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.1 0.2 0.3 0.5 1 2 3 5 10, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
+		, valuelabel labsize(vsmall) ///
+		angle(0)) legend(order(1 "Married" 15 "Widowed/Divorced/Separated")) ///
+		name(marital_cat, replace)
+		
+graph export ".\G0Mother_Results\maritalStatusResults.pdf", replace
+
+
+** Create plot for education (ref = CSE/None)
+
+* As four exposure levels, need to split these up
+capture drop level_split
+gen level_split = level_num - 0.3 if exposure == "education" & exp_level == "Vocational (ref = CSE/None)"
+replace level_split = level_num - 0.1 if exposure == "education" & exp_level == "O-level (ref = CSE/None)"
+replace level_split = level_num + 0.1 if exposure == "education" & exp_level == "A-level (ref = CSE/None)"
+replace level_split = level_num + 0.3 if exposure == "education" & exp_level == "Degree (ref = CSE/None)"
+label values level_split level_lb
+tab level_split
+
+* Min and max x-axis values
+sum lci uci if level_split < . & outcome_level != "NA"
+
+* Now make the graph
+twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"Vocational (ref = CSE/None)", col(black) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+			"Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"Vocational (ref = CSE/None)", col(black) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+			"Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"Vocational (ref = CSE/None)", col(black) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+			"Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
+			"Vocational (ref = CSE/None)", col(black) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+			"Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
+			== "Vocational (ref = CSE/None)", col(black) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+			== "Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
+			== "Vocational (ref = CSE/None)", col(black) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+			== "Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
+			"Vocational (ref = CSE/None)", col(black) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+			"Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"O-level (ref = CSE/None)", col(red) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+			"O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"O-level (ref = CSE/None)", col(red) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+			"O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"O-level (ref = CSE/None)", col(red) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+			"O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
+			"O-level (ref = CSE/None)", col(red) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+			"O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
+			== "O-level (ref = CSE/None)", col(red) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+			== "O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
+			== "O-level (ref = CSE/None)", col(red) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+			== "O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
+			"O-level (ref = CSE/None)", col(red) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+			"O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"A-level (ref = CSE/None)", col(blue) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+			"A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"A-level (ref = CSE/None)", col(blue) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+			"A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"A-level (ref = CSE/None)", col(blue) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+			"A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
+			"A-level (ref = CSE/None)", col(blue) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+			"A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
+			== "A-level (ref = CSE/None)", col(blue) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+			== "A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
+			== "A-level (ref = CSE/None)", col(blue) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+			== "A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
+			"A-level (ref = CSE/None)", col(blue) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+			"A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"Degree (ref = CSE/None)", col(green) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+			"Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"Degree (ref = CSE/None)", col(green) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+			"Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"Degree (ref = CSE/None)", col(green) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+			"Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
+			"Degree (ref = CSE/None)", col(green) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+			"Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
+			== "Degree (ref = CSE/None)", col(green) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+			== "Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
+			== "Degree (ref = CSE/None)", col(green) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+			== "Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
+		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
+			"Degree (ref = CSE/None)", col(green) msize(vtiny) msym(D)) ///
+		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+			"Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(vthin)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio (ref = CSE/None)") ///
+		title("Education and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.05 0.1 0.2 0.3 0.5 1 2 3 5 10, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
+		, valuelabel labsize(vsmall) ///
+		angle(0)) legend(order(1 "Vocational" 15 "O-levels" 29 "A-levels" ///
+			43 "Degree") rows(1)) ///
+		name(edu_cat, replace)
+		
+graph export ".\G0Mother_Results\eduResults.pdf", replace
+		
 
 ** For the multinomial regression results, as interpretation not intuitive, could convert to predicted probabilities using the 'margins' command? (see: https://stats.idre.ucla.edu/stata/dae/multinomiallogistic-regression/)
 
