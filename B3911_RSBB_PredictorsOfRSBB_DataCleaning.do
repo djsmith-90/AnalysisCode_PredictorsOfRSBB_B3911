@@ -1493,9 +1493,15 @@ frame change g1
 * Keep just variables we are interested in
 keep aln qlet kz011b ///
 YPG3000 YPG3040 YPG3040_grp YPG3080_OccNever YPG3080_OccYr YPG3080 YPG3153 YPG3153_cat YPG3160 YPG3170 YPG3155 YPG3155_cat ///
-YPG8000 kz021 c804 a005_grp jan2020ur01ind_grp parent ///
+YPG8000 mz028b kz021 a525_grp c804 a005_grp jan2020ur01ind_grp b032_grp parent ///
 yp_edu c645a c755_grp logavinceq jan2020imd2010q5 jan2020Townsendq5 a006_grp yp_finDiffs physical_abuse_0_16yrs-ACEcat_classic_0_16yrs a551 a636 father_ab age_FA ///
 f8ws110 f8ws111 f8ws112 fh6280 FKWI1030 FKWI1050 fg7360-fg7364 f8lc125 loc_age16 FJCQ1001 f8dv440a triangles_total kr554a skuse16 autism25 kq348a tc4025e prosocial25 CCXD860a f8se125 f8se126
+
+* Drop if not alive at 1 year of age
+tab kz011b, m
+
+drop if kz011b == 2
+drop kz011b
 
 * Remove data from G1 children and mothers who withdrew consent
 tab1 YPG3000 kr554a c804, m
