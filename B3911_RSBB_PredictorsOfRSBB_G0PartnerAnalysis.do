@@ -659,10 +659,10 @@ foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural par
 			mlogit pb150 c.ageInPreg##i.`var', baseoutcome(3) rrr level(99.81)
 		
 			matrix res = r(table)
-			local coef_int = res[1,18]
-			local lci_int = res[5,18]
-			local uci_int = res[6,18]
-			local p_int = res[4,18]
+			local coef_int = res[1,17]
+			local lci_int = res[5,17]
+			local uci_int = res[6,17]
+			local p_int = res[4,17]
 			local age_main = res[1,11]
 			local exp_main = res[1,13]
 		
@@ -1796,10 +1796,10 @@ foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural par
 			mlogit pb153_grp c.ageInPreg##i.`var', baseoutcome(3) rrr level(99.81)
 		
 			matrix res = r(table)
-			local coef_int = res[1,18]
-			local lci_int = res[5,18]
-			local uci_int = res[6,18]
-			local p_int = res[4,18]
+			local coef_int = res[1,17]
+			local lci_int = res[5,17]
+			local uci_int = res[6,17]
+			local p_int = res[4,17]
 			local age_main = res[1,11]
 			local exp_main = res[1,13]
 		
@@ -3864,7 +3864,7 @@ foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural par
 			local uci_int = res[6,25]
 			local p_int = res[4,25]
 			local age_main = res[1,15]
-			local exp_main = res[1,29]
+			local exp_main = res[1,19]
 		
 			post partner_attend ("`exp'") ("`outcome_level'") ("`exp_level'") ///
 				(`n') (`coef') (`lci') (`uci') (`p') ///
@@ -6102,7 +6102,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local uci_int = res[6,25]
 			local p_int = res[4,25]
 			local age_main = res[1,15]
-			local exp_main = res[1,29]
+			local exp_main = res[1,19]
 		
 			post partner_intrinsic_cat ("`exp'") ("`outcome_level'") ("`exp_level'") ///
 				(`n') (`coef') (`lci') (`uci') (`p') ///
@@ -7660,7 +7660,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local uci_int = res[6,25]
 			local p_int = res[4,25]
 			local age_main = res[1,15]
-			local exp_main = res[1,29]
+			local exp_main = res[1,19]
 		
 			post partner_extrinsic_friends ("`exp'") ("`outcome_level'") ("`exp_level'") ///
 				(`n') (`coef') (`lci') (`uci') (`p') ///
@@ -9201,7 +9201,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local uci_int = res[6,25]
 			local p_int = res[4,25]
 			local age_main = res[1,15]
-			local exp_main = res[1,29]
+			local exp_main = res[1,19]
 		
 			post partner_extrinsic_prayer ("`exp'") ("`outcome_level'") ("`exp_level'") ///
 				(`n') (`coef') (`lci') (`uci') (`p') ///
@@ -11772,7 +11772,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local uci_int = res[6,25]
 			local p_int = res[4,25]
 			local age_main = res[1,15]
-			local exp_main = res[1,29]
+			local exp_main = res[1,19]
 		
 			post partner_DUREL_cat ("`exp'") ("`outcome_level'") ("`exp_level'") ///
 				(`n') (`coef') (`lci') (`uci') (`p') ///
