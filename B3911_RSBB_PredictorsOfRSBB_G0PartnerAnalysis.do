@@ -12405,8 +12405,8 @@ order outcome
 save ".\G0Partner_Results\attend_pvalues.dta", replace
 
 
-**** Now read in the next outcome - intrinsic religiosity
-use ".\G0Partner_Results\partner_intrinsic_results_lr.dta", clear
+**** Now read in the next outcome - intrinsic religiosity (will use the multinomial results, as the distribution for the linear model is very non-normal, and using multinomial results makes these p-value plots consistent with the coefficient plots below, which also use the multinomial results)
+use ".\G0Partner_Results\partner_intrinsic_cat_results_lr.dta", clear
 
 ** Convert string exposure var to numeric
 count
@@ -12690,8 +12690,8 @@ order outcome
 save ".\G0Partner_Results\extrinPrayer_pvalues.dta", replace
 
 
-**** Now read in the final outcome - Total DUREL religiosity score
-use ".\G0Partner_Results\partner_DUREL_results_lr.dta", clear
+**** Now read in the final outcome - Total DUREL religiosity score (will use the multinomial results, as the distribution for the linear model is very non-normal, and using multinomial results makes these p-value plots consistent with the coefficient plots below, which also use the multinomial results)
+use ".\G0Partner_Results\partner_DUREL_cat_results_lr.dta", clear
 
 ** Convert string exposure var to numeric
 count
