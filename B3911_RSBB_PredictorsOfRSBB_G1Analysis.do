@@ -13889,32 +13889,32 @@ tab level_num
 
 twoway (scatter level_num coef if outcome == "Belief" & exposure == "ageAt28", ///
 			col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Belief" & exposure == "ageAt28", ///
-			horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "ageAt28", ///
+			horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Relig" & exposure == "ageAt28", ///
 			col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Relig" & exposure == "ageAt28", ///
-			horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "ageAt28", ///
+			horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Attend" & exposure == "ageAt28", ///
 			col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Attend" & exposure == "ageAt28", ///
-			horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "ageAt28", ///
+			horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
 			exposure == "ageAt28", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "ageAt28", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "ageAt28", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - friends" & ///
 			exposure == "ageAt28", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "ageAt28", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "ageAt28", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - prayer" & ///
 			exposure == "ageAt28", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "ageAt28", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "ageAt28", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "DUREL (cat)" & ///
 			exposure == "ageAt28", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "DUREL (cat)" & ///
-			exposure == "ageAt28", horizontal col(black) msize(vtiny)), ///
+		(rspike lci uci level_num if outcome == "DUREL (cat)" & ///
+			exposure == "ageAt28", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
 		title("Age and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
@@ -13933,32 +13933,32 @@ sum lci uci if exposure == "nonWhiteEthnic" & outcome_level != "NA"
 
 twoway (scatter level_num coef if outcome == "Belief" & exposure == "nonWhiteEthnic", ///
 			col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Belief" & exposure == "nonWhiteEthnic", ///
-			horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "nonWhiteEthnic", ///
+			horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Relig" & exposure == "nonWhiteEthnic", ///
 			col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Relig" & exposure == "nonWhiteEthnic", ///
-			horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "nonWhiteEthnic", ///
+			horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Attend" & exposure == "nonWhiteEthnic", ///
 			col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Attend" & exposure == "nonWhiteEthnic", ///
-			horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "nonWhiteEthnic", ///
+			horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
 			exposure == "nonWhiteEthnic", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "nonWhiteEthnic", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "nonWhiteEthnic", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - friends" & ///
 			exposure == "nonWhiteEthnic", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "nonWhiteEthnic", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "nonWhiteEthnic", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - prayer" & ///
 			exposure == "nonWhiteEthnic", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "nonWhiteEthnic", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "nonWhiteEthnic", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "DUREL (cat)" & ///
 			exposure == "nonWhiteEthnic", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "DUREL (cat)" & ///
-			exposure == "nonWhiteEthnic", horizontal col(black) msize(vtiny)), ///
+		(rspike lci uci level_num if outcome == "DUREL (cat)" & ///
+			exposure == "nonWhiteEthnic", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (ref = White)") ///
 		title("Other than White ethnicity and RSBB", size(medium)) ///
@@ -13978,32 +13978,32 @@ sum lci uci if exposure == "male" & outcome_level != "NA"
 
 twoway (scatter level_num coef if outcome == "Belief" & exposure == "male", ///
 			col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Belief" & exposure == "male", ///
-			horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "male", ///
+			horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Relig" & exposure == "male", ///
 			col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Relig" & exposure == "male", ///
-			horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "male", ///
+			horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Attend" & exposure == "male", ///
 			col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Attend" & exposure == "male", ///
-			horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "male", ///
+			horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
 			exposure == "male", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "male", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "male", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - friends" & ///
 			exposure == "male", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "male", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "male", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - prayer" & ///
 			exposure == "male", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "male", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "male", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "DUREL (cat)" & ///
 			exposure == "male", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "DUREL (cat)" & ///
-			exposure == "male", horizontal col(black) msize(vtiny)), ///
+		(rspike lci uci level_num if outcome == "DUREL (cat)" & ///
+			exposure == "male", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (ref = female)") ///
 		title("Male sex and RSBB", size(medium)) ///
@@ -14031,60 +14031,60 @@ sum lci uci if level_split < . & outcome_level != "NA"
 * Now make the graph
 twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
-			"Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"Married (ref = Never married)", horizontal col(black)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
-			"Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"Married (ref = Never married)", horizontal col(black)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
-			"Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"Married (ref = Never married)", horizontal col(black)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
-			"Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+			"Married (ref = Never married)", horizontal col(black)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
-			== "Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+			== "Married (ref = Never married)", horizontal col(black)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
-			== "Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+			== "Married (ref = Never married)", horizontal col(black)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
-			"Married (ref = Never married)", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+			"Married (ref = Never married)", horizontal col(black)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
-			"Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", horizontal col(red)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
-			"Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", horizontal col(red)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
-			"Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", horizontal col(red)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
-			"Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", horizontal col(red)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
-			== "Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+			== "Wid/Div/Sep (ref = Never married)", horizontal col(red)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
-			== "Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)) ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+			== "Wid/Div/Sep (ref = Never married)", horizontal col(red)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
-			"Wid/Div/Sep (ref = Never married)", horizontal col(red) msize(vtiny)), ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", horizontal col(red)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (ref = Never married)") ///
 		title("Marital status and RSBB", size(medium)) ///
@@ -14115,115 +14115,115 @@ sum lci uci if level_split < . & outcome_level != "NA"
 * Now make the graph
 twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"Vocational (ref = CSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"Vocational (ref = CSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"Vocational (ref = CSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Vocational (ref = CSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "Vocational (ref = CSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Vocational (ref = CSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"Vocational (ref = CSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"Vocational (ref = CSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"O-level (ref = CSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"O-level (ref = CSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"O-level (ref = CSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"O-level (ref = CSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "O-level (ref = CSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "O-level (ref = CSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"O-level (ref = CSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"O-level (ref = CSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"A-level (ref = CSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"A-level (ref = CSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"A-level (ref = CSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"A-level (ref = CSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "A-level (ref = CSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "A-level (ref = CSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"A-level (ref = CSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"A-level (ref = CSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"Degree (ref = CSE/None)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"Degree (ref = CSE/None)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"Degree (ref = CSE/None)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Degree (ref = CSE/None)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "Degree (ref = CSE/None)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Degree (ref = CSE/None)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"Degree (ref = CSE/None)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"Degree (ref = CSE/None)", horizontal col(green) msize(vtiny) lwidth(thin)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (ref = CSE/None)") ///
@@ -14255,87 +14255,87 @@ sum lci uci if level_split < . & outcome_level != "NA"
 * Now make the graph
 twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"Vocational (ref = GCSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"Vocational (ref = GCSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"Vocational (ref = GCSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"Vocational (ref = GCSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"Vocational (ref = GCSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"Vocational (ref = GCSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Vocational (ref = GCSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Vocational (ref = GCSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "Vocational (ref = GCSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "Vocational (ref = GCSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Vocational (ref = GCSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Vocational (ref = GCSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"Vocational (ref = GCSE/None)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"Vocational (ref = GCSE/None)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"AS/A level (ref = GCSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"AS/A level (ref = GCSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"AS/A level (ref = GCSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"AS/A level (ref = GCSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"AS/A level (ref = GCSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"AS/A level (ref = GCSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"AS/A level (ref = GCSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"AS/A level (ref = GCSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "AS/A level (ref = GCSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "AS/A level (ref = GCSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "AS/A level (ref = GCSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "AS/A level (ref = GCSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"AS/A level (ref = GCSE/None)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"AS/A level (ref = GCSE/None)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"Degree (ref = GCSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"Degree (ref = GCSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"Degree (ref = GCSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"Degree (ref = GCSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"Degree (ref = GCSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"Degree (ref = GCSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Degree (ref = GCSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Degree (ref = GCSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "Degree (ref = GCSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "Degree (ref = GCSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Degree (ref = GCSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Degree (ref = GCSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"Degree (ref = GCSE/None)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"Degree (ref = GCSE/None)", horizontal col(blue) msize(vtiny) lwidth(thin)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (ref = GCSE/None)") ///
@@ -14355,32 +14355,32 @@ sum lci uci if exposure == "parent" & outcome_level != "NA"
 
 twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 			"parent", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Belief" & exposure == ///
-			"parent", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == ///
+			"parent", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Relig" & exposure == ///
 			"parent", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Relig" & exposure == ///
-			"parent", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == ///
+			"parent", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Attend" & exposure == ///
 			"parent", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Attend" & exposure == ///
-			"parent", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == ///
+			"parent", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
 			exposure == "parent", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "parent", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "parent", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - friends" & ///
 			exposure == "parent", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "parent", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "parent", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - prayer" & ///
 			exposure == "parent", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "parent", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "parent", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "DUREL (cat)" & ///
 			exposure == "parent", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "DUREL (cat)" & ///
-			exposure == "parent", horizontal col(black) msize(vtiny)), ///
+		(rspike lci uci level_num if outcome == "DUREL (cat)" & ///
+			exposure == "parent", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (ref = Not a parent") ///
 		title("Parental status and RSBB", size(medium)) ///
@@ -14398,32 +14398,32 @@ sum lci uci if exposure == "fatherAbsence" & outcome_level != "NA"
 
 twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 			"fatherAbsence", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Belief" & exposure == ///
-			"fatherAbsence", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == ///
+			"fatherAbsence", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Relig" & exposure == ///
 			"fatherAbsence", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Relig" & exposure == ///
-			"fatherAbsence", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == ///
+			"fatherAbsence", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Attend" & exposure == ///
 			"fatherAbsence", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Attend" & exposure == ///
-			"fatherAbsence", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == ///
+			"fatherAbsence", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
 			exposure == "fatherAbsence", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "fatherAbsence", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "fatherAbsence", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - friends" & ///
 			exposure == "fatherAbsence", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "fatherAbsence", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "fatherAbsence", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - prayer" & ///
 			exposure == "fatherAbsence", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "fatherAbsence", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "fatherAbsence", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "DUREL (cat)" & ///
 			exposure == "fatherAbsence", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "DUREL (cat)" & ///
-			exposure == "fatherAbsence", horizontal col(black) msize(vtiny)), ///
+		(rspike lci uci level_num if outcome == "DUREL (cat)" & ///
+			exposure == "fatherAbsence", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (ref = No FA") ///
 		title("Father absence and RSBB", size(medium)) ///
@@ -14441,32 +14441,32 @@ sum lci uci if exposure == "mother_ageAtBirth" & outcome_level != "NA"
 
 twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 			"mother_ageAtBirth", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Belief" & exposure == ///
-			"mother_ageAtBirth", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == ///
+			"mother_ageAtBirth", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Relig" & exposure == ///
 			"mother_ageAtBirth", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Relig" & exposure == ///
-			"mother_ageAtBirth", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == ///
+			"mother_ageAtBirth", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Attend" & exposure == ///
 			"mother_ageAtBirth", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Attend" & exposure == ///
-			"mother_ageAtBirth", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == ///
+			"mother_ageAtBirth", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
 			exposure == "mother_ageAtBirth", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "mother_ageAtBirth", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "mother_ageAtBirth", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - friends" & ///
 			exposure == "mother_ageAtBirth", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "mother_ageAtBirth", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "mother_ageAtBirth", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - prayer" & ///
 			exposure == "mother_ageAtBirth", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "mother_ageAtBirth", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "mother_ageAtBirth", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "DUREL (cat)" & ///
 			exposure == "mother_ageAtBirth", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "DUREL (cat)" & ///
-			exposure == "mother_ageAtBirth", horizontal col(black) msize(vtiny)), ///
+		(rspike lci uci level_num if outcome == "DUREL (cat)" & ///
+			exposure == "mother_ageAtBirth", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (per unit increase)") ///
 		title("Maternal age at birth and RSBB", size(medium)) ///
@@ -14484,32 +14484,32 @@ sum lci uci if exposure == "totalIQ_age8" & outcome_level != "NA"
 
 twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 			"totalIQ_age8", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Belief" & exposure == ///
-			"totalIQ_age8", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == ///
+			"totalIQ_age8", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Relig" & exposure == ///
 			"totalIQ_age8", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Relig" & exposure == ///
-			"totalIQ_age8", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == ///
+			"totalIQ_age8", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Attend" & exposure == ///
 			"totalIQ_age8", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Attend" & exposure == ///
-			"totalIQ_age8", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == ///
+			"totalIQ_age8", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
 			exposure == "totalIQ_age8", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "totalIQ_age8", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "totalIQ_age8", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - friends" & ///
 			exposure == "totalIQ_age8", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "totalIQ_age8", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "totalIQ_age8", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - prayer" & ///
 			exposure == "totalIQ_age8", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "totalIQ_age8", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "totalIQ_age8", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "DUREL (cat)" & ///
 			exposure == "totalIQ_age8", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "DUREL (cat)" & ///
-			exposure == "totalIQ_age8", horizontal col(black) msize(vtiny)), ///
+		(rspike lci uci level_num if outcome == "DUREL (cat)" & ///
+			exposure == "totalIQ_age8", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (per unit increase in IQ)") ///
 		title("Total IQ Age 8 and RSBB", size(medium)) ///
@@ -14527,32 +14527,32 @@ sum lci uci if exposure == "totalIQ_age15" & outcome_level != "NA"
 
 twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 			"totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Belief" & exposure == ///
-			"totalIQ_age15", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == ///
+			"totalIQ_age15", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Relig" & exposure == ///
 			"totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Relig" & exposure == ///
-			"totalIQ_age15", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == ///
+			"totalIQ_age15", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Attend" & exposure == ///
 			"totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Attend" & exposure == ///
-			"totalIQ_age15", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == ///
+			"totalIQ_age15", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
 			exposure == "totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "totalIQ_age15", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "totalIQ_age15", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - friends" & ///
 			exposure == "totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "totalIQ_age15", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "totalIQ_age15", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - prayer" & ///
 			exposure == "totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "totalIQ_age15", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "totalIQ_age15", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "DUREL (cat)" & ///
 			exposure == "totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "DUREL (cat)" & ///
-			exposure == "totalIQ_age15", horizontal col(black) msize(vtiny)), ///
+		(rspike lci uci level_num if outcome == "DUREL (cat)" & ///
+			exposure == "totalIQ_age15", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (per unit increase in IQ)") ///
 		title("Total IQ Age 15 and RSBB", size(medium)) ///
@@ -14570,32 +14570,32 @@ sum lci uci if exposure == "conscientiousness_age13" & outcome_level != "NA"
 
 twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 			"conscientiousness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Belief" & exposure == ///
-			"conscientiousness_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == ///
+			"conscientiousness_age13", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Relig" & exposure == ///
 			"conscientiousness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Relig" & exposure == ///
-			"conscientiousness_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == ///
+			"conscientiousness_age13", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Attend" & exposure == ///
 			"conscientiousness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Attend" & exposure == ///
-			"conscientiousness_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == ///
+			"conscientiousness_age13", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
 			exposure == "conscientiousness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "conscientiousness_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "conscientiousness_age13", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - friends" & ///
 			exposure == "conscientiousness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "conscientiousness_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "conscientiousness_age13", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - prayer" & ///
 			exposure == "conscientiousness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "conscientiousness_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "conscientiousness_age13", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "DUREL (cat)" & ///
 			exposure == "conscientiousness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "DUREL (cat)" & ///
-			exposure == "conscientiousness_age13", horizontal col(black) msize(vtiny)), ///
+		(rspike lci uci level_num if outcome == "DUREL (cat)" & ///
+			exposure == "conscientiousness_age13", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (per unit increase)") ///
 		title("Conscientiousness Age 13 and RSBB", size(medium)) ///
@@ -14613,32 +14613,32 @@ sum lci uci if exposure == "emoRec_triangles_age13" & outcome_level != "NA"
 
 twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 			"emoRec_triangles_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Belief" & exposure == ///
-			"emoRec_triangles_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == ///
+			"emoRec_triangles_age13", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Relig" & exposure == ///
 			"emoRec_triangles_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Relig" & exposure == ///
-			"emoRec_triangles_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == ///
+			"emoRec_triangles_age13", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Attend" & exposure == ///
 			"emoRec_triangles_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Attend" & exposure == ///
-			"emoRec_triangles_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == ///
+			"emoRec_triangles_age13", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
 			exposure == "emoRec_triangles_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "emoRec_triangles_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "emoRec_triangles_age13", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - friends" & ///
 			exposure == "emoRec_triangles_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "emoRec_triangles_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "emoRec_triangles_age13", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Extrinsic - prayer" & ///
 			exposure == "emoRec_triangles_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "emoRec_triangles_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci uci level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "emoRec_triangles_age13", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "DUREL (cat)" & ///
 			exposure == "emoRec_triangles_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci uci level_num if outcome == "DUREL (cat)" & ///
-			exposure == "emoRec_triangles_age13", horizontal col(black) msize(vtiny)), ///
+		(rspike lci uci level_num if outcome == "DUREL (cat)" & ///
+			exposure == "emoRec_triangles_age13", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (per unit increase)") ///
 		title("Emo. Recog. (triangles task) Age 13 and RSBB", size(medium)) ///
@@ -14668,115 +14668,115 @@ sum lci uci if level_split < . & outcome_level != "NA"
 * Now make the graph
 twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"2 (ref = 1/Least dep.)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"2 (ref = 1/Least dep.)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"2 (ref = 1/Least dep.)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"2 (ref = 1/Least dep.)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"2 (ref = 1/Least dep.)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"2 (ref = 1/Least dep.)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"2 (ref = 1/Least dep.)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"2 (ref = 1/Least dep.)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "2 (ref = 1/Least dep.)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "2 (ref = 1/Least dep.)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "2 (ref = 1/Least dep.)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "2 (ref = 1/Least dep.)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"2 (ref = 1/Least dep.)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"2 (ref = 1/Least dep.)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"3 (ref = 1/Least dep.)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"3 (ref = 1/Least dep.)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"3 (ref = 1/Least dep.)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"3 (ref = 1/Least dep.)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"3 (ref = 1/Least dep.)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"3 (ref = 1/Least dep.)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"3 (ref = 1/Least dep.)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"3 (ref = 1/Least dep.)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "3 (ref = 1/Least dep.)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "3 (ref = 1/Least dep.)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "3 (ref = 1/Least dep.)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "3 (ref = 1/Least dep.)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"3 (ref = 1/Least dep.)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"3 (ref = 1/Least dep.)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"4 (ref = 1/Least dep.)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"4 (ref = 1/Least dep.)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"4 (ref = 1/Least dep.)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"4 (ref = 1/Least dep.)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"4 (ref = 1/Least dep.)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"4 (ref = 1/Least dep.)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"4 (ref = 1/Least dep.)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"4 (ref = 1/Least dep.)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "4 (ref = 1/Least dep.)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "4 (ref = 1/Least dep.)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "4 (ref = 1/Least dep.)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "4 (ref = 1/Least dep.)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"4 (ref = 1/Least dep.)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"4 (ref = 1/Least dep.)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"5/Most dep. (ref = 1/Least dep.)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"5/Most dep. (ref = 1/Least dep.)", horizontal col(green) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"5/Most dep. (ref = 1/Least dep.)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"5/Most dep. (ref = 1/Least dep.)", horizontal col(green) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"5/Most dep. (ref = 1/Least dep.)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"5/Most dep. (ref = 1/Least dep.)", horizontal col(green) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"5/Most dep. (ref = 1/Least dep.)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"5/Most dep. (ref = 1/Least dep.)", horizontal col(green) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "5/Most dep. (ref = 1/Least dep.)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "5/Most dep. (ref = 1/Least dep.)", horizontal col(green) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "5/Most dep. (ref = 1/Least dep.)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "5/Most dep. (ref = 1/Least dep.)", horizontal col(green) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"5/Most dep. (ref = 1/Least dep.)", col(green) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"5/Most dep. (ref = 1/Least dep.)", horizontal col(green) msize(vtiny) lwidth(thin)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (ref = 1/Least Deprived)") ///
@@ -14807,87 +14807,87 @@ sum lci uci if level_split < . & outcome_level != "NA"
 * Now make the graph
 twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"Rent (ref = Own/Mortgage)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"Rent (ref = Own/Mortgage)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"Rent (ref = Own/Mortgage)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"Rent (ref = Own/Mortgage)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"Rent (ref = Own/Mortgage)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"Rent (ref = Own/Mortgage)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Rent (ref = Own/Mortgage)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Rent (ref = Own/Mortgage)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "Rent (ref = Own/Mortgage)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "Rent (ref = Own/Mortgage)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Rent (ref = Own/Mortgage)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Rent (ref = Own/Mortgage)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"Rent (ref = Own/Mortgage)", col(black) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"Rent (ref = Own/Mortgage)", horizontal col(black) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"Council/HA (ref = Own/Mortgage)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"Council/HA (ref = Own/Mortgage)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"Council/HA (ref = Own/Mortgage)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"Council/HA (ref = Own/Mortgage)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"Council/HA (ref = Own/Mortgage)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"Council/HA (ref = Own/Mortgage)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Council/HA (ref = Own/Mortgage)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Council/HA (ref = Own/Mortgage)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "Council/HA (ref = Own/Mortgage)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "Council/HA (ref = Own/Mortgage)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Council/HA (ref = Own/Mortgage)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Council/HA (ref = Own/Mortgage)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"Council/HA (ref = Own/Mortgage)", col(red) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"Council/HA (ref = Own/Mortgage)", horizontal col(red) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"Other (ref = Own/Mortgage)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"Other (ref = Own/Mortgage)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"Other (ref = Own/Mortgage)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"Other (ref = Own/Mortgage)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"Other (ref = Own/Mortgage)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"Other (ref = Own/Mortgage)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Other (ref = Own/Mortgage)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"Other (ref = Own/Mortgage)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "Other (ref = Own/Mortgage)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "Other (ref = Own/Mortgage)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Other (ref = Own/Mortgage)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "Other (ref = Own/Mortgage)", horizontal col(blue) msize(vtiny) lwidth(thin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"Other (ref = Own/Mortgage)", col(blue) msize(tiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"Other (ref = Own/Mortgage)", horizontal col(blue) msize(vtiny) lwidth(thin)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (ref = Owned/Mortgaged)") ///
@@ -14921,143 +14921,143 @@ sum lci uci if level_split < . & outcome_level != "NA"
 * Now make the graph
 twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"1 move (ref = 0 moves)", col(black) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"1 move (ref = 0 moves)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"1 move (ref = 0 moves)", col(black) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"1 move (ref = 0 moves)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"1 move (ref = 0 moves)", col(black) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"1 move (ref = 0 moves)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"1 move (ref = 0 moves)", col(black) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"1 move (ref = 0 moves)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "1 move (ref = 0 moves)", col(black) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "1 move (ref = 0 moves)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "1 move (ref = 0 moves)", col(black) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "1 move (ref = 0 moves)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"1 move (ref = 0 moves)", col(black) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"1 move (ref = 0 moves)", horizontal col(black) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"2 moves (ref = 0 moves)", col(red) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"2 moves (ref = 0 moves)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"2 moves (ref = 0 moves)", col(red) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"2 moves (ref = 0 moves)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"2 moves (ref = 0 moves)", col(red) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"2 moves (ref = 0 moves)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"2 moves (ref = 0 moves)", col(red) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"2 moves (ref = 0 moves)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "2 moves (ref = 0 moves)", col(red) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "2 moves (ref = 0 moves)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "2 moves (ref = 0 moves)", col(red) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "2 moves (ref = 0 moves)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"2 moves (ref = 0 moves)", col(red) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"2 moves (ref = 0 moves)", horizontal col(red) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"3 moves (ref = 0 moves)", col(blue) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"3 moves (ref = 0 moves)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"3 moves (ref = 0 moves)", col(blue) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"3 moves (ref = 0 moves)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"3 moves (ref = 0 moves)", col(blue) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"3 moves (ref = 0 moves)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"3 moves (ref = 0 moves)", col(blue) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"3 moves (ref = 0 moves)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "3 moves (ref = 0 moves)", col(blue) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "3 moves (ref = 0 moves)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "3 moves (ref = 0 moves)", col(blue) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "3 moves (ref = 0 moves)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"3 moves (ref = 0 moves)", col(blue) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"3 moves (ref = 0 moves)", horizontal col(blue) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"4 moves (ref = 0 moves)", col(green) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"4 moves (ref = 0 moves)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"4 moves (ref = 0 moves)", col(green) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"4 moves (ref = 0 moves)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"4 moves (ref = 0 moves)", col(green) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"4 moves (ref = 0 moves)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"4 moves (ref = 0 moves)", col(green) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"4 moves (ref = 0 moves)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "4 moves (ref = 0 moves)", col(green) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "4 moves (ref = 0 moves)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "4 moves (ref = 0 moves)", col(green) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "4 moves (ref = 0 moves)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"4 moves (ref = 0 moves)", col(green) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"4 moves (ref = 0 moves)", horizontal col(green) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"5 + moves (ref = 0 moves)", col(orange) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Belief" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
 			"5 + moves (ref = 0 moves)", horizontal col(orange) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Relig" & exp_level == ///
 			"5 + moves (ref = 0 moves)", col(orange) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Relig" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
 			"5 + moves (ref = 0 moves)", horizontal col(orange) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Attend" & exp_level == ///
 			"5 + moves (ref = 0 moves)", col(orange) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Attend" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
 			"5 + moves (ref = 0 moves)", horizontal col(orange) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Intrinsic (cat)" & exp_level == ///
 			"5 + moves (ref = 0 moves)", col(orange) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "Intrinsic (cat)" & exp_level == ///
 			"5 + moves (ref = 0 moves)", horizontal col(orange) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - friends" & exp_level ///
 			== "5 + moves (ref = 0 moves)", col(orange) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - friends" & exp_level ///
 			== "5 + moves (ref = 0 moves)", horizontal col(orange) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "Extrinsic - prayer" & exp_level ///
 			== "5 + moves (ref = 0 moves)", col(orange) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
+		(rspike lci uci level_split if outcome == "Extrinsic - prayer" & exp_level ///
 			== "5 + moves (ref = 0 moves)", horizontal col(orange) msize(vtiny) lwidth(vthin)) ///
 		(scatter level_split coef if outcome == "DUREL (cat)" & exp_level == ///
 			"5 + moves (ref = 0 moves)", col(orange) msize(vtiny) msym(D)) ///
-		(rcap lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
+		(rspike lci uci level_split if outcome == "DUREL (cat)" & exp_level == ///
 			"5 + moves (ref = 0 moves)", horizontal col(orange) msize(vtiny) lwidth(vthin)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (ref = 0 moves)") ///
@@ -15081,32 +15081,32 @@ sum lci_int uci_int if exposure == "totalIQ_age15" & outcome_level != "NA"
 
 twoway (scatter level_num coef_int if outcome == "Belief" & exposure == ///
 			"totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Belief" & exposure == ///
-			"totalIQ_age15", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Belief" & exposure == ///
+			"totalIQ_age15", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Relig" & exposure == ///
 			"totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Relig" & exposure == ///
-			"totalIQ_age15", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Relig" & exposure == ///
+			"totalIQ_age15", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Attend" & exposure == ///
 			"totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Attend" & exposure == ///
-			"totalIQ_age15", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Attend" & exposure == ///
+			"totalIQ_age15", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Intrinsic (cat)" & ///
 			exposure == "totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "totalIQ_age15", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "totalIQ_age15", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Extrinsic - friends" & ///
 			exposure == "totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "totalIQ_age15", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "totalIQ_age15", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Extrinsic - prayer" & ///
 			exposure == "totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "totalIQ_age15", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "totalIQ_age15", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "DUREL (cat)" & ///
 			exposure == "totalIQ_age15", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "DUREL (cat)" & ///
-			exposure == "totalIQ_age15", horizontal col(black) msize(vtiny)), ///
+		(rspike lci_int uci_int level_num if outcome == "DUREL (cat)" & ///
+			exposure == "totalIQ_age15", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (per unit increase in IQ)") ///
 		title("IQ age 15*Sex Interaction and RSBB", size(medium)) ///
@@ -15124,32 +15124,32 @@ sum lci_int uci_int if exposure == "agreeableness_age13" & outcome_level != "NA"
 
 twoway (scatter level_num coef_int if outcome == "Belief" & exposure == ///
 			"agreeableness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Belief" & exposure == ///
-			"agreeableness_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Belief" & exposure == ///
+			"agreeableness_age13", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Relig" & exposure == ///
 			"agreeableness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Relig" & exposure == ///
-			"agreeableness_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Relig" & exposure == ///
+			"agreeableness_age13", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Attend" & exposure == ///
 			"agreeableness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Attend" & exposure == ///
-			"agreeableness_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Attend" & exposure == ///
+			"agreeableness_age13", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Intrinsic (cat)" & ///
 			exposure == "agreeableness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "agreeableness_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "agreeableness_age13", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Extrinsic - friends" & ///
 			exposure == "agreeableness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "agreeableness_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "agreeableness_age13", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Extrinsic - prayer" & ///
 			exposure == "agreeableness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "agreeableness_age13", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "agreeableness_age13", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "DUREL (cat)" & ///
 			exposure == "agreeableness_age13", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "DUREL (cat)" & ///
-			exposure == "agreeableness_age13", horizontal col(black) msize(vtiny)), ///
+		(rspike lci_int uci_int level_num if outcome == "DUREL (cat)" & ///
+			exposure == "agreeableness_age13", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (per unit increase in agree.)") ///
 		title("Agreeableness*Sex Interaction and RSBB", size(medium)) ///
@@ -15167,32 +15167,32 @@ sum lci_int uci_int if exposure == "income" & outcome_level != "NA"
 
 twoway (scatter level_num coef_int if outcome == "Belief" & exposure == ///
 			"income", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Belief" & exposure == ///
-			"income", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Belief" & exposure == ///
+			"income", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Relig" & exposure == ///
 			"income", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Relig" & exposure == ///
-			"income", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Relig" & exposure == ///
+			"income", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Attend" & exposure == ///
 			"income", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Attend" & exposure == ///
-			"income", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Attend" & exposure == ///
+			"income", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Intrinsic (cat)" & ///
 			exposure == "income", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Intrinsic (cat)" & ///
-			exposure == "income", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Intrinsic (cat)" & ///
+			exposure == "income", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Extrinsic - friends" & ///
 			exposure == "income", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Extrinsic - friends" & ///
-			exposure == "income", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Extrinsic - friends" & ///
+			exposure == "income", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Extrinsic - prayer" & ///
 			exposure == "income", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "Extrinsic - prayer" & ///
-			exposure == "income", horizontal col(black) msize(vtiny)) ///
+		(rspike lci_int uci_int level_num if outcome == "Extrinsic - prayer" & ///
+			exposure == "income", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "DUREL (cat)" & ///
 			exposure == "income", col(black) msize(small) msym(D)) ///
-		(rcap lci_int uci_int level_num if outcome == "DUREL (cat)" & ///
-			exposure == "income", horizontal col(black) msize(vtiny)), ///
+		(rspike lci_int uci_int level_num if outcome == "DUREL (cat)" & ///
+			exposure == "income", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (per unit increase in log income)") ///
 		title("Household income*Sex Interaction and RSBB", size(medium)) ///
@@ -15207,7 +15207,7 @@ graph export ".\G1_Results\incomeResults_int.pdf", replace
 graph close _all
 
 
-** For the multinomial regression results, as interpretation not intuitive, could convert to predicted probabilities using the 'margins' command? (see: https://stats.idre.ucla.edu/stata/dae/multinomiallogistic-regression/)
+** For the multinomial regression results, as interpretation not intuitive, could convert to predicted probabilities using the 'margins' command? (see: https://stats.idre.ucla.edu/stata/dae/multinomiallogistic-regression/) - Have started this in the G0 mothers file; see there for example code.
 
 
 
