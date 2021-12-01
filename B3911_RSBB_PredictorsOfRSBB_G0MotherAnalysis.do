@@ -1435,7 +1435,7 @@ postclose mother_belief
 postclose mother_belief_lr
 	
 
-****************************************************************************************
+**************************************************************************************
 *** Now to the next RSBB outcome: Religious affiliation
 
 *** As this is an unordered categorical variable, will again use multinomial logistic model (with 'none' as reference)
@@ -2576,7 +2576,7 @@ postclose mother_relig_lr
 
 
 
-****************************************************************************************
+**************************************************************************************
 *** Now to the next RSBB outcome: Attendance at church/place of worship
 
 *** As this is an ordered categorical variable, will use ordinal regression model. For consistency with previous models, will recode so that higher values indicate greater RSBB
@@ -12144,6 +12144,3835 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 postclose mother_DUREL_cat
 postclose mother_DUREL_cat_lr
 
+
+**** Also want to get the likelihood ratio p-values for belief in God, religious affiliation and church attendance for the 2019 data as well, as more directly comparable with the intrinsic/extrinsic/total religiosity data (will also save coeffients as well, in case decide to use this too)
+tab1 d810 Y3000, m
+
+*** Belief in God (2019)
+capture postclose mother_belief_2019
+postfile mother_belief_2019 str30 exposure str30 outcome_level str40 exp_level /// 
+	n coef lci uci double(p) coef_int lci_int uci_int double(p_int) age_main exp_main ///
+	using ".\G0Mother_Results\mother_belief_2019_results.dta", replace
+
+capture postclose mother_belief_2019_lr
+postfile mother_belief_2019_lr str30 exposure double(lr_p_main lr_p_int) ///
+	using ".\G0Mother_Results\mother_belief_2019_results_lr.dta", replace
+
+foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu highSocClass income IMD townsendDep housing financeDiffs chLifeEvents_wgt chLifeEvents_total crowding neighPercept partnerAbsence logicMemory-selfEsteem {
+	
+	// Save the exposure variable as a macro
+	local exp = "`var'"
+	
+	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'ageAt28' separately first as will be adjusted for in all other models
+	if "`var'" == "ageAt28" {
+		mlogit Y3000 `var', baseoutcome(3) rrr level(99.85)
+		
+		local n = e(N)
+		
+		// Start with the first reference category (1/yes)
+		local outcome_level = "Yes (ref = No)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,1]
+		local lci = res[5,1]
+		local uci = res[6,1]
+		local p = res[4,1]
+		
+		// As no interaction model, will fill with blank values
+		local coef_int = .
+		local lci_int = .
+		local uci_int = .
+		local p_int = .
+		local age_main = .
+		local exp_main = .
+		
+		post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		// Now onto the next reference category (2/not sure)
+		local outcome_level = "Not sure (ref = No)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,3]
+		local lci = res[5,3]
+		local uci = res[6,3]
+		local p = res[4,3]
+		
+		// As no interaction model, will fill with blank values
+		local coef_int = .
+		local lci_int = .
+		local uci_int = .
+		local p_int = .
+		local age_main = .
+		local exp_main = .
+		
+		post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+		
+		// And finally run the likelihood ratio tests
+		mlogit Y3000 if `var' != ., baseoutcome(3) rrr level(99.85)
+		est store base
+		mlogit Y3000 `var', baseoutcome(3) rrr level(99.85)
+		est store main
+		
+		lrtest base main
+		local lr_p_main = r(p)
+		
+		// As no interaction model for age, will just fill with missing value
+		local lr_p_int = .
+		
+		post mother_belief_2019_lr ("`exp'") (`lr_p_main') (`lr_p_int')
+		
+	}
+	
+	// Next, analyse the rest of the continuous/binary variables
+	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
+		
+		mlogit Y3000 ageAt28 `var', baseoutcome(3) rrr level(99.85)
+		
+		local n = e(N)
+		
+		// Start with the first reference category (1/yes)
+		local outcome_level = "Yes (ref = No)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,2]
+		local lci = res[5,2]
+		local uci = res[6,2]
+		local p = res[4,2]
+		
+		// Now for interaction model
+		mlogit Y3000 c.ageAt28##c.`var', baseoutcome(3) rrr level(99.85)
+		
+		matrix res = r(table)
+		local coef_int = res[1,3]
+		local lci_int = res[5,3]
+		local uci_int = res[6,3]
+		local p_int = res[4,3]
+		local age_main = res[1,1]
+		local exp_main = res[1,2]
+		
+		post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		// Now onto the next reference category (2/not sure)
+		mlogit Y3000 ageAt28 `var', baseoutcome(3) rrr level(99.85)
+		
+		local outcome_level = "Not sure (ref = No)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,5]
+		local lci = res[5,5]
+		local uci = res[6,5]
+		local p = res[4,5]
+				
+		// Now for interaction model
+		mlogit Y3000 c.ageAt28##c.`var', baseoutcome(3) rrr level(99.85)
+		
+		matrix res = r(table)
+		local coef_int = res[1,7]
+		local lci_int = res[5,7]
+		local uci_int = res[6,7]
+		local p_int = res[4,7]
+		local age_main = res[1,5]
+		local exp_main = res[1,6]
+		
+		post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+		
+		// And finally run the likelihood ratio tests
+		mlogit Y3000 ageAt28 if `var' != ., baseoutcome(3) rrr level(99.85)
+		est store base
+		mlogit Y3000 ageAt28 `var', baseoutcome(3) rrr level(99.85)
+		est store main
+		
+		lrtest base main
+		local lr_p_main = r(p)
+		
+		// And the interaction model
+		mlogit Y3000 c.ageAt28##c.`var', baseoutcome(3) rrr level(99.85)
+		est store inter
+		
+		lrtest main inter
+		local lr_p_int = r(p)
+		
+		post mother_belief_2019_lr ("`exp'") (`lr_p_main') (`lr_p_int')
+			
+	}
+	
+	// Next, go through the remaining categorical variables and code as needed - In all cases will treat lowest category as reference
+	else {
+	
+		// First, need to know how many categories these vars have, and edit the number of cycles depending on this - As the number of categories shifts the number of columns in the results matrix, need to take variables in turn, depending on number of categories
+		quietly distinct `var'
+		local cats = r(ndistinct) - 1
+		
+		// Start with variables that have 2 categories (exc. reference)
+		if `cats' == 2 {
+		
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "maritalStatus" {
+				local exp_level = "Married (ref = Never married)"
+			}
+			else if "`var'" == "parity" {
+				local exp_level = "1 (ref = 0)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,3]
+			local lci = res[5,3]
+			local uci = res[6,3]
+			local p = res[4,3]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,6]
+			local lci_int = res[5,6]
+			local uci_int = res[6,6]
+			local p_int = res[4,6]
+			local age_main = res[1,1]
+			local exp_main = res[1,3]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,8]
+			local lci = res[5,8]
+			local uci = res[6,8]
+			local p = res[4,8]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,14]
+			local lci_int = res[5,14]
+			local uci_int = res[6,14]
+			local p_int = res[4,14]
+			local age_main = res[1,9]
+			local exp_main = res[1,11]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Move to the next category of the exposure (category 3)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "maritalStatus" {
+				local exp_level = "Wid/Div/Sep (ref = Never married)"
+			}
+			else if "`var'" == "parity" {
+				local exp_level = "2 or more (ref = 0)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,4]
+			local lci = res[5,4]
+			local uci = res[6,4]
+			local p = res[4,4]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,7]
+			local lci_int = res[5,7]
+			local uci_int = res[6,7]
+			local p_int = res[4,7]
+			local age_main = res[1,1]
+			local exp_main = res[1,4]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,9]
+			local lci = res[5,9]
+			local uci = res[6,9]
+			local p = res[4,9]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,15]
+			local lci_int = res[5,15]
+			local uci_int = res[6,15]
+			local p_int = res[4,15]
+			local age_main = res[1,9]
+			local exp_main = res[1,12]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		}
+		
+		
+		// Now to variables that have 3 categories (exc. reference)
+		if `cats' == 3 {
+		
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "housing" {
+				local exp_level = "Rent (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding" {
+				local exp_level = "> 0.5 to 0.75 (ref = <= 0.5)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,3]
+			local lci = res[5,3]
+			local uci = res[6,3]
+			local p = res[4,3]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,7]
+			local lci_int = res[5,7]
+			local uci_int = res[6,7]
+			local p_int = res[4,7]
+			local age_main = res[1,1]
+			local exp_main = res[1,3]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,9]
+			local lci = res[5,9]
+			local uci = res[6,9]
+			local p = res[4,9]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,17]
+			local lci_int = res[5,17]
+			local uci_int = res[6,17]
+			local p_int = res[4,17]
+			local age_main = res[1,11]
+			local exp_main = res[1,13]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 3)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "housing" {
+				local exp_level = "Council/HA (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding" {
+				local exp_level = "> 0.75 to 1 (ref = <= 0.5)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,4]
+			local lci = res[5,4]
+			local uci = res[6,4]
+			local p = res[4,4]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,8]
+			local lci_int = res[5,8]
+			local uci_int = res[6,8]
+			local p_int = res[4,8]
+			local age_main = res[1,1]
+			local exp_main = res[1,4]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,10]
+			local lci = res[5,10]
+			local uci = res[6,10]
+			local p = res[4,10]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,18]
+			local lci_int = res[5,18]
+			local uci_int = res[6,18]
+			local p_int = res[4,18]
+			local age_main = res[1,11]
+			local exp_main = res[1,14]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 4)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "housing" {
+				local exp_level = "Other (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding" {
+				local exp_level = "> 1 (ref = <= 0.5)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,5]
+			local lci = res[5,5]
+			local uci = res[6,5]
+			local p = res[4,5]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,9]
+			local lci_int = res[5,9]
+			local uci_int = res[6,9]
+			local p_int = res[4,9]
+			local age_main = res[1,1]
+			local exp_main = res[1,5]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,11]
+			local lci = res[5,11]
+			local uci = res[6,11]
+			local p = res[4,11]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,19]
+			local lci_int = res[5,19]
+			local uci_int = res[6,19]
+			local p_int = res[4,19]
+			local age_main = res[1,11]
+			local exp_main = res[1,15]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+		}
+				
+			
+		// Now to variables that have 4 categories (exc. reference)
+		if `cats' == 4 {
+		
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "education" {
+				local exp_level = "Vocational (ref = CSE/None)"
+			}
+			else if "`var'" == "maternalEdu" {
+				local exp_level = "Vocational (ref = CSE/None)"
+			}
+			else if "`var'" == "IMD" {
+				local exp_level = "2 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep" {
+				local exp_level = "2 (ref = 1/Least dep.)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,3]
+			local lci = res[5,3]
+			local uci = res[6,3]
+			local p = res[4,3]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,8]
+			local lci_int = res[5,8]
+			local uci_int = res[6,8]
+			local p_int = res[4,8]
+			local age_main = res[1,1]
+			local exp_main = res[1,3]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,10]
+			local lci = res[5,10]
+			local uci = res[6,10]
+			local p = res[4,10]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,20]
+			local lci_int = res[5,20]
+			local uci_int = res[6,20]
+			local p_int = res[4,20]
+			local age_main = res[1,13]
+			local exp_main = res[1,15]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 3)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "education" {
+				local exp_level = "O-level (ref = CSE/None)"
+			}
+			else if "`var'" == "maternalEdu" {
+				local exp_level = "O-level (ref = CSE/None)"
+			}
+			else if "`var'" == "IMD" {
+				local exp_level = "3 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep" {
+				local exp_level = "3 (ref = 1/Least dep.)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,4]
+			local lci = res[5,4]
+			local uci = res[6,4]
+			local p = res[4,4]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,9]
+			local lci_int = res[5,9]
+			local uci_int = res[6,9]
+			local p_int = res[4,9]
+			local age_main = res[1,1]
+			local exp_main = res[1,4]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,11]
+			local lci = res[5,11]
+			local uci = res[6,11]
+			local p = res[4,11]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,21]
+			local lci_int = res[5,21]
+			local uci_int = res[6,21]
+			local p_int = res[4,21]
+			local age_main = res[1,13]
+			local exp_main = res[1,16]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 4)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "education" {
+				local exp_level = "A-level (ref = CSE/None)"
+			}
+			else if "`var'" == "maternalEdu" {
+				local exp_level = "A-level (ref = CSE/None)"
+			}
+			else if "`var'" == "IMD" {
+				local exp_level = "4 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep" {
+				local exp_level = "4 (ref = 1/Least dep.)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,5]
+			local lci = res[5,5]
+			local uci = res[6,5]
+			local p = res[4,5]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,10]
+			local lci_int = res[5,10]
+			local uci_int = res[6,10]
+			local p_int = res[4,10]
+			local age_main = res[1,1]
+			local exp_main = res[1,5]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,12]
+			local lci = res[5,12]
+			local uci = res[6,12]
+			local p = res[4,12]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,22]
+			local lci_int = res[5,22]
+			local uci_int = res[6,22]
+			local p_int = res[4,22]
+			local age_main = res[1,13]
+			local exp_main = res[1,17]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+				
+			// Move to the next category of the exposure (category 5)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "education" {
+				local exp_level = "Degree (ref = CSE/None)"
+			}
+			else if "`var'" == "maternalEdu" {
+				local exp_level = "Degree (ref = CSE/None)"
+			}
+			else if "`var'" == "IMD" {
+				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep" {
+				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,6]
+			local lci = res[5,6]
+			local uci = res[6,6]
+			local p = res[4,6]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,11]
+			local lci_int = res[5,11]
+			local uci_int = res[6,11]
+			local p_int = res[4,11]
+			local age_main = res[1,1]
+			local exp_main = res[1,6]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,13]
+			local lci = res[5,13]
+			local uci = res[6,13]
+			local p = res[4,13]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,23]
+			local lci_int = res[5,23]
+			local uci_int = res[6,23]
+			local p_int = res[4,23]
+			local age_main = res[1,13]
+			local exp_main = res[1,18]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		}
+		
+		
+		// Now to variables that have 5 categories (exc. reference)
+		if `cats' == 5 {
+		
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "1 move (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,3]
+			local lci = res[5,3]
+			local uci = res[6,3]
+			local p = res[4,3]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,9]
+			local lci_int = res[5,9]
+			local uci_int = res[6,9]
+			local p_int = res[4,9]
+			local age_main = res[1,1]
+			local exp_main = res[1,3]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,11]
+			local lci = res[5,11]
+			local uci = res[6,11]
+			local p = res[4,11]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,23]
+			local lci_int = res[5,23]
+			local uci_int = res[6,23]
+			local p_int = res[4,23]
+			local age_main = res[1,15]
+			local exp_main = res[1,17]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 3)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "2 moves (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,4]
+			local lci = res[5,4]
+			local uci = res[6,4]
+			local p = res[4,4]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,10]
+			local lci_int = res[5,10]
+			local uci_int = res[6,10]
+			local p_int = res[4,10]
+			local age_main = res[1,1]
+			local exp_main = res[1,4]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,12]
+			local lci = res[5,12]
+			local uci = res[6,12]
+			local p = res[4,12]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,24]
+			local lci_int = res[5,24]
+			local uci_int = res[6,24]
+			local p_int = res[4,24]
+			local age_main = res[1,15]
+			local exp_main = res[1,18]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 4)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "3 moves (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,5]
+			local lci = res[5,5]
+			local uci = res[6,5]
+			local p = res[4,5]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,11]
+			local lci_int = res[5,11]
+			local uci_int = res[6,11]
+			local p_int = res[4,11]
+			local age_main = res[1,1]
+			local exp_main = res[1,5]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,13]
+			local lci = res[5,13]
+			local uci = res[6,13]
+			local p = res[4,13]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,25]
+			local lci_int = res[5,25]
+			local uci_int = res[6,25]
+			local p_int = res[4,25]
+			local age_main = res[1,15]
+			local exp_main = res[1,19]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+				
+			// Move to the next category of the exposure (category 5)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "4 moves (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,6]
+			local lci = res[5,6]
+			local uci = res[6,6]
+			local p = res[4,6]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,12]
+			local lci_int = res[5,12]
+			local uci_int = res[6,12]
+			local p_int = res[4,12]
+			local age_main = res[1,1]
+			local exp_main = res[1,6]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,14]
+			local lci = res[5,14]
+			local uci = res[6,14]
+			local p = res[4,14]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,26]
+			local lci_int = res[5,26]
+			local uci_int = res[6,26]
+			local p_int = res[4,26]
+			local age_main = res[1,15]
+			local exp_main = res[1,20]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			
+			// Move to the next category of the exposure (category 6)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/yes)
+			local outcome_level = "Yes (ref = No)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "5 + moves (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,7]
+			local lci = res[5,7]
+			local uci = res[6,7]
+			local p = res[4,7]
+		
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,13]
+			local lci_int = res[5,13]
+			local uci_int = res[6,13]
+			local p_int = res[4,13]
+			local age_main = res[1,1]
+			local exp_main = res[1,7]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/not sure)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Not sure (ref = No)"
+		
+			matrix res = r(table)
+			local coef = res[1,15]
+			local lci = res[5,15]
+			local uci = res[6,15]
+			local p = res[4,15]
+				
+			// Now for interaction model
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,27]
+			local lci_int = res[5,27]
+			local uci_int = res[6,27]
+			local p_int = res[4,27]
+			local age_main = res[1,15]
+			local exp_main = res[1,21]
+		
+			post mother_belief_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		}
+
+		
+		// And finally run the likelihood ratio tests for all these categorical exposures
+		mlogit Y3000 ageAt28 if `var' != ., baseoutcome(3) rrr level(99.85)
+		est store base
+		mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		est store main
+		
+		lrtest base main
+		local lr_p_main = r(p)
+		
+		// And the interaction model
+		mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		est store inter
+		
+		lrtest main inter
+		local lr_p_int = r(p)
+		
+		post mother_belief_2019_lr ("`exp'") (`lr_p_main') (`lr_p_int')
+				
+	}
+		
+}
+
+postclose mother_belief_2019
+postclose mother_belief_2019_lr
+
+
+*** Religious affiliation (2019)
+*** As this is an unordered categorical variable, will again use multinomial logistic model (with 'none' as reference)
+tab1 d813_grp Y3040_grp
+
+* Do need to re-order the categories so can simply copy and paste the script from above without having to faff around with editing the cells to take the statistics from
+recode Y3040_grp (1 = 3) (2 = 1) (3 = 2)
+tab Y3040_grp
+
+
+*** Now run the loop to save all the results
+capture postclose mother_relig_2019
+postfile mother_relig_2019 str30 exposure str30 outcome_level str40 exp_level /// 
+	n coef lci uci double(p) coef_int lci_int uci_int double(p_int) age_main exp_main ///
+	using ".\G0Mother_Results\mother_relig_2019_results.dta", replace
+
+capture postclose mother_relig_2019_lr
+postfile mother_relig_2019_lr str30 exposure double(lr_p_main lr_p_int) ///
+	using ".\G0Mother_Results\mother_relig_2019_results_lr.dta", replace
+
+foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu highSocClass income IMD townsendDep housing financeDiffs chLifeEvents_wgt chLifeEvents_total crowding neighPercept partnerAbsence logicMemory-selfEsteem {
+	
+	// Save the exposure variable as a macro
+	local exp = "`var'"
+	
+	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'ageAt28' separately first as will be adjusted for in all other models
+	if "`var'" == "ageAt28" {
+		mlogit Y3040_grp `var', baseoutcome(3) rrr level(99.85)
+		
+		local n = e(N)
+		
+		// Start with the first reference category (1/Chrstian)
+		local outcome_level = "Christian (ref = None)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,1]
+		local lci = res[5,1]
+		local uci = res[6,1]
+		local p = res[4,1]
+		
+		// As no interaction model, will fill with blank values
+		local coef_int = .
+		local lci_int = .
+		local uci_int = .
+		local p_int = .
+		local age_main = .
+		local exp_main = .
+		
+		post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		// Now onto the next reference category (2/Other)
+		local outcome_level = "Other (ref = None)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,3]
+		local lci = res[5,3]
+		local uci = res[6,3]
+		local p = res[4,3]
+		
+		// As no interaction model, will fill with blank values
+		local coef_int = .
+		local lci_int = .
+		local uci_int = .
+		local p_int = .
+		local age_main = .
+		local exp_main = .
+		
+		post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+		
+		// And finally run the likelihood ratio tests
+		mlogit Y3040_grp if `var' != ., baseoutcome(3) rrr level(99.85)
+		est store base
+		mlogit Y3040_grp `var', baseoutcome(3) rrr level(99.85)
+		est store main
+		
+		lrtest base main
+		local lr_p_main = r(p)
+		
+		// As no interaction model for age, will just fill with missing value
+		local lr_p_int = .
+		
+		post mother_relig_2019_lr ("`exp'") (`lr_p_main') (`lr_p_int')
+		
+	}
+	
+	// Next, analyse the rest of the continuous/binary variables
+	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
+		
+		mlogit Y3040_grp ageAt28 `var', baseoutcome(3) rrr level(99.85)
+		
+		local n = e(N)
+		
+		// Start with the first reference category (1/Chrstian)
+		local outcome_level = "Christian (ref = None)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,2]
+		local lci = res[5,2]
+		local uci = res[6,2]
+		local p = res[4,2]
+		
+		// Now for interaction model
+		mlogit Y3040_grp c.ageAt28##c.`var', baseoutcome(3) rrr level(99.85)
+		
+		matrix res = r(table)
+		local coef_int = res[1,3]
+		local lci_int = res[5,3]
+		local uci_int = res[6,3]
+		local p_int = res[4,3]
+		local age_main = res[1,1]
+		local exp_main = res[1,2]
+		
+		post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		// Now onto the next reference category (2/Other)
+		mlogit Y3040_grp ageAt28 `var', baseoutcome(3) rrr level(99.85)
+		
+		local outcome_level = "Other (ref = None)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,5]
+		local lci = res[5,5]
+		local uci = res[6,5]
+		local p = res[4,5]
+				
+		// Now for interaction model
+		mlogit Y3040_grp c.ageAt28##c.`var', baseoutcome(3) rrr level(99.85)
+		
+		matrix res = r(table)
+		local coef_int = res[1,7]
+		local lci_int = res[5,7]
+		local uci_int = res[6,7]
+		local p_int = res[4,7]
+		local age_main = res[1,5]
+		local exp_main = res[1,6]
+		
+		post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+		
+		// And finally run the likelihood ratio tests
+		mlogit Y3040_grp ageAt28 if `var' != ., baseoutcome(3) rrr level(99.85)
+		est store base
+		mlogit Y3040_grp ageAt28 `var', baseoutcome(3) rrr level(99.85)
+		est store main
+		
+		lrtest base main
+		local lr_p_main = r(p)
+		
+		// And the interaction model
+		mlogit Y3040_grp c.ageAt28##c.`var', baseoutcome(3) rrr level(99.85)
+		est store inter
+		
+		lrtest main inter
+		local lr_p_int = r(p)
+		
+		post mother_relig_2019_lr ("`exp'") (`lr_p_main') (`lr_p_int')
+			
+	}
+	
+	// Next, go through the remaining categorical variables and code as needed - In all cases will treat lowest category as reference
+	else {
+	
+		// First, need to know how many categories these vars have, and edit the number of cycles depending on this - As the number of categories shifts the number of columns in the results matrix, need to take variables in turn, depending on number of categories
+		quietly distinct `var'
+		local cats = r(ndistinct) - 1
+		
+		// Start with variables that have 2 categories (exc. reference)
+		if `cats' == 2 {
+		
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "maritalStatus" {
+				local exp_level = "Married (ref = Never married)"
+			}
+			else if "`var'" == "parity" {
+				local exp_level = "1 (ref = 0)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,3]
+			local lci = res[5,3]
+			local uci = res[6,3]
+			local p = res[4,3]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,6]
+			local lci_int = res[5,6]
+			local uci_int = res[6,6]
+			local p_int = res[4,6]
+			local age_main = res[1,1]
+			local exp_main = res[1,3]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,8]
+			local lci = res[5,8]
+			local uci = res[6,8]
+			local p = res[4,8]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,14]
+			local lci_int = res[5,14]
+			local uci_int = res[6,14]
+			local p_int = res[4,14]
+			local age_main = res[1,9]
+			local exp_main = res[1,11]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Move to the next category of the exposure (category 3)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "maritalStatus" {
+				local exp_level = "Wid/Div/Sep (ref = Never married)"
+			}
+			else if "`var'" == "parity" {
+				local exp_level = "2 or more (ref = 0)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,4]
+			local lci = res[5,4]
+			local uci = res[6,4]
+			local p = res[4,4]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,7]
+			local lci_int = res[5,7]
+			local uci_int = res[6,7]
+			local p_int = res[4,7]
+			local age_main = res[1,1]
+			local exp_main = res[1,4]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,9]
+			local lci = res[5,9]
+			local uci = res[6,9]
+			local p = res[4,9]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,15]
+			local lci_int = res[5,15]
+			local uci_int = res[6,15]
+			local p_int = res[4,15]
+			local age_main = res[1,9]
+			local exp_main = res[1,12]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		}
+		
+		
+		// Now to variables that have 3 categories (exc. reference)
+		if `cats' == 3 {
+		
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "housing" {
+				local exp_level = "Rent (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding" {
+				local exp_level = "> 0.5 to 0.75 (ref = <= 0.5)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,3]
+			local lci = res[5,3]
+			local uci = res[6,3]
+			local p = res[4,3]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,7]
+			local lci_int = res[5,7]
+			local uci_int = res[6,7]
+			local p_int = res[4,7]
+			local age_main = res[1,1]
+			local exp_main = res[1,3]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,9]
+			local lci = res[5,9]
+			local uci = res[6,9]
+			local p = res[4,9]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,17]
+			local lci_int = res[5,17]
+			local uci_int = res[6,17]
+			local p_int = res[4,17]
+			local age_main = res[1,11]
+			local exp_main = res[1,13]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 3)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "housing" {
+				local exp_level = "Council/HA (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding" {
+				local exp_level = "> 0.75 to 1 (ref = <= 0.5)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,4]
+			local lci = res[5,4]
+			local uci = res[6,4]
+			local p = res[4,4]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,8]
+			local lci_int = res[5,8]
+			local uci_int = res[6,8]
+			local p_int = res[4,8]
+			local age_main = res[1,1]
+			local exp_main = res[1,4]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,10]
+			local lci = res[5,10]
+			local uci = res[6,10]
+			local p = res[4,10]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,18]
+			local lci_int = res[5,18]
+			local uci_int = res[6,18]
+			local p_int = res[4,18]
+			local age_main = res[1,11]
+			local exp_main = res[1,14]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 4)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "housing" {
+				local exp_level = "Other (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding" {
+				local exp_level = "> 1 (ref = <= 0.5)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,5]
+			local lci = res[5,5]
+			local uci = res[6,5]
+			local p = res[4,5]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,9]
+			local lci_int = res[5,9]
+			local uci_int = res[6,9]
+			local p_int = res[4,9]
+			local age_main = res[1,1]
+			local exp_main = res[1,5]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,11]
+			local lci = res[5,11]
+			local uci = res[6,11]
+			local p = res[4,11]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,19]
+			local lci_int = res[5,19]
+			local uci_int = res[6,19]
+			local p_int = res[4,19]
+			local age_main = res[1,11]
+			local exp_main = res[1,15]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+		}
+				
+			
+		// Now to variables that have 4 categories (exc. reference)
+		if `cats' == 4 {
+		
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "education" {
+				local exp_level = "Vocational (ref = CSE/None)"
+			}
+			else if "`var'" == "maternalEdu" {
+				local exp_level = "Vocational (ref = CSE/None)"
+			}
+			else if "`var'" == "IMD" {
+				local exp_level = "2 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep" {
+				local exp_level = "2 (ref = 1/Least dep.)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,3]
+			local lci = res[5,3]
+			local uci = res[6,3]
+			local p = res[4,3]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,8]
+			local lci_int = res[5,8]
+			local uci_int = res[6,8]
+			local p_int = res[4,8]
+			local age_main = res[1,1]
+			local exp_main = res[1,3]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,10]
+			local lci = res[5,10]
+			local uci = res[6,10]
+			local p = res[4,10]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,20]
+			local lci_int = res[5,20]
+			local uci_int = res[6,20]
+			local p_int = res[4,20]
+			local age_main = res[1,13]
+			local exp_main = res[1,15]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 3)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "education" {
+				local exp_level = "O-level (ref = CSE/None)"
+			}
+			else if "`var'" == "maternalEdu" {
+				local exp_level = "O-level (ref = CSE/None)"
+			}
+			else if "`var'" == "IMD" {
+				local exp_level = "3 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep" {
+				local exp_level = "3 (ref = 1/Least dep.)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,4]
+			local lci = res[5,4]
+			local uci = res[6,4]
+			local p = res[4,4]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,9]
+			local lci_int = res[5,9]
+			local uci_int = res[6,9]
+			local p_int = res[4,9]
+			local age_main = res[1,1]
+			local exp_main = res[1,4]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,11]
+			local lci = res[5,11]
+			local uci = res[6,11]
+			local p = res[4,11]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,21]
+			local lci_int = res[5,21]
+			local uci_int = res[6,21]
+			local p_int = res[4,21]
+			local age_main = res[1,13]
+			local exp_main = res[1,16]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 4)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "education" {
+				local exp_level = "A-level (ref = CSE/None)"
+			}
+			else if "`var'" == "maternalEdu" {
+				local exp_level = "A-level (ref = CSE/None)"
+			}
+			else if "`var'" == "IMD" {
+				local exp_level = "4 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep" {
+				local exp_level = "4 (ref = 1/Least dep.)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,5]
+			local lci = res[5,5]
+			local uci = res[6,5]
+			local p = res[4,5]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,10]
+			local lci_int = res[5,10]
+			local uci_int = res[6,10]
+			local p_int = res[4,10]
+			local age_main = res[1,1]
+			local exp_main = res[1,5]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,12]
+			local lci = res[5,12]
+			local uci = res[6,12]
+			local p = res[4,12]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,22]
+			local lci_int = res[5,22]
+			local uci_int = res[6,22]
+			local p_int = res[4,22]
+			local age_main = res[1,13]
+			local exp_main = res[1,17]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+				
+			// Move to the next category of the exposure (category 5)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "education" {
+				local exp_level = "Degree (ref = CSE/None)"
+			}
+			else if "`var'" == "maternalEdu" {
+				local exp_level = "Degree (ref = CSE/None)"
+			}
+			else if "`var'" == "IMD" {
+				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep" {
+				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,6]
+			local lci = res[5,6]
+			local uci = res[6,6]
+			local p = res[4,6]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,11]
+			local lci_int = res[5,11]
+			local uci_int = res[6,11]
+			local p_int = res[4,11]
+			local age_main = res[1,1]
+			local exp_main = res[1,6]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,13]
+			local lci = res[5,13]
+			local uci = res[6,13]
+			local p = res[4,13]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,23]
+			local lci_int = res[5,23]
+			local uci_int = res[6,23]
+			local p_int = res[4,23]
+			local age_main = res[1,13]
+			local exp_main = res[1,18]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		}
+		
+		
+		// Now to variables that have 5 categories (exc. reference)
+		if `cats' == 5 {
+		
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "1 move (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,3]
+			local lci = res[5,3]
+			local uci = res[6,3]
+			local p = res[4,3]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,9]
+			local lci_int = res[5,9]
+			local uci_int = res[6,9]
+			local p_int = res[4,9]
+			local age_main = res[1,1]
+			local exp_main = res[1,3]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,11]
+			local lci = res[5,11]
+			local uci = res[6,11]
+			local p = res[4,11]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,23]
+			local lci_int = res[5,23]
+			local uci_int = res[6,23]
+			local p_int = res[4,23]
+			local age_main = res[1,15]
+			local exp_main = res[1,17]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 3)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "2 moves (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,4]
+			local lci = res[5,4]
+			local uci = res[6,4]
+			local p = res[4,4]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,10]
+			local lci_int = res[5,10]
+			local uci_int = res[6,10]
+			local p_int = res[4,10]
+			local age_main = res[1,1]
+			local exp_main = res[1,4]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,12]
+			local lci = res[5,12]
+			local uci = res[6,12]
+			local p = res[4,12]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,24]
+			local lci_int = res[5,24]
+			local uci_int = res[6,24]
+			local p_int = res[4,24]
+			local age_main = res[1,15]
+			local exp_main = res[1,18]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 4)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "3 moves (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,5]
+			local lci = res[5,5]
+			local uci = res[6,5]
+			local p = res[4,5]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,11]
+			local lci_int = res[5,11]
+			local uci_int = res[6,11]
+			local p_int = res[4,11]
+			local age_main = res[1,1]
+			local exp_main = res[1,5]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,13]
+			local lci = res[5,13]
+			local uci = res[6,13]
+			local p = res[4,13]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,25]
+			local lci_int = res[5,25]
+			local uci_int = res[6,25]
+			local p_int = res[4,25]
+			local age_main = res[1,15]
+			local exp_main = res[1,19]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+				
+			// Move to the next category of the exposure (category 5)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "4 moves (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,6]
+			local lci = res[5,6]
+			local uci = res[6,6]
+			local p = res[4,6]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,12]
+			local lci_int = res[5,12]
+			local uci_int = res[6,12]
+			local p_int = res[4,12]
+			local age_main = res[1,1]
+			local exp_main = res[1,6]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,14]
+			local lci = res[5,14]
+			local uci = res[6,14]
+			local p = res[4,14]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,26]
+			local lci_int = res[5,26]
+			local uci_int = res[6,26]
+			local p_int = res[4,26]
+			local age_main = res[1,15]
+			local exp_main = res[1,20]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			
+			// Move to the next category of the exposure (category 6)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/Chrstian)
+			local outcome_level = "Christian (ref = None)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "5 + moves (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,7]
+			local lci = res[5,7]
+			local uci = res[6,7]
+			local p = res[4,7]
+		
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,13]
+			local lci_int = res[5,13]
+			local uci_int = res[6,13]
+			local p_int = res[4,13]
+			local age_main = res[1,1]
+			local exp_main = res[1,7]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/Other)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		
+			local outcome_level = "Other (ref = None)"
+		
+			matrix res = r(table)
+			local coef = res[1,15]
+			local lci = res[5,15]
+			local uci = res[6,15]
+			local p = res[4,15]
+				
+			// Now for interaction model
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,27]
+			local lci_int = res[5,27]
+			local uci_int = res[6,27]
+			local p_int = res[4,27]
+			local age_main = res[1,15]
+			local exp_main = res[1,21]
+		
+			post mother_relig_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		}
+
+		
+		// And finally run the likelihood ratio tests for all these categorical exposures
+		mlogit Y3040_grp ageAt28 if `var' != ., baseoutcome(3) rrr level(99.85)
+		est store base
+		mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		est store main
+		
+		lrtest base main
+		local lr_p_main = r(p)
+		
+		// And the interaction model
+		mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		est store inter
+		
+		lrtest main inter
+		local lr_p_int = r(p)
+		
+		post mother_relig_2019_lr ("`exp'") (`lr_p_main') (`lr_p_int')
+				
+	}
+		
+}
+
+postclose mother_relig_2019
+postclose mother_relig_2019_lr
+
+
+**** Attendance at church/place of worship (2019)
+
+*** As this is an ordered categorical variable, will use ordinal regression model. For consistency with previous models, will recode so that higher values indicate greater RSBB. For the 2019 data, this question was asked different and included an 'occasionally' option; here, I will combine this this 'at least once a year' so is the same coding as the pregnancy data
+tab1 d816 Y3080_OccYr
+
+recode Y3080_OccYr (1 = 3) (2 = 2) (3 = 1) (4 = 0), gen(Y3080_OccYr_rev)
+label values Y3080_OccYr_rev attend_rev_lb
+tab Y3080_OccYr_rev
+
+
+** Quick test of whether proportional odds assumption been violated in most basic model (with just age at birth). Ah, it has been violated, and gets worse if add in additional predictors. 
+ologit Y3080_OccYr_rev ageAt28, or level(99.85)
+brant, detail
+
+ologit Y3080_OccYr_rev ageAt28 i.IMD, or level(99.85)
+brant, detail
+
+
+** So instead will just run multinomial models with 'not at all' as the baseline/reference category.
+
+
+*** Now run the loop to save all the results
+capture postclose mother_attend_2019
+postfile mother_attend_2019 str30 exposure str30 outcome_level str40 exp_level /// 
+	n coef lci uci double(p) coef_int lci_int uci_int double(p_int) age_main exp_main ///
+	using ".\G0Mother_Results\mother_attend_2019_results.dta", replace
+
+capture postclose mother_attend_2019_lr
+postfile mother_attend_2019_lr str30 exposure double(lr_p_main lr_p_int) ///
+	using ".\G0Mother_Results\mother_attend_2019_results_lr.dta", replace
+
+foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu highSocClass income IMD townsendDep housing financeDiffs chLifeEvents_wgt chLifeEvents_total crowding neighPercept partnerAbsence logicMemory-selfEsteem {
+	
+	// Save the exposure variable as a macro
+	local exp = "`var'"
+	
+	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'ageAt28' separately first as will be adjusted for in all other models
+	if "`var'" == "ageAt28" {
+		mlogit Y3080_OccYr_rev `var', baseoutcome(0) rrr level(99.85)
+		
+		local n = e(N)
+		
+		// Start with the first reference category (1/once year)
+		local outcome_level = "Min once year (ref = Not at all)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,3]
+		local lci = res[5,3]
+		local uci = res[6,3]
+		local p = res[4,3]
+		
+		// As no interaction model, will fill with blank values
+		local coef_int = .
+		local lci_int = .
+		local uci_int = .
+		local p_int = .
+		local age_main = .
+		local exp_main = .
+		
+		post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		// Now onto the next reference category (2/once month)
+		local outcome_level = "Min once month (ref = Not at all)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,5]
+		local lci = res[5,5]
+		local uci = res[6,5]
+		local p = res[4,5]
+		
+		// As no interaction model, will fill with blank values
+		local coef_int = .
+		local lci_int = .
+		local uci_int = .
+		local p_int = .
+		local age_main = .
+		local exp_main = .
+		
+		post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+		
+		// Now onto the next reference category (3/once week)
+		local outcome_level = "Min once week (ref = Not at all)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,7]
+		local lci = res[5,7]
+		local uci = res[6,7]
+		local p = res[4,7]
+		
+		// As no interaction model, will fill with blank values
+		local coef_int = .
+		local lci_int = .
+		local uci_int = .
+		local p_int = .
+		local age_main = .
+		local exp_main = .
+		
+		post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+		
+		// And finally run the likelihood ratio tests
+		mlogit Y3080_OccYr_rev if `var' != ., baseoutcome(0) rrr level(99.85)
+		est store base
+		mlogit Y3080_OccYr_rev `var', baseoutcome(0) rrr level(99.85)
+		est store main
+		
+		lrtest base main
+		local lr_p_main = r(p)
+		
+		// As no interaction model for age, will just fill with missing value
+		local lr_p_int = .
+		
+		post mother_attend_2019_lr ("`exp'") (`lr_p_main') (`lr_p_int')
+		
+	}
+	
+	// Next, analyse the rest of the continuous/binary variables
+	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
+		
+		mlogit Y3080_OccYr_rev ageAt28 `var', baseoutcome(0) rrr level(99.85)
+		
+		local n = e(N)
+		
+		// Start with the first reference category (1/once year)
+		local outcome_level = "Min once year (ref = Not at all)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,5]
+		local lci = res[5,5]
+		local uci = res[6,5]
+		local p = res[4,5]
+		
+		// Now for interaction model
+		mlogit Y3080_OccYr_rev c.ageAt28##c.`var', baseoutcome(0) rrr level(99.85)
+		
+		matrix res = r(table)
+		local coef_int = res[1,7]
+		local lci_int = res[5,7]
+		local uci_int = res[6,7]
+		local p_int = res[4,7]
+		local age_main = res[1,5]
+		local exp_main = res[1,6]
+		
+		post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		// Now onto the next reference category (2/once month)
+		mlogit Y3080_OccYr_rev ageAt28 `var', baseoutcome(0) rrr level(99.85)
+		
+		local outcome_level = "Min once month (ref = Not at all)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,8]
+		local lci = res[5,8]
+		local uci = res[6,8]
+		local p = res[4,8]
+				
+		// Now for interaction model
+		mlogit Y3080_OccYr_rev c.ageAt28##c.`var', baseoutcome(0) rrr level(99.85)
+		
+		matrix res = r(table)
+		local coef_int = res[1,11]
+		local lci_int = res[5,11]
+		local uci_int = res[6,11]
+		local p_int = res[4,11]
+		local age_main = res[1,9]
+		local exp_main = res[1,10]
+		
+		post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		// Now onto the next reference category (3/once week)
+		mlogit Y3080_OccYr_rev ageAt28 `var', baseoutcome(0) rrr level(99.85)
+		
+		local outcome_level = "Min once week (ref = Not at all)"
+		local exp_level = "NA"
+		
+		matrix res = r(table)
+		local coef = res[1,11]
+		local lci = res[5,11]
+		local uci = res[6,11]
+		local p = res[4,11]
+				
+		// Now for interaction model
+		mlogit Y3080_OccYr_rev c.ageAt28##c.`var', baseoutcome(0) rrr level(99.85)
+		
+		matrix res = r(table)
+		local coef_int = res[1,15]
+		local lci_int = res[5,15]
+		local uci_int = res[6,15]
+		local p_int = res[4,15]
+		local age_main = res[1,13]
+		local exp_main = res[1,14]
+		
+		post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+			(`n') (`coef') (`lci') (`uci') (`p') ///
+			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+		
+		// And finally run the likelihood ratio tests
+		mlogit Y3080_OccYr_rev ageAt28 if `var' != ., baseoutcome(0) rrr level(99.85)
+		est store base
+		mlogit Y3080_OccYr_rev ageAt28 `var', baseoutcome(0) rrr level(99.85)
+		est store main
+		
+		lrtest base main
+		local lr_p_main = r(p)
+		
+		// And the interaction model
+		mlogit Y3080_OccYr_rev c.ageAt28##c.`var', baseoutcome(0) rrr level(99.85)
+		est store inter
+		
+		lrtest main inter
+		local lr_p_int = r(p)
+		
+		post mother_attend_2019_lr ("`exp'") (`lr_p_main') (`lr_p_int')
+			
+	}
+	
+	// Next, go through the remaining categorical variables and code as needed - In all cases will treat lowest category as reference
+	else {
+	
+		// First, need to know how many categories these vars have, and edit the number of cycles depending on this - As the number of categories shifts the number of columns in the results matrix, need to take variables in turn, depending on number of categories
+		quietly distinct `var'
+		local cats = r(ndistinct) - 1
+		
+		// Start with variables that have 2 categories (exc. reference)
+		if `cats' == 2 {
+		
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "maritalStatus" {
+				local exp_level = "Married (ref = Never married)"
+			}
+			else if "`var'" == "parity" {
+				local exp_level = "1 (ref = 0)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,8]
+			local lci = res[5,8]
+			local uci = res[6,8]
+			local p = res[4,8]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,14]
+			local lci_int = res[5,14]
+			local uci_int = res[6,14]
+			local p_int = res[4,14]
+			local age_main = res[1,9]
+			local exp_main = res[1,11]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,13]
+			local lci = res[5,13]
+			local uci = res[6,13]
+			local p = res[4,13]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,22]
+			local lci_int = res[5,22]
+			local uci_int = res[6,22]
+			local p_int = res[4,22]
+			local age_main = res[1,17]
+			local exp_main = res[1,19]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,18]
+			local lci = res[5,18]
+			local uci = res[6,18]
+			local p = res[4,18]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,30]
+			local lci_int = res[5,30]
+			local uci_int = res[6,30]
+			local p_int = res[4,30]
+			local age_main = res[1,25]
+			local exp_main = res[1,27]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 3)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "maritalStatus" {
+				local exp_level = "Wid/Div/Sep (ref = Never married)"
+			}
+			else if "`var'" == "parity" {
+				local exp_level = "2 or more (ref = 0)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,9]
+			local lci = res[5,9]
+			local uci = res[6,9]
+			local p = res[4,9]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,15]
+			local lci_int = res[5,15]
+			local uci_int = res[6,15]
+			local p_int = res[4,15]
+			local age_main = res[1,9]
+			local exp_main = res[1,12]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,14]
+			local lci = res[5,14]
+			local uci = res[6,14]
+			local p = res[4,14]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,23]
+			local lci_int = res[5,23]
+			local uci_int = res[6,23]
+			local p_int = res[4,23]
+			local age_main = res[1,17]
+			local exp_main = res[1,20]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,19]
+			local lci = res[5,19]
+			local uci = res[6,19]
+			local p = res[4,19]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,31]
+			local lci_int = res[5,31]
+			local uci_int = res[6,31]
+			local p_int = res[4,31]
+			local age_main = res[1,25]
+			local exp_main = res[1,28]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		}
+		
+		
+		// Now to variables that have 3 categories (exc. reference)
+		if `cats' == 3 {
+		
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "housing" {
+				local exp_level = "Rent (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding" {
+				local exp_level = "> 0.5 to 0.75 (ref = <= 0.5)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,9]
+			local lci = res[5,9]
+			local uci = res[6,9]
+			local p = res[4,9]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,17]
+			local lci_int = res[5,17]
+			local uci_int = res[6,17]
+			local p_int = res[4,17]
+			local age_main = res[1,11]
+			local exp_main = res[1,13]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,15]
+			local lci = res[5,15]
+			local uci = res[6,15]
+			local p = res[4,15]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,27]
+			local lci_int = res[5,27]
+			local uci_int = res[6,27]
+			local p_int = res[4,27]
+			local age_main = res[1,21]
+			local exp_main = res[1,23]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,21]
+			local lci = res[5,21]
+			local uci = res[6,21]
+			local p = res[4,21]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,37]
+			local lci_int = res[5,37]
+			local uci_int = res[6,37]
+			local p_int = res[4,37]
+			local age_main = res[1,31]
+			local exp_main = res[1,33]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 3)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "housing" {
+				local exp_level = "Council/HA (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding" {
+				local exp_level = "> 0.75 to 1 (ref = <= 0.5)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,10]
+			local lci = res[5,10]
+			local uci = res[6,10]
+			local p = res[4,10]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,18]
+			local lci_int = res[5,18]
+			local uci_int = res[6,18]
+			local p_int = res[4,18]
+			local age_main = res[1,11]
+			local exp_main = res[1,14]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,16]
+			local lci = res[5,16]
+			local uci = res[6,16]
+			local p = res[4,16]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,28]
+			local lci_int = res[5,28]
+			local uci_int = res[6,28]
+			local p_int = res[4,28]
+			local age_main = res[1,21]
+			local exp_main = res[1,24]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,22]
+			local lci = res[5,22]
+			local uci = res[6,22]
+			local p = res[4,22]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,38]
+			local lci_int = res[5,38]
+			local uci_int = res[6,38]
+			local p_int = res[4,38]
+			local age_main = res[1,31]
+			local exp_main = res[1,34]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 4)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "housing" {
+				local exp_level = "Other (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding" {
+				local exp_level = "> 1 (ref = <= 0.5)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,11]
+			local lci = res[5,11]
+			local uci = res[6,11]
+			local p = res[4,11]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,19]
+			local lci_int = res[5,19]
+			local uci_int = res[6,19]
+			local p_int = res[4,19]
+			local age_main = res[1,11]
+			local exp_main = res[1,15]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,17]
+			local lci = res[5,17]
+			local uci = res[6,17]
+			local p = res[4,17]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,29]
+			local lci_int = res[5,29]
+			local uci_int = res[6,29]
+			local p_int = res[4,29]
+			local age_main = res[1,21]
+			local exp_main = res[1,25]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,23]
+			local lci = res[5,23]
+			local uci = res[6,23]
+			local p = res[4,23]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,39]
+			local lci_int = res[5,39]
+			local uci_int = res[6,39]
+			local p_int = res[4,39]
+			local age_main = res[1,31]
+			local exp_main = res[1,35]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+		}
+				
+			
+		// Now to variables that have 4 categories (exc. reference)
+		if `cats' == 4 {
+		
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "education" {
+				local exp_level = "Vocational (ref = CSE/None)"
+			}
+			else if "`var'" == "maternalEdu" {
+				local exp_level = "Vocational (ref = CSE/None)"
+			}
+			else if "`var'" == "IMD" {
+				local exp_level = "2 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep" {
+				local exp_level = "2 (ref = 1/Least dep.)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,10]
+			local lci = res[5,10]
+			local uci = res[6,10]
+			local p = res[4,10]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,20]
+			local lci_int = res[5,20]
+			local uci_int = res[6,20]
+			local p_int = res[4,20]
+			local age_main = res[1,13]
+			local exp_main = res[1,15]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,17]
+			local lci = res[5,17]
+			local uci = res[6,17]
+			local p = res[4,17]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,32]
+			local lci_int = res[5,32]
+			local uci_int = res[6,32]
+			local p_int = res[4,32]
+			local age_main = res[1,25]
+			local exp_main = res[1,27]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			// Now onto the next reference category (2/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,24]
+			local lci = res[5,24]
+			local uci = res[6,24]
+			local p = res[4,24]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,44]
+			local lci_int = res[5,44]
+			local uci_int = res[6,44]
+			local p_int = res[4,44]
+			local age_main = res[1,37]
+			local exp_main = res[1,39]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 3)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "education" {
+				local exp_level = "O-level (ref = CSE/None)"
+			}
+			else if "`var'" == "maternalEdu" {
+				local exp_level = "O-level (ref = CSE/None)"
+			}
+			else if "`var'" == "IMD" {
+				local exp_level = "3 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep" {
+				local exp_level = "3 (ref = 1/Least dep.)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,11]
+			local lci = res[5,11]
+			local uci = res[6,11]
+			local p = res[4,11]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,21]
+			local lci_int = res[5,21]
+			local uci_int = res[6,21]
+			local p_int = res[4,21]
+			local age_main = res[1,13]
+			local exp_main = res[1,16]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,18]
+			local lci = res[5,18]
+			local uci = res[6,18]
+			local p = res[4,18]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,33]
+			local lci_int = res[5,33]
+			local uci_int = res[6,33]
+			local p_int = res[4,33]
+			local age_main = res[1,25]
+			local exp_main = res[1,28]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,25]
+			local lci = res[5,25]
+			local uci = res[6,25]
+			local p = res[4,25]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,45]
+			local lci_int = res[5,45]
+			local uci_int = res[6,45]
+			local p_int = res[4,45]
+			local age_main = res[1,37]
+			local exp_main = res[1,40]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 4)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "education" {
+				local exp_level = "A-level (ref = CSE/None)"
+			}
+			else if "`var'" == "maternalEdu" {
+				local exp_level = "A-level (ref = CSE/None)"
+			}
+			else if "`var'" == "IMD" {
+				local exp_level = "4 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep" {
+				local exp_level = "4 (ref = 1/Least dep.)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,12]
+			local lci = res[5,12]
+			local uci = res[6,12]
+			local p = res[4,12]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,22]
+			local lci_int = res[5,22]
+			local uci_int = res[6,22]
+			local p_int = res[4,22]
+			local age_main = res[1,13]
+			local exp_main = res[1,15]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,19]
+			local lci = res[5,19]
+			local uci = res[6,19]
+			local p = res[4,19]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,34]
+			local lci_int = res[5,34]
+			local uci_int = res[6,34]
+			local p_int = res[4,34]
+			local age_main = res[1,25]
+			local exp_main = res[1,29]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,26]
+			local lci = res[5,26]
+			local uci = res[6,26]
+			local p = res[4,26]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,46]
+			local lci_int = res[5,46]
+			local uci_int = res[6,46]
+			local p_int = res[4,46]
+			local age_main = res[1,37]
+			local exp_main = res[1,41]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+				
+			// Move to the next category of the exposure (category 5)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "education" {
+				local exp_level = "Degree (ref = CSE/None)"
+			}
+			else if "`var'" == "maternalEdu" {
+				local exp_level = "Degree (ref = CSE/None)"
+			}
+			else if "`var'" == "IMD" {
+				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep" {
+				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,13]
+			local lci = res[5,13]
+			local uci = res[6,13]
+			local p = res[4,13]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,23]
+			local lci_int = res[5,23]
+			local uci_int = res[6,23]
+			local p_int = res[4,23]
+			local age_main = res[1,13]
+			local exp_main = res[1,18]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,20]
+			local lci = res[5,20]
+			local uci = res[6,20]
+			local p = res[4,20]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,35]
+			local lci_int = res[5,35]
+			local uci_int = res[6,35]
+			local p_int = res[4,35]
+			local age_main = res[1,25]
+			local exp_main = res[1,30]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,27]
+			local lci = res[5,27]
+			local uci = res[6,27]
+			local p = res[4,27]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,47]
+			local lci_int = res[5,47]
+			local uci_int = res[6,47]
+			local p_int = res[4,47]
+			local age_main = res[1,37]
+			local exp_main = res[1,42]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		}
+		
+		
+		// Now to variables that have 5 categories (exc. reference)
+		if `cats' == 5 {
+		
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "1 move (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,11]
+			local lci = res[5,11]
+			local uci = res[6,11]
+			local p = res[4,11]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,23]
+			local lci_int = res[5,23]
+			local uci_int = res[6,23]
+			local p_int = res[4,23]
+			local age_main = res[1,15]
+			local exp_main = res[1,17]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,19]
+			local lci = res[5,19]
+			local uci = res[6,19]
+			local p = res[4,19]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,37]
+			local lci_int = res[5,37]
+			local uci_int = res[6,37]
+			local p_int = res[4,37]
+			local age_main = res[1,29]
+			local exp_main = res[1,31]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,27]
+			local lci = res[5,27]
+			local uci = res[6,27]
+			local p = res[4,27]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,51]
+			local lci_int = res[5,51]
+			local uci_int = res[6,51]
+			local p_int = res[4,51]
+			local age_main = res[1,43]
+			local exp_main = res[1,45]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 3)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "2 moves (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,12]
+			local lci = res[5,12]
+			local uci = res[6,12]
+			local p = res[4,12]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,24]
+			local lci_int = res[5,24]
+			local uci_int = res[6,24]
+			local p_int = res[4,24]
+			local age_main = res[1,15]
+			local exp_main = res[1,18]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,20]
+			local lci = res[5,20]
+			local uci = res[6,20]
+			local p = res[4,20]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,38]
+			local lci_int = res[5,38]
+			local uci_int = res[6,38]
+			local p_int = res[4,38]
+			local age_main = res[1,29]
+			local exp_main = res[1,32]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,28]
+			local lci = res[5,28]
+			local uci = res[6,28]
+			local p = res[4,28]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,52]
+			local lci_int = res[5,52]
+			local uci_int = res[6,52]
+			local p_int = res[4,52]
+			local age_main = res[1,43]
+			local exp_main = res[1,46]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			
+			// Move to the next category of the exposure (category 4)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "3 moves (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,13]
+			local lci = res[5,13]
+			local uci = res[6,13]
+			local p = res[4,13]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,25]
+			local lci_int = res[5,25]
+			local uci_int = res[6,25]
+			local p_int = res[4,25]
+			local age_main = res[1,15]
+			local exp_main = res[1,19]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,21]
+			local lci = res[5,21]
+			local uci = res[6,21]
+			local p = res[4,21]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,39]
+			local lci_int = res[5,39]
+			local uci_int = res[6,39]
+			local p_int = res[4,39]
+			local age_main = res[1,29]
+			local exp_main = res[1,33]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,29]
+			local lci = res[5,29]
+			local uci = res[6,29]
+			local p = res[4,29]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,53]
+			local lci_int = res[5,53]
+			local uci_int = res[6,53]
+			local p_int = res[4,53]
+			local age_main = res[1,43]
+			local exp_main = res[1,47]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+				
+			// Move to the next category of the exposure (category 5)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "4 moves (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,14]
+			local lci = res[5,14]
+			local uci = res[6,14]
+			local p = res[4,14]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,26]
+			local lci_int = res[5,26]
+			local uci_int = res[6,26]
+			local p_int = res[4,26]
+			local age_main = res[1,15]
+			local exp_main = res[1,20]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,22]
+			local lci = res[5,22]
+			local uci = res[6,22]
+			local p = res[4,22]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,40]
+			local lci_int = res[5,40]
+			local uci_int = res[6,40]
+			local p_int = res[4,40]
+			local age_main = res[1,29]
+			local exp_main = res[1,34]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,30]
+			local lci = res[5,30]
+			local uci = res[6,30]
+			local p = res[4,30]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,54]
+			local lci_int = res[5,54]
+			local uci_int = res[6,54]
+			local p_int = res[4,54]
+			local age_main = res[1,43]
+			local exp_main = res[1,48]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+				
+			
+			// Move to the next category of the exposure (category 6)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local n = e(N)
+		
+			// Start with the first reference category (1/once year)
+			local outcome_level = "Min once year (ref = Not at all)"
+			
+			// Specify the level of the categorical exposure variable
+			if "`var'" == "mobility" {
+				local exp_level = "5 + moves (ref = 0 moves)"
+			}
+			
+			// Now extract the relevant statistics		
+			matrix res = r(table)
+			local coef = res[1,15]
+			local lci = res[5,15]
+			local uci = res[6,15]
+			local p = res[4,15]
+		
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,27]
+			local lci_int = res[5,27]
+			local uci_int = res[6,27]
+			local p_int = res[4,27]
+			local age_main = res[1,15]
+			local exp_main = res[1,21]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (2/once month)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once month (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,23]
+			local lci = res[5,23]
+			local uci = res[6,23]
+			local p = res[4,23]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,41]
+			local lci_int = res[5,41]
+			local uci_int = res[6,41]
+			local p_int = res[4,41]
+			local age_main = res[1,29]
+			local exp_main = res[1,35]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+			// Now onto the next reference category (3/once week)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		
+			local outcome_level = "Min once week (ref = Not at all)"
+		
+			matrix res = r(table)
+			local coef = res[1,31]
+			local lci = res[5,31]
+			local uci = res[6,31]
+			local p = res[4,31]
+				
+			// Now for interaction model
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		
+			matrix res = r(table)
+			local coef_int = res[1,55]
+			local lci_int = res[5,55]
+			local uci_int = res[6,55]
+			local p_int = res[4,55]
+			local age_main = res[1,43]
+			local exp_main = res[1,49]
+		
+			post mother_attend_2019 ("`exp'") ("`outcome_level'") ("`exp_level'") ///
+				(`n') (`coef') (`lci') (`uci') (`p') ///
+				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
+			
+		}
+
+		
+		// And finally run the likelihood ratio tests for all these categorical exposures
+		mlogit Y3080_OccYr_rev ageAt28 if `var' != ., baseoutcome(0) rrr level(99.85)
+		est store base
+		mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		est store main
+		
+		lrtest base main
+		local lr_p_main = r(p)
+		
+		// And the interaction model
+		mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		est store inter
+		
+		lrtest main inter
+		local lr_p_int = r(p)
+		
+		post mother_attend_2019_lr ("`exp'") (`lr_p_main') (`lr_p_int')
+				
+	}
+		
+}
+
+postclose mother_attend_2019
+postclose mother_attend_2019_lr
+
+
 * And close the log file
 log close
 
@@ -12827,7 +16656,6 @@ append using ".\G0Mother_Results\attend_pvalues.dta"
 append using ".\G0Mother_Results\intrin_pvalues.dta"
 append using ".\G0Mother_Results\extrinFriends_pvalues.dta"
 append using ".\G0Mother_Results\extrinPrayer_pvalues.dta"
-append using ".\G0Mother_Results\extrinPrayer_pvalues.dta"
 append using ".\G0Mother_Results\durel_pvalues.dta"
 
 
@@ -12930,6 +16758,185 @@ graph combine preg_main preg_int age28_main age28_int, imargin(0 0 0 0) iscale(0
 graph export ".\G0Mother_Results\allData_pvalues.pdf", replace
 
 graph close _all
+
+
+** Save these p-values as CSV files
+list outcome exposure lr_p_main lr_p_int in 1/10
+
+keep outcome exp_num lr_p_main lr_p_int
+order outcome exp_num lr_p_main lr_p_int
+
+* Convert to wide format (need to edit outcomes strings so have no spaces)
+replace outcome = "Attend" if outcome == "Church attendance"
+replace outcome = "Extrin_fr" if outcome == "Extrinsic relig. (friends)"
+replace outcome = "Extrin_pr" if outcome == "Extrinsic relig. (prayer)"
+replace outcome = "Intrins" if outcome == "Intrinsic relig."
+replace outcome = "Religion" if outcome == "Religious affil."
+tab outcome
+
+reshape wide lr_p_main lr_p_int, i(exp_num) j (outcome) string
+
+order exp_num lr_p_mainBelief lr_p_intBelief lr_p_mainReligion lr_p_intReligion lr_p_mainAttend lr_p_intAttend lr_p_mainIntrins lr_p_intIntrins lr_p_mainExtrin_fr lr_p_intExtrin_fr lr_p_mainExtrin_pr lr_p_intExtrin_pr lr_p_mainDUREL lr_p_intDUREL
+
+format %9.5f lr_p_mainBelief-lr_p_intDUREL
+
+outsheet exp_num-lr_p_intDUREL using ".\G0Mother_Results\pvalue_results.csv", comma replace
+
+
+** And how many exposures were associated with the outcome at both Bonferroni and standard alpha levels?
+
+* Belief in god - main effect
+count if lr_p_mainBelief < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainBelief < 0.05
+display (r(N) / _N) * 100
+
+* Belief in god - interaction
+count if lr_p_intBelief < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intBelief < 0.05
+display (r(N) / (_N - 1)) * 100
+
+* Religious affiliation - main effect
+count if lr_p_mainReligion < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainReligion < 0.05
+display (r(N) / _N) * 100
+
+* Religious affiliation - interaction
+count if lr_p_intReligion < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intReligion < 0.05
+display (r(N) / (_N - 1)) * 100
+
+* Church attendance - main effect
+count if lr_p_mainAttend < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainAttend < 0.05
+display (r(N) / _N) * 100
+
+* Church attendance - interaction
+count if lr_p_intAttend < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intAttend < 0.05
+display (r(N) / (_N - 1)) * 100
+
+* Intrinsic religiosity - main effect
+count if lr_p_mainIntrins < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainIntrins < 0.05
+display (r(N) / _N) * 100
+
+* Intrinsic religiosity - interaction
+count if lr_p_intIntrins < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intIntrins < 0.05
+display (r(N) / (_N - 1)) * 100
+
+* Extrinsic religiosity (friends) - main effect
+count if lr_p_mainExtrin_fr < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainExtrin_fr < 0.05
+display (r(N) / _N) * 100
+
+* Extrinsic religiosity (friends) - interaction
+count if lr_p_intExtrin_fr < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intExtrin_fr < 0.05
+display (r(N) / (_N - 1)) * 100
+
+* Extrinsic religiosity (prayer) - main effect
+count if lr_p_mainExtrin_pr < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainExtrin_pr < 0.05
+display (r(N) / _N) * 100
+
+* Extrinsic religiosity (prayer) - interaction
+count if lr_p_intExtrin_pr < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intExtrin_pr < 0.05
+display (r(N) / (_N - 1)) * 100
+
+* Total religiosity - main effect
+count if lr_p_mainDUREL < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainDUREL < 0.05
+display (r(N) / _N) * 100
+
+* Total religiosity - interaction
+count if lr_p_intDUREL < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intDUREL < 0.05
+display (r(N) / (_N - 1)) * 100
+
+
+*** Now get these for the 2019 data
+
+** Belief in God
+use ".\G0Mother_Results\mother_belief_2019_results_lr.dta", clear
+
+* Main effect
+count if lr_p_main < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_main < 0.05
+display (r(N) / _N) * 100
+
+* Interaction
+count if lr_p_int < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_int < 0.05
+display (r(N) / (_N - 1)) * 100
+
+** Religious affiliation
+use ".\G0Mother_Results\mother_relig_2019_results_lr.dta", clear
+
+* Main effect
+count if lr_p_main < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_main < 0.05
+display (r(N) / _N) * 100
+
+* Interaction
+count if lr_p_int < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_int < 0.05
+display (r(N) / (_N - 1)) * 100
+
+** Church attendance
+use ".\G0Mother_Results\mother_attend_2019_results_lr.dta", clear
+
+* Main effect
+count if lr_p_main < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_main < 0.05
+display (r(N) / _N) * 100
+
+* Interaction
+count if lr_p_int < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_int < 0.05
+display (r(N) / (_N - 1)) * 100
+
 
 
 *** Next, want to plot some of the actual results
