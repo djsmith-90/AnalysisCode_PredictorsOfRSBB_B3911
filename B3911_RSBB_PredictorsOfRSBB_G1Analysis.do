@@ -23,7 +23,8 @@ use "G1_PredictorsOfRSBB_B3911.dta", clear
 *ssc install palettes, replace
 *ssc install colrspace, replace
 
-** And also install 'spost' commands for testing proportional odds assumption of ordinal regression models (to install 'spost', type 'search spost13' and install the 'spost13_ado' package)
+** Install 'grc1leg' to merge plots together with a single legend
+*ssc install grc1leg, replace
 
 
 **********************************************************************************
@@ -323,7 +324,7 @@ restore
 *** Start with belief in God/divine power - As is a unordered categorical variable, will use multinomial regression (with 'no' as baseline/reference category)
 tab YPG3000, m
 
-** This will be quite complicated, as want to post results to file, but as exposures differ extracting the results will be variable specific. To adjust for multiple corrections will use conservative bonferroni adjustment when constructing confidence intervals and interpreting p-values - As 48 exposures, will use 99.9% confidence intervals (as this is 100 - 5/48) and a p-value threshold of 0.05/48 = 0.0010.
+** This will be quite complicated, as want to post results to file, but as exposures differ extracting the results will be variable specific. To adjust for multiple corrections will use conservative bonferroni adjustment when constructing confidence intervals and interpreting p-values - As 48 exposures, will a Bonferroni p-value threshold of 0.05/48 = 0.0010.
 display round(100 - 5/48, 0.01)
 display 0.05/48
 
@@ -346,7 +347,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'ageAt28' and 'sex' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit YPG3000 male `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 male `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -361,7 +362,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,2]
 		
 		// Interaction between age and sex
-		mlogit YPG3000 c.male##c.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 c.male##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,3]
@@ -379,7 +380,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "Not sure (ref = No)"
 		local exp_level = "NA"
 		
-		mlogit YPG3000 male `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 male `var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,5]
@@ -388,7 +389,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,5]
 		
 		// Interaction between age and sex
-		mlogit YPG3000 c.male##c.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 c.male##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -403,16 +404,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3000 male if `var' != ., baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 male if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit YPG3000 male `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 male `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3000 c.male##c.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 c.male##c.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -424,7 +425,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, analyse the 'sex' variable
 	else if "`var'" == "male" {
-		mlogit YPG3000 ageAt28 `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -473,9 +474,9 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3000 ageAt28 if `var' != ., baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit YPG3000 ageAt28 `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
@@ -491,7 +492,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "parent" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "ACEscore_13items" | "`var'" == "ACEscore_10items" | "`var'" == "neighPercept" | "`var'" == "fatherAbsence" | "`var'" == "verbalIQ_age8" | "`var'" == "performanceIQ_age8" | "`var'" == "totalIQ_age8" | "`var'" == "totalIQ_age15" | "`var'" == "digitSymbol_age24" | "`var'" == "vocaba_age24" | "`var'" == "extraversion_age13" | "`var'" == "agreeableness_age13" | "`var'" == "conscientiousness_age13" | "`var'" == "emotionalStab_age13" | "`var'" == "Openess_age13" | "`var'" == "loc_age8" | "`var'" == "loc_age16" | "`var'" == "negCogStyles_age17" | "`var'" == "emoRec_faces_age8" | "`var'" == "emoRec_triangles_age13" | "`var'" == "skuseSocCog_age8" | "`var'" == "skuseSocCog_age16" | "`var'" == "autismSpec_age25" | "`var'" == "SDQ_prosocial_age8" | "`var'" == "SDQ_prosocial_age13" | "`var'" == "SDQ_prosocial_age25" | "`var'" == "esteem_bachman_age17" | "`var'" == "scholasticEsteem_age8" | "`var'" == "globalEsteem_age8" {
 		
-		mlogit YPG3000 ageAt28 male `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 male `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -506,7 +507,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,3]
 		
 		// Now for interaction model
-		mlogit YPG3000 ageAt28 c.male##c.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 c.male##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,4]
@@ -521,7 +522,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (2/not sure)
-		mlogit YPG3000 ageAt28 male `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 male `var', baseoutcome(3) rrr
 		
 		local outcome_level = "Not sure (ref = No)"
 		local exp_level = "NA"
@@ -533,7 +534,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,7]
 				
 		// Now for interaction model
-		mlogit YPG3000 ageAt28 c.male##c.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 c.male##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,9]
@@ -548,16 +549,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3000 ageAt28 male if `var' != ., baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 male if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit YPG3000 ageAt28 male `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 male `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3000 ageAt28 c.male##c.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 c.male##c.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -577,7 +578,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -603,7 +604,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -618,7 +619,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -629,7 +630,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,10]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,16]
@@ -644,7 +645,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -670,7 +671,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -685,7 +686,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -696,7 +697,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -716,7 +717,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -742,7 +743,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -757,7 +758,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -768,7 +769,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -784,7 +785,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -810,7 +811,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -825,7 +826,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -836,7 +837,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -852,7 +853,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -878,7 +879,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -893,7 +894,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -904,7 +905,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -924,7 +925,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -950,7 +951,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -965,7 +966,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -976,7 +977,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -992,7 +993,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1018,7 +1019,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -1033,7 +1034,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1044,7 +1045,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -1060,7 +1061,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1086,7 +1087,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -1101,7 +1102,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1112,7 +1113,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -1128,7 +1129,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1154,7 +1155,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,7]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -1169,7 +1170,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1180,7 +1181,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -1200,7 +1201,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1220,7 +1221,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -1235,7 +1236,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1246,7 +1247,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -1262,7 +1263,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1282,7 +1283,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -1297,7 +1298,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1308,7 +1309,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -1324,7 +1325,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1344,7 +1345,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -1359,7 +1360,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1370,7 +1371,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -1386,7 +1387,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1406,7 +1407,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,7]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -1421,7 +1422,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1432,7 +1433,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -1448,7 +1449,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1468,7 +1469,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,8]
 		
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -1483,7 +1484,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1494,7 +1495,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -1512,16 +1513,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit YPG3000 ageAt28 male if `var' != ., baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 male if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 male i.`var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -1567,7 +1568,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'ageAt28' and 'sex' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit YPG3040_grp male `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp male `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -1582,7 +1583,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,2]
 		
 		// Interaction between age and sex
-		mlogit YPG3040_grp c.male##c.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp c.male##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,3]
@@ -1600,7 +1601,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "Other (ref = None)"
 		local exp_level = "NA"
 		
-		mlogit YPG3040_grp male `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp male `var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,5]
@@ -1609,7 +1610,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,5]
 		
 		// Interaction between age and sex
-		mlogit YPG3040_grp c.male##c.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp c.male##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -1624,16 +1625,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3040_grp male if `var' != ., baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp male if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit YPG3040_grp male `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp male `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3040_grp c.male##c.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp c.male##c.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -1645,7 +1646,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 		// Next, analyse the 'sex' variable
 	else if "`var'" == "male" {
-		mlogit YPG3040_grp ageAt28 `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp ageAt28 `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -1694,9 +1695,9 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3000 ageAt28 if `var' != ., baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit YPG3000 ageAt28 `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3000 ageAt28 `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
@@ -1712,7 +1713,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "parent" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "ACEscore_13items" | "`var'" == "ACEscore_10items" | "`var'" == "neighPercept" | "`var'" == "fatherAbsence" | "`var'" == "verbalIQ_age8" | "`var'" == "performanceIQ_age8" | "`var'" == "totalIQ_age8" | "`var'" == "totalIQ_age15" | "`var'" == "digitSymbol_age24" | "`var'" == "vocaba_age24" | "`var'" == "extraversion_age13" | "`var'" == "agreeableness_age13" | "`var'" == "conscientiousness_age13" | "`var'" == "emotionalStab_age13" | "`var'" == "Openess_age13" | "`var'" == "loc_age8" | "`var'" == "loc_age16" | "`var'" == "negCogStyles_age17" | "`var'" == "emoRec_faces_age8" | "`var'" == "emoRec_triangles_age13" | "`var'" == "skuseSocCog_age8" | "`var'" == "skuseSocCog_age16" | "`var'" == "autismSpec_age25" | "`var'" == "SDQ_prosocial_age8" | "`var'" == "SDQ_prosocial_age13" | "`var'" == "SDQ_prosocial_age25" | "`var'" == "esteem_bachman_age17" | "`var'" == "scholasticEsteem_age8" | "`var'" == "globalEsteem_age8" {
 		
-		mlogit YPG3040_grp ageAt28 male `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp ageAt28 male `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -1727,7 +1728,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,3]
 		
 		// Now for interaction model
-		mlogit YPG3040_grp ageAt28 c.male##c.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp ageAt28 c.male##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,4]
@@ -1742,7 +1743,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (2/Other)
-		mlogit YPG3040_grp ageAt28 male `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp ageAt28 male `var', baseoutcome(3) rrr
 		
 		local outcome_level = "Other (ref = None)"
 		local exp_level = "NA"
@@ -1754,7 +1755,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,7]
 				
 		// Now for interaction model
-		mlogit YPG3040_grp ageAt28 c.male##c.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp ageAt28 c.male##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,9]
@@ -1769,16 +1770,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3040_grp ageAt28 male if `var' != ., baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp ageAt28 male if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit YPG3040_grp ageAt28 male `var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp ageAt28 male `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3040_grp ageAt28 c.male##c.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp ageAt28 c.male##c.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -1798,7 +1799,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1824,7 +1825,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -1839,7 +1840,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -1850,7 +1851,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,10]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,16]
@@ -1865,7 +1866,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1891,7 +1892,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -1906,7 +1907,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -1917,7 +1918,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -1937,7 +1938,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1963,7 +1964,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -1978,7 +1979,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -1989,7 +1990,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -2005,7 +2006,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2031,7 +2032,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -2046,7 +2047,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2057,7 +2058,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -2073,7 +2074,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2099,7 +2100,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -2114,7 +2115,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2125,7 +2126,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -2145,7 +2146,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2171,7 +2172,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -2186,7 +2187,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2197,7 +2198,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -2213,7 +2214,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2239,7 +2240,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -2254,7 +2255,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2265,7 +2266,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -2281,7 +2282,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2307,7 +2308,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -2322,7 +2323,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2333,7 +2334,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -2349,7 +2350,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2375,7 +2376,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,7]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -2390,7 +2391,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2401,7 +2402,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -2421,7 +2422,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2441,7 +2442,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -2456,7 +2457,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2467,7 +2468,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -2483,7 +2484,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2503,7 +2504,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -2518,7 +2519,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2529,7 +2530,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -2545,7 +2546,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2565,7 +2566,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -2580,7 +2581,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2591,7 +2592,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -2607,7 +2608,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2627,7 +2628,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,7]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,13]
@@ -2642,7 +2643,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2653,7 +2654,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -2669,7 +2670,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2689,7 +2690,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,8]
 		
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -2704,7 +2705,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2715,7 +2716,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+			mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -2733,16 +2734,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit YPG3040_grp ageAt28 male if `var' != ., baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp ageAt28 male if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp ageAt28 male i.`var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr level(99.9)
+		mlogit YPG3040_grp ageAt28 c.male##i.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -2775,10 +2776,10 @@ tab YPG3080_rev
 
 
 ** Quick test of whether proportional odds assumption been violated in most basic model (with just age at birth). Ah, it has been violated. 
-ologit YPG3080_rev ageAt28, or level(99.9)
+ologit YPG3080_rev ageAt28, or
 brant, detail
 
-ologit YPG3080_rev ageAt28 i.IMD, or level(99.9)
+ologit YPG3080_rev ageAt28 i.IMD, or
 brant, detail
 
 
@@ -2802,7 +2803,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'ageAt28' and 'sex' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit YPG3080_rev male `var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev male `var', baseoutcome(0) rrr
 		
 		local n = e(N)
 		
@@ -2817,7 +2818,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,5]
 		
 		// Interaction between age and sex
-		mlogit YPG3080_rev c.male##c.`var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev c.male##c.`var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -2835,7 +2836,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "Min once year (ref = Not at all)"
 		local exp_level = "NA"
 		
-		mlogit YPG3080_rev male `var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev male `var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,8]
@@ -2844,7 +2845,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,8]
 		
 		// Interaction between age and sex
-		mlogit YPG3080_rev c.male##c.`var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev c.male##c.`var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,11]
@@ -2862,7 +2863,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "Min once month (ref = Not at all)"
 		local exp_level = "NA"
 		
-		mlogit YPG3080_rev male `var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev male `var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,11]
@@ -2871,7 +2872,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,11]
 		
 		// Interaction between age and sex
-		mlogit YPG3080_rev c.male##c.`var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev c.male##c.`var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,15]
@@ -2886,16 +2887,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3080_rev male if `var' != ., baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev male if `var' != ., baseoutcome(0) rrr
 		est store base
-		mlogit YPG3080_rev male `var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev male `var', baseoutcome(0) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3080_rev c.male##c.`var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev c.male##c.`var', baseoutcome(0) rrr
 		est store inter
 		
 		lrtest main inter
@@ -2907,7 +2908,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, analyse the 'sex' variable
 	else if "`var'" == "male" {
-		mlogit YPG3080_rev ageAt28 `var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 `var', baseoutcome(0) rrr
 		
 		local n = e(N)
 		
@@ -2978,9 +2979,9 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3080_rev ageAt28 if `var' != ., baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 if `var' != ., baseoutcome(0) rrr
 		est store base
-		mlogit YPG3080_rev ageAt28 `var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 `var', baseoutcome(0) rrr
 		est store main
 		
 		lrtest base main
@@ -2996,7 +2997,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "parent" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "ACEscore_13items" | "`var'" == "ACEscore_10items" | "`var'" == "neighPercept" | "`var'" == "fatherAbsence" | "`var'" == "verbalIQ_age8" | "`var'" == "performanceIQ_age8" | "`var'" == "totalIQ_age8" | "`var'" == "totalIQ_age15" | "`var'" == "digitSymbol_age24" | "`var'" == "vocaba_age24" | "`var'" == "extraversion_age13" | "`var'" == "agreeableness_age13" | "`var'" == "conscientiousness_age13" | "`var'" == "emotionalStab_age13" | "`var'" == "Openess_age13" | "`var'" == "loc_age8" | "`var'" == "loc_age16" | "`var'" == "negCogStyles_age17" | "`var'" == "emoRec_faces_age8" | "`var'" == "emoRec_triangles_age13" | "`var'" == "skuseSocCog_age8" | "`var'" == "skuseSocCog_age16" | "`var'" == "autismSpec_age25" | "`var'" == "SDQ_prosocial_age8" | "`var'" == "SDQ_prosocial_age13" | "`var'" == "SDQ_prosocial_age25" | "`var'" == "esteem_bachman_age17" | "`var'" == "scholasticEsteem_age8" | "`var'" == "globalEsteem_age8" {
 		
-		mlogit YPG3080_rev ageAt28 male `var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 male `var', baseoutcome(0) rrr
 		
 		local n = e(N)
 		
@@ -3011,7 +3012,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,7]
 		
 		// Now for interaction model
-		mlogit YPG3080_rev ageAt28 c.male##c.`var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 c.male##c.`var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,9]
@@ -3026,7 +3027,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (2/once year)
-		mlogit YPG3080_rev ageAt28 male `var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 male `var', baseoutcome(0) rrr
 		
 		local outcome_level = "Min once year (ref = Not at all)"
 		local exp_level = "NA"
@@ -3038,7 +3039,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,11]
 				
 		// Now for interaction model
-		mlogit YPG3080_rev ageAt28 c.male##c.`var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 c.male##c.`var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,14]
@@ -3053,7 +3054,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (3/once month)
-		mlogit YPG3080_rev ageAt28 male `var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 male `var', baseoutcome(0) rrr
 		
 		local outcome_level = "Min once month (ref = Not at all)"
 		local exp_level = "NA"
@@ -3065,7 +3066,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,15]
 				
 		// Now for interaction model
-		mlogit YPG3080_rev ageAt28 c.male##c.`var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 c.male##c.`var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,19]
@@ -3080,16 +3081,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3080_rev ageAt28 male if `var' != ., baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 male if `var' != ., baseoutcome(0) rrr
 		est store base
-		mlogit YPG3080_rev ageAt28 male `var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 male `var', baseoutcome(0) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3080_rev ageAt28 c.male##c.`var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 c.male##c.`var', baseoutcome(0) rrr
 		est store inter
 		
 		lrtest main inter
@@ -3109,7 +3110,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3135,7 +3136,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,16]
@@ -3150,7 +3151,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -3161,7 +3162,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -3176,7 +3177,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3187,7 +3188,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,34]
@@ -3203,7 +3204,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3229,7 +3230,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -3244,7 +3245,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -3255,7 +3256,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -3270,7 +3271,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3281,7 +3282,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -3301,7 +3302,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3327,7 +3328,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -3342,7 +3343,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -3353,7 +3354,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,30]
@@ -3368,7 +3369,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3379,7 +3380,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -3395,7 +3396,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3421,7 +3422,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -3436,7 +3437,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -3447,7 +3448,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,31]
@@ -3462,7 +3463,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3473,7 +3474,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,42]
@@ -3489,7 +3490,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3515,7 +3516,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -3530,7 +3531,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -3541,7 +3542,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,32]
@@ -3556,7 +3557,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3567,7 +3568,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,43]
@@ -3587,7 +3588,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3613,7 +3614,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -3628,7 +3629,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -3639,7 +3640,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -3654,7 +3655,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (2/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3665,7 +3666,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,28]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,48]
@@ -3681,7 +3682,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3707,7 +3708,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -3722,7 +3723,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -3733,7 +3734,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,36]
@@ -3748,7 +3749,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3759,7 +3760,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,49]
@@ -3775,7 +3776,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3801,7 +3802,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -3816,7 +3817,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -3827,7 +3828,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -3842,7 +3843,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3853,7 +3854,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,30]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,50]
@@ -3869,7 +3870,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3895,7 +3896,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -3910,7 +3911,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -3921,7 +3922,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -3936,7 +3937,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3947,7 +3948,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,51]
@@ -3967,7 +3968,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3987,7 +3988,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -4002,7 +4003,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -4013,7 +4014,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,40]
@@ -4028,7 +4029,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -4039,7 +4040,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,55]
@@ -4055,7 +4056,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -4075,7 +4076,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -4090,7 +4091,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -4101,7 +4102,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -4116,7 +4117,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -4127,7 +4128,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,32]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,56]
@@ -4143,7 +4144,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -4163,7 +4164,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -4178,7 +4179,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -4189,7 +4190,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,24]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,42]
@@ -4204,7 +4205,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -4215,7 +4216,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,33]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,57]
@@ -4231,7 +4232,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -4251,7 +4252,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,16]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -4266,7 +4267,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -4277,7 +4278,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,43]
@@ -4292,7 +4293,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -4303,7 +4304,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,34]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,58]
@@ -4319,7 +4320,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -4339,7 +4340,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,17]
 		
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -4354,7 +4355,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once year)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once year (ref = Not at all)"
 		
@@ -4365,7 +4366,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,44]
@@ -4380,7 +4381,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/once month)
-			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -4391,7 +4392,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,35]
 				
 			// Now for interaction model
-			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+			mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,59]
@@ -4409,16 +4410,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit YPG3080_rev ageAt28 male if `var' != ., baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 male if `var' != ., baseoutcome(0) rrr
 		est store base
-		mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 male i.`var', baseoutcome(0) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr level(99.9)
+		mlogit YPG3080_rev ageAt28 c.male##i.`var', baseoutcome(0) rrr
 		est store inter
 		
 		lrtest main inter
@@ -4463,7 +4464,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'age' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		regress YPG3153 male `var', level(99.9)
+		regress YPG3153 male `var',
 		
 		local n = e(N)
 		
@@ -4478,7 +4479,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,2]
 		
 		// Interaction between age and sex
-		regress YPG3153 c.male##c.`var', level(99.9)
+		regress YPG3153 c.male##c.`var',
 		
 		matrix res = r(table)
 		local coef_int = res[1,3]
@@ -4493,16 +4494,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// And finally run the likelihood ratio tests
-		regress YPG3153 male if `var' != ., level(99.9)
+		regress YPG3153 male if `var' != .,
 		est store base
-		regress YPG3153 male `var', level(99.9)
+		regress YPG3153 male `var',
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		regress YPG3153 c.male##c.`var', level(99.9)
+		regress YPG3153 c.male##c.`var',
 		est store inter
 		
 		lrtest main inter
@@ -4514,7 +4515,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, analyse the 'sex' variable
 	else if "`var'" == "male" {
-		regress YPG3153 ageAt28 `var', level(99.9)
+		regress YPG3153 ageAt28 `var',
 		
 		local n = e(N)
 		
@@ -4541,9 +4542,9 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// And finally run the likelihood ratio tests
-		regress YPG3153 ageAt28 if `var' != ., level(99.9)
+		regress YPG3153 ageAt28 if `var' != .,
 		est store base
-		regress YPG3153 ageAt28 `var', level(99.9)
+		regress YPG3153 ageAt28 `var',
 		est store main
 		
 		lrtest base main
@@ -4559,7 +4560,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "parent" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "ACEscore_13items" | "`var'" == "ACEscore_10items" | "`var'" == "neighPercept" | "`var'" == "fatherAbsence" | "`var'" == "verbalIQ_age8" | "`var'" == "performanceIQ_age8" | "`var'" == "totalIQ_age8" | "`var'" == "totalIQ_age15" | "`var'" == "digitSymbol_age24" | "`var'" == "vocaba_age24" | "`var'" == "extraversion_age13" | "`var'" == "agreeableness_age13" | "`var'" == "conscientiousness_age13" | "`var'" == "emotionalStab_age13" | "`var'" == "Openess_age13" | "`var'" == "loc_age8" | "`var'" == "loc_age16" | "`var'" == "negCogStyles_age17" | "`var'" == "emoRec_faces_age8" | "`var'" == "emoRec_triangles_age13" | "`var'" == "skuseSocCog_age8" | "`var'" == "skuseSocCog_age16" | "`var'" == "autismSpec_age25" | "`var'" == "SDQ_prosocial_age8" | "`var'" == "SDQ_prosocial_age13" | "`var'" == "SDQ_prosocial_age25" | "`var'" == "esteem_bachman_age17" | "`var'" == "scholasticEsteem_age8" | "`var'" == "globalEsteem_age8" {
 		
-		regress YPG3153 ageAt28 male `var', level(99.9)
+		regress YPG3153 ageAt28 male `var',
 		
 		local n = e(N)
 		
@@ -4574,7 +4575,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,3]
 		
 		// Now for interaction model
-		regress YPG3153 ageAt28 c.male##c.`var', level(99.9)
+		regress YPG3153 ageAt28 c.male##c.`var',
 		
 		matrix res = r(table)
 		local coef_int = res[1,4]
@@ -4590,16 +4591,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 		// And finally run the likelihood ratio tests
-		regress YPG3153 ageAt28 male if `var' != ., level(99.9)
+		regress YPG3153 ageAt28 male if `var' != .,
 		est store base
-		regress YPG3153 ageAt28 male `var', level(99.9)
+		regress YPG3153 ageAt28 male `var',
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		regress YPG3153 ageAt28 c.male##c.`var', level(99.9)
+		regress YPG3153 ageAt28 c.male##c.`var',
 		est store inter
 		
 		lrtest main inter
@@ -4619,7 +4620,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 		
@@ -4645,7 +4646,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -4661,7 +4662,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 						
 			// Move to the next category of the exposure (category 3)
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -4684,7 +4685,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -4704,7 +4705,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 		
@@ -4730,7 +4731,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -4746,7 +4747,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 						
 			// Move to the next category of the exposure (category 3)
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -4769,7 +4770,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -4785,7 +4786,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 						
 			// Move to the next category of the exposure (category 4)
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -4808,7 +4809,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,6]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -4828,7 +4829,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 		
@@ -4854,7 +4855,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -4870,7 +4871,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 						
 			// Move to the next category of the exposure (category 3)
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -4893,7 +4894,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -4909,7 +4910,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 						
 			
 			// Move to the next category of the exposure (category 4)
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -4932,7 +4933,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,6]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -4948,7 +4949,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 							
 			// Move to the next category of the exposure (category 5)
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -4971,7 +4972,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,7]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -4991,7 +4992,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 		
@@ -5011,7 +5012,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -5027,7 +5028,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -5044,7 +5045,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -5060,7 +5061,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -5077,7 +5078,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,6]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -5093,7 +5094,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 5)
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 		
@@ -5110,7 +5111,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,7]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,13]
@@ -5126,7 +5127,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 							
 			
 			// Move to the next category of the exposure (category 6)
-			regress YPG3153 ageAt28 male i.`var', level(99.9)
+			regress YPG3153 ageAt28 male i.`var',
 		
 			local n = e(N)
 
@@ -5143,7 +5144,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,8]
 		
 			// Now for interaction model
-			regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3153 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -5161,16 +5162,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		regress YPG3153 ageAt28 male if `var' != ., level(99.9)
+		regress YPG3153 ageAt28 male if `var' != .,
 		est store base
-		regress YPG3153 ageAt28 male i.`var', level(99.9)
+		regress YPG3153 ageAt28 male i.`var',
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		regress YPG3153 ageAt28 c.male##i.`var', level(99.9)
+		regress YPG3153 ageAt28 c.male##i.`var',
 		est store inter
 		
 		lrtest main inter
@@ -5206,7 +5207,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'age' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit YPG3153_cat male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat male `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -5221,7 +5222,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,5]
 		
 		// Interaction between age and sex
-		mlogit YPG3153_cat c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -5239,7 +5240,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		local exp_level = "NA"
 		
-		mlogit YPG3153_cat male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat male `var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,8]
@@ -5248,7 +5249,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,8]
 		
 		// Interaction between age and sex
-		mlogit YPG3153_cat c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,11]
@@ -5266,7 +5267,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		local exp_level = "NA"
 		
-		mlogit YPG3153_cat male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat male `var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,11]
@@ -5275,7 +5276,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,11]
 		
 		// Interaction between age and sex
-		mlogit YPG3153_cat c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,15]
@@ -5290,16 +5291,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3153_cat male if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat male if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3153_cat male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat male `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3153_cat c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat c.male##c.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -5311,7 +5312,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, analyse the 'sex' variable
 	else if "`var'" == "male" {
-		mlogit YPG3153_cat ageAt28 `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -5382,9 +5383,9 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3153_cat ageAt28 if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3153_cat ageAt28 `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
@@ -5400,7 +5401,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "parent" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "ACEscore_13items" | "`var'" == "ACEscore_10items" | "`var'" == "neighPercept" | "`var'" == "fatherAbsence" | "`var'" == "verbalIQ_age8" | "`var'" == "performanceIQ_age8" | "`var'" == "totalIQ_age8" | "`var'" == "totalIQ_age15" | "`var'" == "digitSymbol_age24" | "`var'" == "vocaba_age24" | "`var'" == "extraversion_age13" | "`var'" == "agreeableness_age13" | "`var'" == "conscientiousness_age13" | "`var'" == "emotionalStab_age13" | "`var'" == "Openess_age13" | "`var'" == "loc_age8" | "`var'" == "loc_age16" | "`var'" == "negCogStyles_age17" | "`var'" == "emoRec_faces_age8" | "`var'" == "emoRec_triangles_age13" | "`var'" == "skuseSocCog_age8" | "`var'" == "skuseSocCog_age16" | "`var'" == "autismSpec_age25" | "`var'" == "SDQ_prosocial_age8" | "`var'" == "SDQ_prosocial_age13" | "`var'" == "SDQ_prosocial_age25" | "`var'" == "esteem_bachman_age17" | "`var'" == "scholasticEsteem_age8" | "`var'" == "globalEsteem_age8" {
 		
-		mlogit YPG3153_cat ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 male `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -5415,7 +5416,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,7]
 		
 		// Now for interaction model
-		mlogit YPG3153_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,9]
@@ -5430,7 +5431,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (3/high)
-		mlogit YPG3153_cat ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 male `var', baseoutcome(1) rrr
 		
 		local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		local exp_level = "NA"
@@ -5442,7 +5443,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,11]
 				
 		// Now for interaction model
-		mlogit YPG3153_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,14]
@@ -5457,7 +5458,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (4/highest)
-		mlogit YPG3153_cat ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 male `var', baseoutcome(1) rrr
 		
 		local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		local exp_level = "NA"
@@ -5469,7 +5470,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,15]
 				
 		// Now for interaction model
-		mlogit YPG3153_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,19]
@@ -5484,16 +5485,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3153_cat ageAt28 male if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 male if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3153_cat ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 male `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3153_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -5513,7 +5514,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5539,7 +5540,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,16]
@@ -5554,7 +5555,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5565,7 +5566,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -5580,7 +5581,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5591,7 +5592,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,34]
@@ -5607,7 +5608,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5633,7 +5634,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -5648,7 +5649,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5659,7 +5660,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -5674,7 +5675,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5685,7 +5686,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -5705,7 +5706,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5732,7 +5733,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -5747,7 +5748,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5758,7 +5759,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,30]
@@ -5773,7 +5774,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5784,7 +5785,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -5800,7 +5801,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5826,7 +5827,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -5841,7 +5842,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5852,7 +5853,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,31]
@@ -5867,7 +5868,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5878,7 +5879,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,42]
@@ -5894,7 +5895,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5920,7 +5921,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -5935,7 +5936,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5946,7 +5947,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,32]
@@ -5961,7 +5962,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5972,7 +5973,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,43]
@@ -5992,7 +5993,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6018,7 +6019,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -6033,7 +6034,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6044,7 +6045,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -6059,7 +6060,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6070,7 +6071,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,28]
 			
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,48]
@@ -6086,7 +6087,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6112,7 +6113,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -6127,7 +6128,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6138,7 +6139,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,36]
@@ -6153,7 +6154,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6164,7 +6165,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,49]
@@ -6180,7 +6181,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6206,7 +6207,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -6221,7 +6222,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6232,7 +6233,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -6247,7 +6248,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6258,7 +6259,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,30]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,50]
@@ -6274,7 +6275,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6300,7 +6301,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -6315,7 +6316,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6326,7 +6327,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -6341,7 +6342,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6352,7 +6353,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,51]
@@ -6372,7 +6373,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6392,7 +6393,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -6407,7 +6408,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6418,7 +6419,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,40]
@@ -6433,7 +6434,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6444,7 +6445,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,55]
@@ -6460,7 +6461,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6480,7 +6481,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -6495,7 +6496,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6506,7 +6507,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -6521,7 +6522,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6532,7 +6533,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,32]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,56]
@@ -6548,7 +6549,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6568,7 +6569,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -6583,7 +6584,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6594,7 +6595,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,24]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,42]
@@ -6609,7 +6610,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6620,7 +6621,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,33]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,57]
@@ -6636,7 +6637,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6656,7 +6657,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,16]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -6671,7 +6672,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6682,7 +6683,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,43]
@@ -6697,7 +6698,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6708,7 +6709,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,34]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,58]
@@ -6724,7 +6725,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6744,7 +6745,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,17]
 		
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -6759,7 +6760,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6770,7 +6771,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,44]
@@ -6785,7 +6786,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (4/highest)
-			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6796,7 +6797,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,35]
 				
 			// Now for interaction model
-			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,59]
@@ -6814,16 +6815,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit YPG3153_cat ageAt28 male if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 male if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3153_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -6876,7 +6877,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'age' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit YPG3160_new male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new male `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -6891,7 +6892,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,5]
 		
 		// Interaction between age and sex
-		mlogit YPG3160_new c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -6909,7 +6910,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "Disagree ER (ref = Agree)"
 		local exp_level = "NA"
 		
-		mlogit YPG3160_new male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new male `var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,8]
@@ -6918,7 +6919,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,8]
 		
 		// Interaction between age and sex
-		mlogit YPG3160_new c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,11]
@@ -6936,7 +6937,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "Not applicable ER (ref = Agree)"
 		local exp_level = "NA"
 		
-		mlogit YPG3160_new male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new male `var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,11]
@@ -6945,7 +6946,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,11]
 		
 		// Interaction between age and sex
-		mlogit YPG3160_new c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,15]
@@ -6960,16 +6961,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3160_new male if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new male if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3160_new male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new male `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3160_new c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new c.male##c.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -6981,7 +6982,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, analyse the 'sex' variable
 	else if "`var'" == "male" {
-		mlogit YPG3160_new ageAt28 `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -7052,9 +7053,9 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3160_new ageAt28 if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3160_new ageAt28 `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
@@ -7070,7 +7071,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "parent" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "ACEscore_13items" | "`var'" == "ACEscore_10items" | "`var'" == "neighPercept" | "`var'" == "fatherAbsence" | "`var'" == "verbalIQ_age8" | "`var'" == "performanceIQ_age8" | "`var'" == "totalIQ_age8" | "`var'" == "totalIQ_age15" | "`var'" == "digitSymbol_age24" | "`var'" == "vocaba_age24" | "`var'" == "extraversion_age13" | "`var'" == "agreeableness_age13" | "`var'" == "conscientiousness_age13" | "`var'" == "emotionalStab_age13" | "`var'" == "Openess_age13" | "`var'" == "loc_age8" | "`var'" == "loc_age16" | "`var'" == "negCogStyles_age17" | "`var'" == "emoRec_faces_age8" | "`var'" == "emoRec_triangles_age13" | "`var'" == "skuseSocCog_age8" | "`var'" == "skuseSocCog_age16" | "`var'" == "autismSpec_age25" | "`var'" == "SDQ_prosocial_age8" | "`var'" == "SDQ_prosocial_age13" | "`var'" == "SDQ_prosocial_age25" | "`var'" == "esteem_bachman_age17" | "`var'" == "scholasticEsteem_age8" | "`var'" == "globalEsteem_age8" {
 		
-		mlogit YPG3160_new ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 male `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -7085,7 +7086,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,7]
 		
 		// Now for interaction model
-		mlogit YPG3160_new ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,9]
@@ -7100,7 +7101,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (3/disagree)
-		mlogit YPG3160_new ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 male `var', baseoutcome(1) rrr
 		
 		local outcome_level = "Disagree ER (ref = Agree)"
 		local exp_level = "NA"
@@ -7112,7 +7113,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,11]
 				
 		// Now for interaction model
-		mlogit YPG3160_new ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,14]
@@ -7127,7 +7128,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (4/NA)
-		mlogit YPG3160_new ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 male `var', baseoutcome(1) rrr
 		
 		local outcome_level = "Not applicable ER (ref = Agree)"
 		local exp_level = "NA"
@@ -7139,7 +7140,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,15]
 				
 		// Now for interaction model
-		mlogit YPG3160_new ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,19]
@@ -7154,16 +7155,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3160_new ageAt28 male if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 male if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3160_new ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 male `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3160_new ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -7183,7 +7184,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7209,7 +7210,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,16]
@@ -7224,7 +7225,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7235,7 +7236,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -7250,7 +7251,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7261,7 +7262,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,34]
@@ -7277,7 +7278,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7303,7 +7304,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -7318,7 +7319,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7329,7 +7330,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -7344,7 +7345,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7355,7 +7356,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -7375,7 +7376,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7401,7 +7402,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 			
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -7416,7 +7417,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7427,7 +7428,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,30]
@@ -7442,7 +7443,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7453,7 +7454,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -7469,7 +7470,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7495,7 +7496,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -7510,7 +7511,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7521,7 +7522,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,31]
@@ -7536,7 +7537,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7547,7 +7548,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,26]
 			
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,42]
@@ -7563,7 +7564,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7589,7 +7590,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -7604,7 +7605,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7615,7 +7616,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,32]
@@ -7630,7 +7631,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7641,7 +7642,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,43]
@@ -7661,7 +7662,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7687,7 +7688,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -7702,7 +7703,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7713,7 +7714,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -7728,7 +7729,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7739,7 +7740,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,28]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,48]
@@ -7755,7 +7756,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7781,7 +7782,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -7796,7 +7797,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7807,7 +7808,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,36]
@@ -7822,7 +7823,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7833,7 +7834,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,49]
@@ -7849,7 +7850,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7875,7 +7876,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -7890,7 +7891,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7901,7 +7902,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -7916,7 +7917,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7927,7 +7928,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,30]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,50]
@@ -7943,7 +7944,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7969,7 +7970,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -7984,7 +7985,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7995,7 +7996,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -8010,7 +8011,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8021,7 +8022,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,51]
@@ -8041,7 +8042,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8061,7 +8062,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -8076,7 +8077,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8087,7 +8088,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,40]
@@ -8102,7 +8103,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8113,7 +8114,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,55]
@@ -8129,7 +8130,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8149,7 +8150,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -8164,7 +8165,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8175,7 +8176,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -8190,7 +8191,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8201,7 +8202,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,32]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,56]
@@ -8217,7 +8218,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8237,7 +8238,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -8252,7 +8253,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8263,7 +8264,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,24]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,42]
@@ -8278,7 +8279,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8289,7 +8290,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,33]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,57]
@@ -8305,7 +8306,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8325,7 +8326,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,16]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -8340,7 +8341,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8351,7 +8352,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,43]
@@ -8366,7 +8367,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8377,7 +8378,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,34]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,58]
@@ -8393,7 +8394,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8413,7 +8414,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,17]
 		
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -8428,7 +8429,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8439,7 +8440,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,44]
@@ -8454,7 +8455,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8465,7 +8466,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,35]
 				
 			// Now for interaction model
-			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,59]
@@ -8483,16 +8484,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit YPG3160_new ageAt28 male if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 male if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 male i.`var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3160_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -8528,7 +8529,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'age' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit YPG3170_new male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new male `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -8543,7 +8544,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,5]
 		
 		// Interaction between age and sex
-		mlogit YPG3170_new c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -8561,7 +8562,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "Disagree ER (ref = Agree)"
 		local exp_level = "NA"
 		
-		mlogit YPG3170_new male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new male `var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,8]
@@ -8570,7 +8571,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,8]
 		
 		// Interaction between age and sex
-		mlogit YPG3170_new c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,11]
@@ -8588,7 +8589,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "Not applicable ER (ref = Agree)"
 		local exp_level = "NA"
 		
-		mlogit YPG3170_new male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new male `var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,11]
@@ -8597,7 +8598,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,11]
 		
 		// Interaction between age and sex
-		mlogit YPG3170_new c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,15]
@@ -8612,16 +8613,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3170_new male if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new male if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3170_new male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new male `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3170_new c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new c.male##c.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -8633,7 +8634,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, analyse the 'sex' variable
 	else if "`var'" == "male" {
-		mlogit YPG3170_new ageAt28 `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -8704,9 +8705,9 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3170_new ageAt28 if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3170_new ageAt28 `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
@@ -8722,7 +8723,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "parent" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "ACEscore_13items" | "`var'" == "ACEscore_10items" | "`var'" == "neighPercept" | "`var'" == "fatherAbsence" | "`var'" == "verbalIQ_age8" | "`var'" == "performanceIQ_age8" | "`var'" == "totalIQ_age8" | "`var'" == "totalIQ_age15" | "`var'" == "digitSymbol_age24" | "`var'" == "vocaba_age24" | "`var'" == "extraversion_age13" | "`var'" == "agreeableness_age13" | "`var'" == "conscientiousness_age13" | "`var'" == "emotionalStab_age13" | "`var'" == "Openess_age13" | "`var'" == "loc_age8" | "`var'" == "loc_age16" | "`var'" == "negCogStyles_age17" | "`var'" == "emoRec_faces_age8" | "`var'" == "emoRec_triangles_age13" | "`var'" == "skuseSocCog_age8" | "`var'" == "skuseSocCog_age16" | "`var'" == "autismSpec_age25" | "`var'" == "SDQ_prosocial_age8" | "`var'" == "SDQ_prosocial_age13" | "`var'" == "SDQ_prosocial_age25" | "`var'" == "esteem_bachman_age17" | "`var'" == "scholasticEsteem_age8" | "`var'" == "globalEsteem_age8" {
 		
-		mlogit YPG3170_new ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 male `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -8737,7 +8738,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,7]
 		
 		// Now for interaction model
-		mlogit YPG3170_new ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,9]
@@ -8752,7 +8753,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (3/disagree)
-		mlogit YPG3170_new ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 male `var', baseoutcome(1) rrr
 		
 		local outcome_level = "Disagree ER (ref = Agree)"
 		local exp_level = "NA"
@@ -8764,7 +8765,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,11]
 				
 		// Now for interaction model
-		mlogit YPG3170_new ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,14]
@@ -8779,7 +8780,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (4/NA)
-		mlogit YPG3170_new ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 male `var', baseoutcome(1) rrr
 		
 		local outcome_level = "Not applicable ER (ref = Agree)"
 		local exp_level = "NA"
@@ -8791,7 +8792,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,15]
 				
 		// Now for interaction model
-		mlogit YPG3170_new ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,19]
@@ -8806,16 +8807,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3170_new ageAt28 male if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 male if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3170_new ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 male `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3170_new ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -8835,7 +8836,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8861,7 +8862,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,16]
@@ -8876,7 +8877,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8887,7 +8888,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -8902,7 +8903,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8913,7 +8914,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,34]
@@ -8929,7 +8930,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8955,7 +8956,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -8970,7 +8971,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8981,7 +8982,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -8996,7 +8997,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9007,7 +9008,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -9027,7 +9028,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9053,7 +9054,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 			
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -9068,7 +9069,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9079,7 +9080,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,30]
@@ -9094,7 +9095,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9105,7 +9106,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -9121,7 +9122,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9147,7 +9148,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -9162,7 +9163,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9173,7 +9174,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,31]
@@ -9188,7 +9189,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9199,7 +9200,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,26]
 			
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,42]
@@ -9215,7 +9216,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9241,7 +9242,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -9256,7 +9257,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9267,7 +9268,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,32]
@@ -9282,7 +9283,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9293,7 +9294,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,43]
@@ -9313,7 +9314,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9339,7 +9340,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -9354,7 +9355,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9365,7 +9366,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -9380,7 +9381,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9391,7 +9392,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,28]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,48]
@@ -9407,7 +9408,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9433,7 +9434,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -9448,7 +9449,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9459,7 +9460,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,36]
@@ -9474,7 +9475,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9485,7 +9486,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,49]
@@ -9501,7 +9502,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9527,7 +9528,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -9542,7 +9543,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9553,7 +9554,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -9568,7 +9569,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9579,7 +9580,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,30]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,50]
@@ -9595,7 +9596,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9621,7 +9622,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -9636,7 +9637,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9647,7 +9648,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -9662,7 +9663,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9673,7 +9674,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,51]
@@ -9693,7 +9694,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9713,7 +9714,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -9728,7 +9729,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9739,7 +9740,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,40]
@@ -9754,7 +9755,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9765,7 +9766,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,55]
@@ -9781,7 +9782,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9801,7 +9802,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -9816,7 +9817,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9827,7 +9828,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -9842,7 +9843,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9853,7 +9854,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,32]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,56]
@@ -9869,7 +9870,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9889,7 +9890,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -9904,7 +9905,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9915,7 +9916,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,24]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,42]
@@ -9930,7 +9931,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9941,7 +9942,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,33]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,57]
@@ -9957,7 +9958,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9977,7 +9978,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,16]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -9992,7 +9993,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -10003,7 +10004,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,43]
@@ -10018,7 +10019,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -10029,7 +10030,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,34]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,58]
@@ -10045,7 +10046,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -10065,7 +10066,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,17]
 		
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -10080,7 +10081,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -10091,7 +10092,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,44]
@@ -10106,7 +10107,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (4/NA)
-			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -10117,7 +10118,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,35]
 				
 			// Now for interaction model
-			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,59]
@@ -10135,16 +10136,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit YPG3170_new ageAt28 male if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 male if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 male i.`var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3170_new ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -10189,7 +10190,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'age' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		regress YPG3155 male `var', level(99.9)
+		regress YPG3155 male `var',
 		
 		local n = e(N)
 		
@@ -10204,7 +10205,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,2]
 		
 		// Interaction between age and sex
-		regress YPG3155 c.male##c.`var', level(99.9)
+		regress YPG3155 c.male##c.`var',
 		
 		matrix res = r(table)
 		local coef_int = res[1,3]
@@ -10219,16 +10220,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// And finally run the likelihood ratio tests
-		regress YPG3155 male if `var' != ., level(99.9)
+		regress YPG3155 male if `var' != .,
 		est store base
-		regress YPG3155 male `var', level(99.9)
+		regress YPG3155 male `var',
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		regress YPG3155 c.male##c.`var', level(99.9)
+		regress YPG3155 c.male##c.`var',
 		est store inter
 		
 		lrtest main inter
@@ -10240,7 +10241,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, analyse the 'sex' variable
 	else if "`var'" == "male" {
-		regress YPG3155 ageAt28 `var', level(99.9)
+		regress YPG3155 ageAt28 `var',
 		
 		local n = e(N)
 		
@@ -10267,9 +10268,9 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// And finally run the likelihood ratio tests
-		regress YPG3155 ageAt28 if `var' != ., level(99.9)
+		regress YPG3155 ageAt28 if `var' != .,
 		est store base
-		regress YPG3155 ageAt28 `var', level(99.9)
+		regress YPG3155 ageAt28 `var',
 		est store main
 		
 		lrtest base main
@@ -10285,7 +10286,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "parent" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "ACEscore_13items" | "`var'" == "ACEscore_10items" | "`var'" == "neighPercept" | "`var'" == "fatherAbsence" | "`var'" == "verbalIQ_age8" | "`var'" == "performanceIQ_age8" | "`var'" == "totalIQ_age8" | "`var'" == "totalIQ_age15" | "`var'" == "digitSymbol_age24" | "`var'" == "vocaba_age24" | "`var'" == "extraversion_age13" | "`var'" == "agreeableness_age13" | "`var'" == "conscientiousness_age13" | "`var'" == "emotionalStab_age13" | "`var'" == "Openess_age13" | "`var'" == "loc_age8" | "`var'" == "loc_age16" | "`var'" == "negCogStyles_age17" | "`var'" == "emoRec_faces_age8" | "`var'" == "emoRec_triangles_age13" | "`var'" == "skuseSocCog_age8" | "`var'" == "skuseSocCog_age16" | "`var'" == "autismSpec_age25" | "`var'" == "SDQ_prosocial_age8" | "`var'" == "SDQ_prosocial_age13" | "`var'" == "SDQ_prosocial_age25" | "`var'" == "esteem_bachman_age17" | "`var'" == "scholasticEsteem_age8" | "`var'" == "globalEsteem_age8" {
 		
-		regress YPG3155 ageAt28 male `var', level(99.9)
+		regress YPG3155 ageAt28 male `var',
 		
 		local n = e(N)
 		
@@ -10300,7 +10301,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,3]
 		
 		// Now for interaction model
-		regress YPG3155 ageAt28 c.male##c.`var', level(99.9)
+		regress YPG3155 ageAt28 c.male##c.`var',
 		
 		matrix res = r(table)
 		local coef_int = res[1,4]
@@ -10316,16 +10317,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 		// And finally run the likelihood ratio tests
-		regress YPG3155 ageAt28 male if `var' != ., level(99.9)
+		regress YPG3155 ageAt28 male if `var' != .,
 		est store base
-		regress YPG3155 ageAt28 male `var', level(99.9)
+		regress YPG3155 ageAt28 male `var',
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		regress YPG3155 ageAt28 c.male##c.`var', level(99.9)
+		regress YPG3155 ageAt28 c.male##c.`var',
 		est store inter
 		
 		lrtest main inter
@@ -10345,7 +10346,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 		
@@ -10371,7 +10372,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -10387,7 +10388,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 						
 			// Move to the next category of the exposure (category 3)
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -10410,7 +10411,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -10430,7 +10431,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 		
@@ -10456,7 +10457,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -10472,7 +10473,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 						
 			// Move to the next category of the exposure (category 3)
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -10495,7 +10496,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -10511,7 +10512,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 						
 			// Move to the next category of the exposure (category 4)
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -10534,7 +10535,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,6]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -10554,7 +10555,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 		
@@ -10580,7 +10581,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -10596,7 +10597,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 						
 			// Move to the next category of the exposure (category 3)
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -10619,7 +10620,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -10635,7 +10636,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 						
 			
 			// Move to the next category of the exposure (category 4)
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -10658,7 +10659,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,6]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -10674,7 +10675,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 							
 			// Move to the next category of the exposure (category 5)
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -10697,7 +10698,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,7]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -10717,7 +10718,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 		
@@ -10737,7 +10738,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -10753,7 +10754,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -10770,7 +10771,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -10786,7 +10787,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 			
@@ -10803,7 +10804,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,6]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -10819,7 +10820,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 5)
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 		
@@ -10836,7 +10837,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,7]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,13]
@@ -10852,7 +10853,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 							
 			
 			// Move to the next category of the exposure (category 6)
-			regress YPG3155 ageAt28 male i.`var', level(99.9)
+			regress YPG3155 ageAt28 male i.`var',
 		
 			local n = e(N)
 
@@ -10869,7 +10870,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,8]
 		
 			// Now for interaction model
-			regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+			regress YPG3155 ageAt28 c.male##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -10887,16 +10888,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		regress YPG3155 ageAt28 male if `var' != ., level(99.9)
+		regress YPG3155 ageAt28 male if `var' != .,
 		est store base
-		regress YPG3155 ageAt28 male i.`var', level(99.9)
+		regress YPG3155 ageAt28 male i.`var',
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		regress YPG3155 ageAt28 c.male##i.`var', level(99.9)
+		regress YPG3155 ageAt28 c.male##i.`var',
 		est store inter
 		
 		lrtest main inter
@@ -10932,7 +10933,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'age' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit YPG3155_cat male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat male `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -10947,7 +10948,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,5]
 		
 		// Interaction between age and sex
-		mlogit YPG3155_cat c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -10965,7 +10966,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		local exp_level = "NA"
 		
-		mlogit YPG3155_cat male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat male `var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,8]
@@ -10974,7 +10975,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,8]
 		
 		// Interaction between age and sex
-		mlogit YPG3155_cat c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,11]
@@ -10992,7 +10993,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		local exp_level = "NA"
 		
-		mlogit YPG3155_cat male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat male `var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,11]
@@ -11001,7 +11002,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,11]
 		
 		// Interaction between age and sex
-		mlogit YPG3155_cat c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,15]
@@ -11019,7 +11020,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		local exp_level = "NA"
 		
-		mlogit YPG3155_cat male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat male `var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef = res[1,14]
@@ -11028,7 +11029,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,14]
 		
 		// Interaction between age and sex
-		mlogit YPG3155_cat c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,19]
@@ -11043,16 +11044,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3155_cat male if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat male if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3155_cat male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat male `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3155_cat c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat c.male##c.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -11064,7 +11065,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	
 	// Next, analyse the 'sex' variable
 	else if "`var'" == "male" {
-		mlogit YPG3155_cat ageAt28 `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -11154,9 +11155,9 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3155_cat ageAt28 if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3155_cat ageAt28 `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
@@ -11172,7 +11173,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "parent" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "ACEscore_13items" | "`var'" == "ACEscore_10items" | "`var'" == "neighPercept" | "`var'" == "fatherAbsence" | "`var'" == "verbalIQ_age8" | "`var'" == "performanceIQ_age8" | "`var'" == "totalIQ_age8" | "`var'" == "totalIQ_age15" | "`var'" == "digitSymbol_age24" | "`var'" == "vocaba_age24" | "`var'" == "extraversion_age13" | "`var'" == "agreeableness_age13" | "`var'" == "conscientiousness_age13" | "`var'" == "emotionalStab_age13" | "`var'" == "Openess_age13" | "`var'" == "loc_age8" | "`var'" == "loc_age16" | "`var'" == "negCogStyles_age17" | "`var'" == "emoRec_faces_age8" | "`var'" == "emoRec_triangles_age13" | "`var'" == "skuseSocCog_age8" | "`var'" == "skuseSocCog_age16" | "`var'" == "autismSpec_age25" | "`var'" == "SDQ_prosocial_age8" | "`var'" == "SDQ_prosocial_age13" | "`var'" == "SDQ_prosocial_age25" | "`var'" == "esteem_bachman_age17" | "`var'" == "scholasticEsteem_age8" | "`var'" == "globalEsteem_age8" {
 		
-		mlogit YPG3155_cat ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 male `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -11187,7 +11188,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,7]
 		
 		// Now for interaction model
-		mlogit YPG3155_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,9]
@@ -11202,7 +11203,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (3/11-15 DUREL)
-		mlogit YPG3155_cat ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 male `var', baseoutcome(1) rrr
 		
 		local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		local exp_level = "NA"
@@ -11214,7 +11215,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,11]
 				
 		// Now for interaction model
-		mlogit YPG3155_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,14]
@@ -11229,7 +11230,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (4/16-20 DUREL)
-		mlogit YPG3155_cat ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 male `var', baseoutcome(1) rrr
 		
 		local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		local exp_level = "NA"
@@ -11241,7 +11242,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,15]
 				
 		// Now for interaction model
-		mlogit YPG3155_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,19]
@@ -11256,7 +11257,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 		// Now onto the next reference category (5/21-26 DUREL)
-		mlogit YPG3155_cat ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 male `var', baseoutcome(1) rrr
 		
 		local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		local exp_level = "NA"
@@ -11268,7 +11269,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		local p = res[4,19]
 				
 		// Now for interaction model
-		mlogit YPG3155_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,24]
@@ -11283,16 +11284,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit YPG3155_cat ageAt28 male if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 male if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3155_cat ageAt28 male `var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 male `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3155_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 c.male##c.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -11312,7 +11313,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11338,7 +11339,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,16]
@@ -11353,7 +11354,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11364,7 +11365,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -11379,7 +11380,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11390,7 +11391,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,34]
@@ -11405,7 +11406,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11416,7 +11417,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,28]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,43]
@@ -11432,7 +11433,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11458,7 +11459,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -11473,7 +11474,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11484,7 +11485,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -11499,7 +11500,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11510,7 +11511,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -11525,7 +11526,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 				// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11536,7 +11537,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,44]
@@ -11556,7 +11557,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11582,7 +11583,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -11597,7 +11598,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11608,7 +11609,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,30]
@@ -11623,7 +11624,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11634,7 +11635,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -11649,7 +11650,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11660,7 +11661,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,32]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,52]
@@ -11676,7 +11677,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11702,7 +11703,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -11717,7 +11718,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11728,7 +11729,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,31]
@@ -11743,7 +11744,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11754,7 +11755,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,42]
@@ -11769,7 +11770,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11780,7 +11781,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,33]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,53]
@@ -11796,7 +11797,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11822,7 +11823,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -11837,7 +11838,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11848,7 +11849,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,32]
@@ -11863,7 +11864,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11874,7 +11875,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,43]
@@ -11889,7 +11890,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11900,7 +11901,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,34]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,54]
@@ -11920,7 +11921,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11946,7 +11947,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -11961,7 +11962,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11972,7 +11973,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -11987,7 +11988,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11998,7 +11999,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,28]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,48]
@@ -12013,7 +12014,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -12024,7 +12025,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,36]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,61]
@@ -12040,7 +12041,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -12066,7 +12067,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -12081,7 +12082,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -12092,7 +12093,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,36]
@@ -12107,7 +12108,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -12118,7 +12119,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,49]
@@ -12133,7 +12134,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -12144,7 +12145,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,37]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,62]
@@ -12160,7 +12161,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -12186,7 +12187,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -12201,7 +12202,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -12212,7 +12213,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -12227,7 +12228,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -12238,7 +12239,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,30]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,50]
@@ -12253,7 +12254,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -12264,7 +12265,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,38]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,63]
@@ -12280,7 +12281,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -12306,7 +12307,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -12321,7 +12322,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -12332,7 +12333,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -12347,7 +12348,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -12358,7 +12359,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,51]
@@ -12373,7 +12374,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -12384,7 +12385,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,39]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,64]
@@ -12404,7 +12405,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -12424,7 +12425,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -12439,7 +12440,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -12450,7 +12451,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,40]
@@ -12465,7 +12466,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -12476,7 +12477,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,55]
@@ -12491,7 +12492,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -12502,7 +12503,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,40]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,70]
@@ -12518,7 +12519,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -12538,7 +12539,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -12553,7 +12554,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -12564,7 +12565,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -12579,7 +12580,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -12590,7 +12591,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,32]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,56]
@@ -12605,7 +12606,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -12616,7 +12617,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,41]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,71]
@@ -12632,7 +12633,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -12652,7 +12653,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -12667,7 +12668,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -12678,7 +12679,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,24]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,42]
@@ -12693,7 +12694,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -12704,7 +12705,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,33]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,57]
@@ -12719,7 +12720,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -12730,7 +12731,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,42]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,72]
@@ -12746,7 +12747,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -12766,7 +12767,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,16]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -12781,7 +12782,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -12792,7 +12793,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,43]
@@ -12807,7 +12808,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -12818,7 +12819,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,34]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,58]
@@ -12833,7 +12834,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -12844,7 +12845,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,43]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,73]
@@ -12860,7 +12861,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -12880,7 +12881,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,17]
 		
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -12895,7 +12896,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -12906,7 +12907,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,44]
@@ -12921,7 +12922,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 			
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -12932,7 +12933,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,35]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,59]
@@ -12947,7 +12948,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`sex_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -12958,7 +12959,7 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 			local p = res[4,44]
 				
 			// Now for interaction model
-			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+			mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,74]
@@ -12976,16 +12977,16 @@ foreach var of varlist ageAt28-globalEsteem_age8 {
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit YPG3155_cat ageAt28 male if `var' != ., baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 male if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 male i.`var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr level(99.9)
+		mlogit YPG3155_cat ageAt28 c.male##i.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -13002,6 +13003,10 @@ postclose G1_DUREL_cat_lr
 
 * And close the log file
 log close
+
+* Save this file if we want to use it later
+save ".\G1_Results\G1_PredictorsOfRSBB_B3911_postAnalysis.dta", replace
+
 
 
 
@@ -13716,7 +13721,6 @@ append using ".\G1_Results\attend_pvalues.dta"
 append using ".\G1_Results\intrin_pvalues.dta"
 append using ".\G1_Results\extrinFriends_pvalues.dta"
 append using ".\G1_Results\extrinPrayer_pvalues.dta"
-append using ".\G1_Results\extrinPrayer_pvalues.dta"
 append using ".\G1_Results\durel_pvalues.dta"
 
 
@@ -13819,6 +13823,130 @@ graph combine belRelCh_main belRelCh_int intExtTot_main intExtTot_int, imargin(0
 graph export ".\G1_Results\allData_pvalues.pdf", replace
 
 graph close _all
+
+
+** Save these p-values as CSV files
+list outcome exposure lr_p_main lr_p_int in 1/10
+
+keep outcome exp_num lr_p_main lr_p_int
+order outcome exp_num lr_p_main lr_p_int
+
+* Convert to wide format (need to edit outcomes strings so have no spaces)
+replace outcome = "Attend" if outcome == "Church attendance"
+replace outcome = "Extrin_fr" if outcome == "Extrinsic relig. (friends)"
+replace outcome = "Extrin_pr" if outcome == "Extrinsic relig. (prayer)"
+replace outcome = "Intrins" if outcome == "Intrinsic relig."
+replace outcome = "Religion" if outcome == "Religious affil."
+tab outcome
+
+reshape wide lr_p_main lr_p_int, i(exp_num) j (outcome) string
+
+order exp_num lr_p_mainBelief lr_p_intBelief lr_p_mainReligion lr_p_intReligion lr_p_mainAttend lr_p_intAttend lr_p_mainIntrins lr_p_intIntrins lr_p_mainExtrin_fr lr_p_intExtrin_fr lr_p_mainExtrin_pr lr_p_intExtrin_pr lr_p_mainDUREL lr_p_intDUREL
+
+format %9.5f lr_p_mainBelief-lr_p_intDUREL
+
+outsheet exp_num-lr_p_intDUREL using ".\G1_Results\pvalue_results.csv", comma replace
+
+
+** And how many exposures were associated with the outcome at both Bonferroni and standard alpha levels?
+
+* Belief in god - main effect
+count if lr_p_mainBelief < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainBelief < 0.05
+display (r(N) / _N) * 100
+
+* Belief in god - interaction
+count if lr_p_intBelief < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intBelief < 0.05
+display (r(N) / (_N - 1)) * 100
+
+* Religious affiliation - main effect
+count if lr_p_mainReligion < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainReligion < 0.05
+display (r(N) / _N) * 100
+
+* Religious affiliation - interaction
+count if lr_p_intReligion < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intReligion < 0.05
+display (r(N) / (_N - 1)) * 100
+
+* Church attendance - main effect
+count if lr_p_mainAttend < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainAttend < 0.05
+display (r(N) / _N) * 100
+
+* Church attendance - interaction
+count if lr_p_intAttend < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intAttend < 0.05
+display (r(N) / (_N - 1)) * 100
+
+* Intrinsic religiosity - main effect
+count if lr_p_mainIntrins < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainIntrins < 0.05
+display (r(N) / _N) * 100
+
+* Intrinsic religiosity - interaction
+count if lr_p_intIntrins < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intIntrins < 0.05
+display (r(N) / (_N - 1)) * 100
+
+* Extrinsic religiosity (friends) - main effect
+count if lr_p_mainExtrin_fr < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainExtrin_fr < 0.05
+display (r(N) / _N) * 100
+
+* Extrinsic religiosity (friends) - interaction
+count if lr_p_intExtrin_fr < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intExtrin_fr < 0.05
+display (r(N) / (_N - 1)) * 100
+
+* Extrinsic religiosity (prayer) - main effect
+count if lr_p_mainExtrin_pr < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainExtrin_pr < 0.05
+display (r(N) / _N) * 100
+
+* Extrinsic religiosity (prayer) - interaction
+count if lr_p_intExtrin_pr < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intExtrin_pr < 0.05
+display (r(N) / (_N - 1)) * 100
+
+* Total religiosity - main effect
+count if lr_p_mainDUREL < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainDUREL < 0.05
+display (r(N) / _N) * 100
+
+* Total religiosity - interaction
+count if lr_p_intDUREL < 0.05/(_N - 1)
+display (r(N) / (_N - 1)) * 100
+
+count if lr_p_intDUREL < 0.05
+display (r(N) / (_N - 1)) * 100
 
 
 *** Next, want to plot some of the actual results
@@ -13933,16 +14061,16 @@ sum lci uci if exposure == "nonWhiteEthnic" & outcome_level != "NA"
 
 twoway (scatter level_num coef if outcome == "Belief" & exposure == "nonWhiteEthnic", ///
 			col(black) msize(small) msym(D)) ///
-		(rspike lci uci level_num if outcome == "Belief" & exposure == "nonWhiteEthnic", ///
-			horizontal col(black)) ///
-		(scatter level_num coef if outcome == "Relig" & exposure == "nonWhiteEthnic", ///
-			col(black) msize(small) msym(D)) ///
-		(rspike lci uci level_num if outcome == "Relig" & exposure == "nonWhiteEthnic", ///
-			horizontal col(black)) ///
-		(scatter level_num coef if outcome == "Attend" & exposure == "nonWhiteEthnic", ///
-			col(black) msize(small) msym(D)) ///
-		(rspike lci uci level_num if outcome == "Attend" & exposure == "nonWhiteEthnic", ///
-			horizontal col(black)) ///
+		(rspike lci uci level_num if outcome == "Belief" & ///
+			exposure == "nonWhiteEthnic", horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & ///
+			exposure == "nonWhiteEthnic", col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & ///
+			exposure == "nonWhiteEthnic", horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & ///
+			exposure == "nonWhiteEthnic", col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & ///
+			exposure == "nonWhiteEthnic", horizontal col(black)) ///
 		(scatter level_num coef if outcome == "Intrinsic (cat)" & ///
 			exposure == "nonWhiteEthnic", col(black) msize(small) msym(D)) ///
 		(rspike lci uci level_num if outcome == "Intrinsic (cat)" & ///
@@ -13963,7 +14091,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == "nonWhiteEth
 		xtitle("Relative risk ratio (ref = White)") ///
 		title("Other than White ethnicity and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.2 0.3 0.5 1 2 3 5 10, labsize(small)) ///
+		xlabel(0.2 0.3 0.5 1 2 3 5 7, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(ethnic_cat, replace)
@@ -14008,7 +14136,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == "male", ///
 		xtitle("Relative risk ratio (ref = female)") ///
 		title("Male sex and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.4 0.6 0.8 1 1.5 2 3 4, labsize(small)) ///
+		xlabel(0.5 0.7 1 1.5 2 3, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(sex_cat, replace)
@@ -14089,7 +14217,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = Never married)") ///
 		title("Marital status and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.02 0.05 0.1 0.2 0.5 1 2 5 10 20, labsize(small)) ///
+		xlabel(0.1 0.2 0.5 1 2 5 10, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "Married" 15 "Widowed/Divorced/Separated")) ///
@@ -14229,7 +14357,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = CSE/None)") ///
 		title("Maternal education and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
-		xlabel(0.02 0.05 0.1 0.2 0.5 1 2 5 10 20 40, labsize(small)) ///
+		xlabel(0.05 0.1 0.2 0.5 1 2 5 10, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "Vocational" 15 "O-levels" 29 "A-levels" ///
@@ -14341,7 +14469,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = GCSE/None)") ///
 		title("Education and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
-		xlabel(0.06 0.1 0.2 0.5 1 2 5 10, labsize(small)) ///
+		xlabel(0.2 0.3 0.5 1 2 5, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "Vocational" 15 "AS/A levels" 29 "Degree") rows(1)) ///
@@ -14385,7 +14513,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (ref = Not a parent") ///
 		title("Parental status and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.35 0.5 0.7 1 1.5 2 3 4, labsize(small)) ///
+		xlabel(0.5 0.7 1 1.5 2, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(parent_cat, replace)
@@ -14428,7 +14556,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (ref = No FA") ///
 		title("Father absence and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.25 0.4 0.7 1 1.5 2 3 4 6, labsize(small)) ///
+		xlabel(0.4 0.7 1 1.5 2 3, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(FA_cat, replace)
@@ -14471,7 +14599,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per unit increase)") ///
 		title("Maternal age at birth and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.88 0.92 0.96 1 1.04 1.08 1.12, labsize(small)) ///
+		xlabel(0.9 0.95 1 1.05 1.1, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(mumAge_cat, replace)
@@ -14514,7 +14642,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per unit increase in IQ)") ///
 		title("Total IQ Age 8 and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.92 0.94 0.96 0.98 1 1.02 1.04, labsize(small)) ///
+		xlabel(0.94 0.96 0.98 1 1.02 1.04, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(iq8_cat, replace)
@@ -14557,7 +14685,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per unit increase in IQ)") ///
 		title("Total IQ Age 15 and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.92 0.94 0.96 0.98 1 1.02 1.04 1.06, labsize(small)) ///
+		xlabel(0.94 0.96 0.98 1 1.02 1.04 1.06, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(iq15_cat, replace)
@@ -14600,7 +14728,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per unit increase)") ///
 		title("Conscientiousness Age 13 and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.88 0.9 0.92 0.94 0.96 0.98 1 1.02 1.04 1.06 1.08 1.1, labsize(small)) ///
+		xlabel(0.92 0.94 0.96 0.98 1 1.02 1.04 1.06, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(cons13_cat, replace)
@@ -14643,7 +14771,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per unit increase)") ///
 		title("Emo. Recog. (triangles task) Age 13 and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.88 0.9 0.92 0.94 0.96 0.98 1 1.02 1.04 1.06 1.08, labsize(small)) ///
+		xlabel(0.92 0.94 0.96 0.98 1 1.02 1.04 1.06, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(tri13_cat, replace)
@@ -14782,7 +14910,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = 1/Least Deprived)") ///
 		title("IMD and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
-		xlabel(0.2 0.3 0.5 1 2 3 5 8, labsize(small)) ///
+		xlabel(0.33 0.5 1 2 3 4, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "2" 15 "3" 29 "4" 43 "5/Most dep.") rows(1)) ///
@@ -14893,7 +15021,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = Owned/Mortgaged)") ///
 		title("Housing status and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
-		xlabel(0.02 0.05 0.2 0.5 1 2 5 10 20, labsize(small)) ///
+		xlabel(0.05 0.2 0.5 1 2 5 7, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "Rented" 15 "Council/HA" 29 "Other") ///
@@ -15063,7 +15191,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = 0 moves)") ///
 		title("Residential mobility and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
-		xlabel(0.005 0.03 0.1 0.3 1 2 5 10 15, labsize(small)) ///
+		xlabel(0.02 0.1 0.3 1 2 5, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "1" 15 "2" 29 "3" 43 "4" 57 "5+") rows(1)) ///
@@ -15111,7 +15239,7 @@ twoway (scatter level_num coef_int if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per unit increase in IQ)") ///
 		title("IQ age 15*Sex Interaction and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.88 0.92 0.96 1 1.04 1.08, labsize(small)) ///
+		xlabel(0.92 0.96 1 1.04 1.08, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(iq15_int, replace)
@@ -15154,7 +15282,7 @@ twoway (scatter level_num coef_int if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per unit increase in agree.)") ///
 		title("Agreeableness*Sex Interaction and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.7 0.8 0.9 1 1.1 1.2 1.3 1.4, labsize(small)) ///
+		xlabel(0.8 0.9 1 1.1 1.2 1.3, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(agree13_int, replace)
@@ -15197,7 +15325,7 @@ twoway (scatter level_num coef_int if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per unit increase in log income)") ///
 		title("Household income*Sex Interaction and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.03 0.1 0.3 0.5 1 2 4 6, labsize(small)) ///
+		xlabel(0.1 0.3 0.5 1 2 4, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(income_int, replace)

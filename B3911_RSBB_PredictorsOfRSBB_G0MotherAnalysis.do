@@ -23,7 +23,8 @@ use "G0Mother_PredictorsOfRSBB_B3911.dta", clear
 *ssc install palettes, replace
 *ssc install colrspace, replace
 
-** And also install 'spost' commands for testing proportional odds assumption of ordinal regression models (to install 'spost', type 'search spost13' and install the 'spost13_ado' package)
+** Install 'grc1leg' to merge plots together with a single legend
+*ssc install grc1leg, replace
 
 
 **********************************************************************************
@@ -302,7 +303,7 @@ restore
 *** Start with belief in God/divine power - As is a unordered categorical variable, will use multinomial regression (with 'no' as baseline/reference category)
 tab d810, m
 
-** This will be quite complicated, as want to post results to file, but as exposures differ extracting the results will be variable specific. To adjust for multiple corrections will use conservative bonferroni adjustment when constructing confidence intervals and interpreting p-values - As 34 exposures, will use 99.85% confidence intervals (as this is 100 - 5/34) and a p-value threshold of 0.05/34 = 0.0015.
+** This will be quite complicated, as want to post results to file, but as exposures differ extracting the results will be variable specific. To adjust for multiple corrections will use conservative bonferroni adjustment when constructing confidence intervals and interpreting p-values - As 34 exposures, will a Bonferroni p-value threshold of 0.05/34 = 0.0015.
 display round(100 - 5/34, 0.01)
 display 0.05/34
 
@@ -325,7 +326,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'ageAtBirth' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAtBirth" {
-		mlogit d810 `var', baseoutcome(3) rrr level(99.85)
+		mlogit d810 `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -374,9 +375,9 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit d810 if `var' != ., baseoutcome(3) rrr level(99.85)
+		mlogit d810 if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit d810 `var', baseoutcome(3) rrr level(99.85)
+		mlogit d810 `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
@@ -392,7 +393,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
 		
-		mlogit d810 ageAtBirth `var', baseoutcome(3) rrr level(99.85)
+		mlogit d810 ageAtBirth `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -407,7 +408,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		local p = res[4,2]
 		
 		// Now for interaction model
-		mlogit d810 c.ageAtBirth##c.`var', baseoutcome(3) rrr level(99.85)
+		mlogit d810 c.ageAtBirth##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,3]
@@ -422,7 +423,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (2/not sure)
-		mlogit d810 ageAtBirth `var', baseoutcome(3) rrr level(99.85)
+		mlogit d810 ageAtBirth `var', baseoutcome(3) rrr
 		
 		local outcome_level = "Not sure (ref = No)"
 		local exp_level = "NA"
@@ -434,7 +435,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		local p = res[4,5]
 				
 		// Now for interaction model
-		mlogit d810 c.ageAtBirth##c.`var', baseoutcome(3) rrr level(99.85)
+		mlogit d810 c.ageAtBirth##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -449,16 +450,16 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit d810 ageAtBirth if `var' != ., baseoutcome(3) rrr level(99.85)
+		mlogit d810 ageAtBirth if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit d810 ageAtBirth `var', baseoutcome(3) rrr level(99.85)
+		mlogit d810 ageAtBirth `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit d810 c.ageAtBirth##c.`var', baseoutcome(3) rrr level(99.85)
+		mlogit d810 c.ageAtBirth##c.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -478,7 +479,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -501,7 +502,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,6]
@@ -516,7 +517,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -527,7 +528,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,8]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -542,7 +543,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -565,7 +566,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -580,7 +581,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -591,7 +592,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,9]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,15]
@@ -611,7 +612,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -634,7 +635,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -649,7 +650,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -660,7 +661,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,9]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -676,7 +677,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -699,7 +700,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -714,7 +715,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -725,7 +726,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,10]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,18]
@@ -741,7 +742,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -764,7 +765,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -779,7 +780,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -790,7 +791,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -810,7 +811,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -839,7 +840,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -854,7 +855,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -865,7 +866,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,10]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -881,7 +882,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -910,7 +911,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -925,7 +926,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -936,7 +937,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -952,7 +953,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -981,7 +982,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -996,7 +997,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1007,7 +1008,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,12]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -1023,7 +1024,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1052,7 +1053,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -1067,7 +1068,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1078,7 +1079,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -1098,7 +1099,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1118,7 +1119,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -1133,7 +1134,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1144,7 +1145,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -1160,7 +1161,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1180,7 +1181,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -1195,7 +1196,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1206,7 +1207,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,12]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -1222,7 +1223,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1242,7 +1243,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -1257,7 +1258,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1268,7 +1269,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -1284,7 +1285,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1304,7 +1305,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -1319,7 +1320,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1330,7 +1331,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -1346,7 +1347,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1366,7 +1367,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,7]
 		
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,13]
@@ -1381,7 +1382,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -1392,7 +1393,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -1410,16 +1411,16 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit d810 ageAtBirth if `var' != ., baseoutcome(3) rrr level(99.85)
+		mlogit d810 ageAtBirth if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+		mlogit d810 ageAtBirth i.`var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+		mlogit d810 c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -1465,7 +1466,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'ageAtBirth' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAtBirth" {
-		mlogit d813_grp `var', baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -1514,9 +1515,9 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit d813_grp if `var' != ., baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit d813_grp `var', baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
@@ -1532,7 +1533,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
 		
-		mlogit d813_grp ageAtBirth `var', baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp ageAtBirth `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -1547,7 +1548,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		local p = res[4,2]
 		
 		// Now for interaction model
-		mlogit d813_grp c.ageAtBirth##c.`var', baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp c.ageAtBirth##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,3]
@@ -1562,7 +1563,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (2/Other)
-		mlogit d813_grp ageAtBirth `var', baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp ageAtBirth `var', baseoutcome(3) rrr
 		
 		local outcome_level = "Other (ref = None)"
 		local exp_level = "NA"
@@ -1574,7 +1575,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		local p = res[4,5]
 				
 		// Now for interaction model
-		mlogit d813_grp c.ageAtBirth##c.`var', baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp c.ageAtBirth##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -1589,16 +1590,16 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit d813_grp ageAtBirth if `var' != ., baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp ageAtBirth if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit d813_grp ageAtBirth `var', baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp ageAtBirth `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit d813_grp c.ageAtBirth##c.`var', baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp c.ageAtBirth##c.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -1618,7 +1619,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1641,7 +1642,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,6]
@@ -1656,7 +1657,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -1667,7 +1668,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,8]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -1682,7 +1683,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1705,7 +1706,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -1720,7 +1721,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -1731,7 +1732,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,9]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,15]
@@ -1751,7 +1752,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1774,7 +1775,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -1789,7 +1790,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -1800,7 +1801,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,9]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -1816,7 +1817,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1839,7 +1840,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -1854,7 +1855,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -1865,7 +1866,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,10]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,18]
@@ -1881,7 +1882,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1904,7 +1905,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -1919,7 +1920,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -1930,7 +1931,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -1950,7 +1951,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -1979,7 +1980,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -1994,7 +1995,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2005,7 +2006,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,10]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -2021,7 +2022,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2050,7 +2051,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -2065,7 +2066,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2076,7 +2077,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -2092,7 +2093,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2121,7 +2122,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -2136,7 +2137,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2147,7 +2148,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,12]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -2163,7 +2164,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2192,7 +2193,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -2207,7 +2208,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2218,7 +2219,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -2238,7 +2239,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2258,7 +2259,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -2273,7 +2274,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2284,7 +2285,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -2300,7 +2301,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2320,7 +2321,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -2335,7 +2336,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2346,7 +2347,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,12]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -2362,7 +2363,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2382,7 +2383,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -2397,7 +2398,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2408,7 +2409,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -2424,7 +2425,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2444,7 +2445,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -2459,7 +2460,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2470,7 +2471,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -2486,7 +2487,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -2506,7 +2507,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,7]
 		
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,13]
@@ -2521,7 +2522,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -2532,7 +2533,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -2550,16 +2551,16 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit d813_grp ageAtBirth if `var' != ., baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp ageAtBirth if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp ageAtBirth i.`var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr level(99.85)
+		mlogit d813_grp c.ageAtBirth##i.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -2590,10 +2591,10 @@ tab d816_rev
 
 
 ** Quick test of whether proportional odds assumption been violated in most basic model (with just age at birth). Ah, it has been violated, and gets worse if add in additional predictors. 
-ologit d816_rev ageAtBirth, or level(99.85)
+ologit d816_rev ageAtBirth, or
 brant, detail
 
-ologit d816_rev ageAtBirth i.IMD, or level(99.85)
+ologit d816_rev ageAtBirth i.IMD, or
 brant, detail
 
 
@@ -2617,7 +2618,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'ageAtBirth' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAtBirth" {
-		mlogit d816_rev `var', baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev `var', baseoutcome(0) rrr
 		
 		local n = e(N)
 		
@@ -2688,9 +2689,9 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit d816_rev if `var' != ., baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev if `var' != ., baseoutcome(0) rrr
 		est store base
-		mlogit d816_rev `var', baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev `var', baseoutcome(0) rrr
 		est store main
 		
 		lrtest base main
@@ -2706,7 +2707,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
 		
-		mlogit d816_rev ageAtBirth `var', baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev ageAtBirth `var', baseoutcome(0) rrr
 		
 		local n = e(N)
 		
@@ -2721,7 +2722,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		local p = res[4,5]
 		
 		// Now for interaction model
-		mlogit d816_rev c.ageAtBirth##c.`var', baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev c.ageAtBirth##c.`var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -2736,7 +2737,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (2/once month)
-		mlogit d816_rev ageAtBirth `var', baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev ageAtBirth `var', baseoutcome(0) rrr
 		
 		local outcome_level = "Min once month (ref = Not at all)"
 		local exp_level = "NA"
@@ -2748,7 +2749,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		local p = res[4,8]
 				
 		// Now for interaction model
-		mlogit d816_rev c.ageAtBirth##c.`var', baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev c.ageAtBirth##c.`var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,11]
@@ -2763,7 +2764,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (3/once week)
-		mlogit d816_rev ageAtBirth `var', baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev ageAtBirth `var', baseoutcome(0) rrr
 		
 		local outcome_level = "Min once week (ref = Not at all)"
 		local exp_level = "NA"
@@ -2775,7 +2776,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		local p = res[4,11]
 				
 		// Now for interaction model
-		mlogit d816_rev c.ageAtBirth##c.`var', baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev c.ageAtBirth##c.`var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,15]
@@ -2790,16 +2791,16 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit d816_rev ageAtBirth if `var' != ., baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev ageAtBirth if `var' != ., baseoutcome(0) rrr
 		est store base
-		mlogit d816_rev ageAtBirth `var', baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev ageAtBirth `var', baseoutcome(0) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit d816_rev c.ageAtBirth##c.`var', baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev c.ageAtBirth##c.`var', baseoutcome(0) rrr
 		est store inter
 		
 		lrtest main inter
@@ -2819,7 +2820,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -2842,7 +2843,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,8]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -2857,7 +2858,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -2868,7 +2869,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -2883,7 +2884,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -2894,7 +2895,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,30]
@@ -2910,7 +2911,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -2933,7 +2934,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,9]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,15]
@@ -2948,7 +2949,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -2959,7 +2960,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -2974,7 +2975,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -2985,7 +2986,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,31]
@@ -3005,7 +3006,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3028,7 +3029,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,9]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -3043,7 +3044,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3054,7 +3055,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -3069,7 +3070,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -3080,7 +3081,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -3096,7 +3097,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3119,7 +3120,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,18]
@@ -3134,7 +3135,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3145,7 +3146,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -3160,7 +3161,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -3171,7 +3172,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -3187,7 +3188,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3210,7 +3211,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -3225,7 +3226,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3236,7 +3237,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -3251,7 +3252,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -3262,7 +3263,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -3282,7 +3283,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3311,7 +3312,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -3326,7 +3327,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3337,7 +3338,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,32]
@@ -3352,7 +3353,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (2/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -3363,7 +3364,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,24]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,44]
@@ -3379,7 +3380,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3408,7 +3409,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -3423,7 +3424,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3434,7 +3435,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,33]
@@ -3449,7 +3450,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -3460,7 +3461,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,45]
@@ -3476,7 +3477,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3505,7 +3506,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -3520,7 +3521,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3531,7 +3532,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,34]
@@ -3546,7 +3547,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -3557,7 +3558,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,46]
@@ -3573,7 +3574,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3602,7 +3603,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -3617,7 +3618,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3628,7 +3629,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -3643,7 +3644,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -3654,7 +3655,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,47]
@@ -3674,7 +3675,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3694,7 +3695,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -3709,7 +3710,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3720,7 +3721,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -3735,7 +3736,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -3746,7 +3747,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,51]
@@ -3762,7 +3763,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3782,7 +3783,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -3797,7 +3798,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3808,7 +3809,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -3823,7 +3824,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -3834,7 +3835,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,28]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,52]
@@ -3850,7 +3851,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3870,7 +3871,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -3885,7 +3886,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3896,7 +3897,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -3911,7 +3912,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -3922,7 +3923,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,53]
@@ -3938,7 +3939,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -3958,7 +3959,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -3973,7 +3974,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -3984,7 +3985,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,40]
@@ -3999,7 +4000,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -4010,7 +4011,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,30]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,54]
@@ -4026,7 +4027,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -4046,7 +4047,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -4061,7 +4062,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -4072,7 +4073,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -4087,7 +4088,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/once week)
-			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -4098,7 +4099,7 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,55]
@@ -4116,16 +4117,16 @@ foreach var of varlist ageAtBirth nonWhiteEthnic maritalStatus mobility rural pa
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit d816_rev ageAtBirth if `var' != ., baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev ageAtBirth if `var' != ., baseoutcome(0) rrr
 		est store base
-		mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev ageAtBirth i.`var', baseoutcome(0) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr level(99.85)
+		mlogit d816_rev c.ageAtBirth##i.`var', baseoutcome(0) rrr
 		est store inter
 		
 		lrtest main inter
@@ -4172,7 +4173,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'age' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		regress Y3153 `var', level(99.85)
+		regress Y3153 `var',
 		
 		local n = e(N)
 		
@@ -4199,9 +4200,9 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// And finally run the likelihood ratio tests
-		regress Y3153 if `var' != ., level(99.85)
+		regress Y3153 if `var' != .,
 		est store base
-		regress Y3153 `var', level(99.85)
+		regress Y3153 `var',
 		est store main
 		
 		lrtest base main
@@ -4217,7 +4218,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
 		
-		regress Y3153 ageAt28 `var', level(99.85)
+		regress Y3153 ageAt28 `var',
 		
 		local n = e(N)
 		
@@ -4232,7 +4233,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,2]
 		
 		// Now for interaction model
-		regress Y3153 c.ageAt28##c.`var', level(99.85)
+		regress Y3153 c.ageAt28##c.`var',
 		
 		matrix res = r(table)
 		local coef_int = res[1,3]
@@ -4248,16 +4249,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 		// And finally run the likelihood ratio tests
-		regress Y3153 ageAt28 if `var' != ., level(99.85)
+		regress Y3153 ageAt28 if `var' != .,
 		est store base
-		regress Y3153 ageAt28 `var', level(99.85)
+		regress Y3153 ageAt28 `var',
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		regress Y3153 c.ageAt28##c.`var', level(99.85)
+		regress Y3153 c.ageAt28##c.`var',
 		est store inter
 		
 		lrtest main inter
@@ -4277,7 +4278,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 		
@@ -4300,7 +4301,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,6]
@@ -4316,7 +4317,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 						
 			// Move to the next category of the exposure (category 3)
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -4336,7 +4337,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -4356,7 +4357,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 		
@@ -4379,7 +4380,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -4395,7 +4396,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 						
 			// Move to the next category of the exposure (category 3)
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -4415,7 +4416,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -4431,7 +4432,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 						
 			// Move to the next category of the exposure (category 4)
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -4451,7 +4452,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -4471,7 +4472,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 		
@@ -4500,7 +4501,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -4516,7 +4517,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 						
 			// Move to the next category of the exposure (category 3)
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -4542,7 +4543,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -4558,7 +4559,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 						
 			
 			// Move to the next category of the exposure (category 4)
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -4584,7 +4585,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -4600,7 +4601,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 							
 			// Move to the next category of the exposure (category 5)
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -4626,7 +4627,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,6]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -4646,7 +4647,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 		
@@ -4666,7 +4667,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -4682,7 +4683,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -4699,7 +4700,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -4715,7 +4716,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -4732,7 +4733,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -4748,7 +4749,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 5)
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 		
@@ -4765,7 +4766,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,6]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -4781,7 +4782,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 							
 			
 			// Move to the next category of the exposure (category 6)
-			regress Y3153 ageAt28 i.`var', level(99.85)
+			regress Y3153 ageAt28 i.`var',
 		
 			local n = e(N)
 
@@ -4798,7 +4799,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,7]
 		
 			// Now for interaction model
-			regress Y3153 c.ageAt28##i.`var', level(99.85)
+			regress Y3153 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,13]
@@ -4816,16 +4817,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		regress Y3153 ageAt28 if `var' != ., level(99.85)
+		regress Y3153 ageAt28 if `var' != .,
 		est store base
-		regress Y3153 ageAt28 i.`var', level(99.85)
+		regress Y3153 ageAt28 i.`var',
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		regress Y3153 c.ageAt28##i.`var', level(99.85)
+		regress Y3153 c.ageAt28##i.`var',
 		est store inter
 		
 		lrtest main inter
@@ -4861,7 +4862,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'age' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit Y3153_cat `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -4932,9 +4933,9 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3153_cat if `var' != ., baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit Y3153_cat `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
@@ -4950,7 +4951,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
 		
-		mlogit Y3153_cat ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat ageAt28 `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -4965,7 +4966,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,5]
 		
 		// Now for interaction model
-		mlogit Y3153_cat c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -4980,7 +4981,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (3/high)
-		mlogit Y3153_cat ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat ageAt28 `var', baseoutcome(1) rrr
 		
 		local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		local exp_level = "NA"
@@ -4992,7 +4993,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,8]
 				
 		// Now for interaction model
-		mlogit Y3153_cat c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,11]
@@ -5007,7 +5008,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (4/highest)
-		mlogit Y3153_cat ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat ageAt28 `var', baseoutcome(1) rrr
 		
 		local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		local exp_level = "NA"
@@ -5019,7 +5020,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,11]
 				
 		// Now for interaction model
-		mlogit Y3153_cat c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,15]
@@ -5034,16 +5035,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3153_cat ageAt28 if `var' != ., baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat ageAt28 if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit Y3153_cat ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat ageAt28 `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3153_cat c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat c.ageAt28##c.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -5063,7 +5064,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5086,7 +5087,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,8]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -5101,7 +5102,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5112,7 +5113,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -5127,7 +5128,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5138,7 +5139,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,30]
@@ -5154,7 +5155,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5177,7 +5178,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,15]
@@ -5192,7 +5193,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5203,7 +5204,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -5218,7 +5219,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5229,7 +5230,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,31]
@@ -5249,7 +5250,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5272,7 +5273,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -5287,7 +5288,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5298,7 +5299,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -5313,7 +5314,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5324,7 +5325,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -5340,7 +5341,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5363,7 +5364,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,18]
@@ -5378,7 +5379,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5389,7 +5390,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -5404,7 +5405,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5415,7 +5416,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -5431,7 +5432,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5454,7 +5455,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -5469,7 +5470,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5480,7 +5481,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -5495,7 +5496,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5506,7 +5507,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -5526,7 +5527,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5555,7 +5556,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -5570,7 +5571,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5581,7 +5582,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,32]
@@ -5596,7 +5597,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5607,7 +5608,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,24]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,44]
@@ -5623,7 +5624,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5652,7 +5653,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -5667,7 +5668,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5678,7 +5679,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,33]
@@ -5693,7 +5694,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5704,7 +5705,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,45]
@@ -5720,7 +5721,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5749,7 +5750,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -5764,7 +5765,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5775,7 +5776,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,34]
@@ -5790,7 +5791,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5801,7 +5802,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,46]
@@ -5817,7 +5818,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5846,7 +5847,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -5861,7 +5862,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5872,7 +5873,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -5887,7 +5888,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5898,7 +5899,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,47]
@@ -5918,7 +5919,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -5938,7 +5939,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -5953,7 +5954,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -5964,7 +5965,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -5979,7 +5980,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -5990,7 +5991,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,51]
@@ -6006,7 +6007,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6026,7 +6027,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -6041,7 +6042,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6052,7 +6053,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -6067,7 +6068,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6078,7 +6079,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,28]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,52]
@@ -6094,7 +6095,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6114,7 +6115,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -6129,7 +6130,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6140,7 +6141,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -6155,7 +6156,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6166,7 +6167,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,53]
@@ -6182,7 +6183,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6202,7 +6203,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -6217,7 +6218,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6228,7 +6229,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,40]
@@ -6243,7 +6244,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6254,7 +6255,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,30]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,54]
@@ -6270,7 +6271,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6290,7 +6291,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -6305,7 +6306,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/high)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "High IR/8-11 (ref = lowest/3)"
 		
@@ -6316,7 +6317,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -6331,7 +6332,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (4/highest)
-			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Highest IR/12-15 (ref = lowest/3)"
 		
@@ -6342,7 +6343,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,55]
@@ -6360,16 +6361,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit Y3153_cat ageAt28 if `var' != ., baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat ageAt28 if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat ageAt28 i.`var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3153_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -6422,7 +6423,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'age' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit Y3160_new `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -6493,9 +6494,9 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3160_new if `var' != ., baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit Y3160_new `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
@@ -6511,7 +6512,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
 		
-		mlogit Y3160_new ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new ageAt28 `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -6526,7 +6527,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,5]
 		
 		// Now for interaction model
-		mlogit Y3160_new c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -6541,7 +6542,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (3/disagree)
-		mlogit Y3160_new ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new ageAt28 `var', baseoutcome(1) rrr
 		
 		local outcome_level = "Disagree ER (ref = Agree)"
 		local exp_level = "NA"
@@ -6553,7 +6554,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,8]
 				
 		// Now for interaction model
-		mlogit Y3160_new c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,11]
@@ -6568,7 +6569,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (4/NA)
-		mlogit Y3160_new ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new ageAt28 `var', baseoutcome(1) rrr
 		
 		local outcome_level = "Not applicable ER (ref = Agree)"
 		local exp_level = "NA"
@@ -6580,7 +6581,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,11]
 				
 		// Now for interaction model
-		mlogit Y3160_new c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,15]
@@ -6595,16 +6596,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3160_new ageAt28 if `var' != ., baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new ageAt28 if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit Y3160_new ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new ageAt28 `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3160_new c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new c.ageAt28##c.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -6624,7 +6625,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6647,7 +6648,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,8]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -6662,7 +6663,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -6673,7 +6674,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -6688,7 +6689,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -6699,7 +6700,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,30]
@@ -6715,7 +6716,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6738,7 +6739,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,15]
@@ -6753,7 +6754,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -6764,7 +6765,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -6779,7 +6780,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -6790,7 +6791,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,31]
@@ -6810,7 +6811,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6833,7 +6834,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -6848,7 +6849,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -6859,7 +6860,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -6874,7 +6875,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -6885,7 +6886,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -6901,7 +6902,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -6924,7 +6925,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,18]
@@ -6939,7 +6940,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -6950,7 +6951,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -6965,7 +6966,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -6976,7 +6977,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -6992,7 +6993,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7015,7 +7016,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -7030,7 +7031,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7041,7 +7042,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -7056,7 +7057,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7067,7 +7068,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -7087,7 +7088,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7116,7 +7117,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -7131,7 +7132,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7142,7 +7143,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,32]
@@ -7157,7 +7158,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7168,7 +7169,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,24]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,44]
@@ -7184,7 +7185,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7213,7 +7214,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -7228,7 +7229,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7239,7 +7240,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,33]
@@ -7254,7 +7255,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7265,7 +7266,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,45]
@@ -7281,7 +7282,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7310,7 +7311,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -7325,7 +7326,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7336,7 +7337,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,34]
@@ -7351,7 +7352,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7362,7 +7363,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,46]
@@ -7378,7 +7379,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7407,7 +7408,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -7422,7 +7423,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7433,7 +7434,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -7448,7 +7449,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7459,7 +7460,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,47]
@@ -7479,7 +7480,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7499,7 +7500,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -7514,7 +7515,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7525,7 +7526,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -7540,7 +7541,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7551,7 +7552,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,51]
@@ -7567,7 +7568,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7587,7 +7588,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -7602,7 +7603,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7613,7 +7614,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -7628,7 +7629,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7639,7 +7640,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,28]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,52]
@@ -7655,7 +7656,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7675,7 +7676,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -7690,7 +7691,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7701,7 +7702,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -7716,7 +7717,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7727,7 +7728,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,53]
@@ -7743,7 +7744,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7763,7 +7764,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -7778,7 +7779,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7789,7 +7790,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,40]
@@ -7804,7 +7805,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7815,7 +7816,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,30]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,54]
@@ -7831,7 +7832,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -7851,7 +7852,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -7866,7 +7867,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -7877,7 +7878,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -7892,7 +7893,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (4/NA)
-			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -7903,7 +7904,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,55]
@@ -7921,16 +7922,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit Y3160_new ageAt28 if `var' != ., baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new ageAt28 if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new ageAt28 i.`var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3160_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -7966,7 +7967,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'age' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit Y3170_new `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -8037,9 +8038,9 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3170_new if `var' != ., baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit Y3170_new `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
@@ -8055,7 +8056,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
 		
-		mlogit Y3170_new ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new ageAt28 `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -8070,7 +8071,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,5]
 		
 		// Now for interaction model
-		mlogit Y3170_new c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -8085,7 +8086,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (3/disagree)
-		mlogit Y3170_new ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new ageAt28 `var', baseoutcome(1) rrr
 		
 		local outcome_level = "Disagree ER (ref = Agree)"
 		local exp_level = "NA"
@@ -8097,7 +8098,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,8]
 				
 		// Now for interaction model
-		mlogit Y3170_new c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,11]
@@ -8112,7 +8113,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (4/NA)
-		mlogit Y3170_new ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new ageAt28 `var', baseoutcome(1) rrr
 		
 		local outcome_level = "Not applicable ER (ref = Agree)"
 		local exp_level = "NA"
@@ -8124,7 +8125,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,11]
 				
 		// Now for interaction model
-		mlogit Y3170_new c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,15]
@@ -8139,16 +8140,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3170_new ageAt28 if `var' != ., baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new ageAt28 if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit Y3170_new ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new ageAt28 `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3170_new c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new c.ageAt28##c.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -8168,7 +8169,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8191,7 +8192,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,8]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -8206,7 +8207,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8217,7 +8218,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -8232,7 +8233,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8243,7 +8244,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,30]
@@ -8259,7 +8260,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8282,7 +8283,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,15]
@@ -8297,7 +8298,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8308,7 +8309,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -8323,7 +8324,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8334,7 +8335,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,31]
@@ -8354,7 +8355,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8377,7 +8378,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -8392,7 +8393,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8403,7 +8404,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -8418,7 +8419,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8429,7 +8430,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -8445,7 +8446,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8468,7 +8469,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,18]
@@ -8483,7 +8484,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8494,7 +8495,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -8509,7 +8510,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8520,7 +8521,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -8536,7 +8537,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8559,7 +8560,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -8574,7 +8575,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8585,7 +8586,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -8600,7 +8601,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8611,7 +8612,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -8631,7 +8632,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8660,7 +8661,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -8675,7 +8676,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8686,7 +8687,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,32]
@@ -8701,7 +8702,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8712,7 +8713,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,24]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,44]
@@ -8728,7 +8729,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8757,7 +8758,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -8772,7 +8773,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8783,7 +8784,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,33]
@@ -8798,7 +8799,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8809,7 +8810,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,45]
@@ -8825,7 +8826,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8854,7 +8855,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -8869,7 +8870,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8880,7 +8881,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,34]
@@ -8895,7 +8896,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -8906,7 +8907,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,46]
@@ -8922,7 +8923,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -8951,7 +8952,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -8966,7 +8967,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -8977,7 +8978,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -8992,7 +8993,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9003,7 +9004,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,47]
@@ -9023,7 +9024,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9043,7 +9044,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -9058,7 +9059,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9069,7 +9070,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -9084,7 +9085,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9095,7 +9096,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,51]
@@ -9111,7 +9112,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9131,7 +9132,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -9146,7 +9147,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9157,7 +9158,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -9172,7 +9173,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9183,7 +9184,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,28]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,52]
@@ -9199,7 +9200,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9219,7 +9220,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -9234,7 +9235,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9245,7 +9246,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -9260,7 +9261,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9271,7 +9272,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,53]
@@ -9287,7 +9288,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9307,7 +9308,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -9322,7 +9323,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9333,7 +9334,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,40]
@@ -9348,7 +9349,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9359,7 +9360,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,30]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,54]
@@ -9375,7 +9376,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -9395,7 +9396,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -9410,7 +9411,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/disagree)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Disagree ER (ref = Agree)"
 		
@@ -9421,7 +9422,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -9436,7 +9437,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (4/NA)
-			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "Not applicable ER (ref = Agree)"
 		
@@ -9447,7 +9448,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,55]
@@ -9465,16 +9466,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit Y3170_new ageAt28 if `var' != ., baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new ageAt28 if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new ageAt28 i.`var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3170_new c.ageAt28##i.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -9519,7 +9520,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'age' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		regress Y3155 `var', level(99.85)
+		regress Y3155 `var',
 		
 		local n = e(N)
 		
@@ -9546,9 +9547,9 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// And finally run the likelihood ratio tests
-		regress Y3155 if `var' != ., level(99.85)
+		regress Y3155 if `var' != .,
 		est store base
-		regress Y3155 `var', level(99.85)
+		regress Y3155 `var',
 		est store main
 		
 		lrtest base main
@@ -9564,7 +9565,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
 		
-		regress Y3155 ageAt28 `var', level(99.85)
+		regress Y3155 ageAt28 `var',
 		
 		local n = e(N)
 		
@@ -9579,7 +9580,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,2]
 		
 		// Now for interaction model
-		regress Y3155 c.ageAt28##c.`var', level(99.85)
+		regress Y3155 c.ageAt28##c.`var',
 		
 		matrix res = r(table)
 		local coef_int = res[1,3]
@@ -9595,16 +9596,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 		// And finally run the likelihood ratio tests
-		regress Y3155 ageAt28 if `var' != ., level(99.85)
+		regress Y3155 ageAt28 if `var' != .,
 		est store base
-		regress Y3155 ageAt28 `var', level(99.85)
+		regress Y3155 ageAt28 `var',
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		regress Y3155 c.ageAt28##c.`var', level(99.85)
+		regress Y3155 c.ageAt28##c.`var',
 		est store inter
 		
 		lrtest main inter
@@ -9624,7 +9625,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 		
@@ -9647,7 +9648,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,6]
@@ -9663,7 +9664,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 						
 			// Move to the next category of the exposure (category 3)
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -9683,7 +9684,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -9703,7 +9704,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 		
@@ -9726,7 +9727,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -9742,7 +9743,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 						
 			// Move to the next category of the exposure (category 3)
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -9762,7 +9763,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -9778,7 +9779,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 						
 			// Move to the next category of the exposure (category 4)
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -9798,7 +9799,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -9818,7 +9819,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 		
@@ -9847,7 +9848,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -9863,7 +9864,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 						
 			// Move to the next category of the exposure (category 3)
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -9889,7 +9890,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -9905,7 +9906,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 						
 			
 			// Move to the next category of the exposure (category 4)
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -9931,7 +9932,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -9947,7 +9948,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 							
 			// Move to the next category of the exposure (category 5)
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -9973,7 +9974,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,6]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -9993,7 +9994,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 		
@@ -10013,7 +10014,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -10029,7 +10030,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -10046,7 +10047,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -10062,7 +10063,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 			
@@ -10079,7 +10080,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,5]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -10095,7 +10096,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 5)
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 		
@@ -10112,7 +10113,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,6]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -10128,7 +10129,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 							
 			
 			// Move to the next category of the exposure (category 6)
-			regress Y3155 ageAt28 i.`var', level(99.85)
+			regress Y3155 ageAt28 i.`var',
 		
 			local n = e(N)
 
@@ -10145,7 +10146,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,7]
 		
 			// Now for interaction model
-			regress Y3155 c.ageAt28##i.`var', level(99.85)
+			regress Y3155 c.ageAt28##i.`var',
 		
 			matrix res = r(table)
 			local coef_int = res[1,13]
@@ -10163,16 +10164,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		regress Y3155 ageAt28 if `var' != ., level(99.85)
+		regress Y3155 ageAt28 if `var' != .,
 		est store base
-		regress Y3155 ageAt28 i.`var', level(99.85)
+		regress Y3155 ageAt28 i.`var',
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		regress Y3155 c.ageAt28##i.`var', level(99.85)
+		regress Y3155 c.ageAt28##i.`var',
 		est store inter
 		
 		lrtest main inter
@@ -10208,7 +10209,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'age' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit Y3155_cat `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -10301,9 +10302,9 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3155_cat if `var' != ., baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit Y3155_cat `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
@@ -10319,7 +10320,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
 		
-		mlogit Y3155_cat ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat ageAt28 `var', baseoutcome(1) rrr
 		
 		local n = e(N)
 		
@@ -10334,7 +10335,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,5]
 		
 		// Now for interaction model
-		mlogit Y3155_cat c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -10349,7 +10350,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (3/11-15 DUREL)
-		mlogit Y3155_cat ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat ageAt28 `var', baseoutcome(1) rrr
 		
 		local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		local exp_level = "NA"
@@ -10361,7 +10362,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,8]
 				
 		// Now for interaction model
-		mlogit Y3155_cat c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,11]
@@ -10376,7 +10377,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (4/16-20 DUREL)
-		mlogit Y3155_cat ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat ageAt28 `var', baseoutcome(1) rrr
 		
 		local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		local exp_level = "NA"
@@ -10388,7 +10389,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,11]
 				
 		// Now for interaction model
-		mlogit Y3155_cat c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,15]
@@ -10403,7 +10404,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (5/21-26 DUREL)
-		mlogit Y3155_cat ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat ageAt28 `var', baseoutcome(1) rrr
 		
 		local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		local exp_level = "NA"
@@ -10415,7 +10416,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,14]
 				
 		// Now for interaction model
-		mlogit Y3155_cat c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat c.ageAt28##c.`var', baseoutcome(1) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,19]
@@ -10430,16 +10431,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3155_cat ageAt28 if `var' != ., baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat ageAt28 if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit Y3155_cat ageAt28 `var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat ageAt28 `var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3155_cat c.ageAt28##c.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat c.ageAt28##c.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -10459,7 +10460,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -10482,7 +10483,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,8]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -10497,7 +10498,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -10508,7 +10509,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -10523,7 +10524,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -10534,7 +10535,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,30]
@@ -10549,7 +10550,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -10560,7 +10561,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -10576,7 +10577,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -10599,7 +10600,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,15]
@@ -10614,7 +10615,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -10625,7 +10626,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -10640,7 +10641,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -10651,7 +10652,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,31]
@@ -10666,7 +10667,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 				// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -10677,7 +10678,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,24]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -10697,7 +10698,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -10720,7 +10721,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -10735,7 +10736,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -10746,7 +10747,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -10761,7 +10762,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -10772,7 +10773,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -10787,7 +10788,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -10798,7 +10799,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,47]
@@ -10814,7 +10815,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -10837,7 +10838,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,18]
@@ -10852,7 +10853,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -10863,7 +10864,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -10878,7 +10879,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -10889,7 +10890,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -10904,7 +10905,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -10915,7 +10916,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,28]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,48]
@@ -10931,7 +10932,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -10954,7 +10955,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -10969,7 +10970,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -10980,7 +10981,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -10995,7 +10996,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11006,7 +11007,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -11021,7 +11022,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11032,7 +11033,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,49]
@@ -11052,7 +11053,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11081,7 +11082,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -11096,7 +11097,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11107,7 +11108,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,32]
@@ -11122,7 +11123,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11133,7 +11134,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,24]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,44]
@@ -11148,7 +11149,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11159,7 +11160,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,56]
@@ -11175,7 +11176,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11204,7 +11205,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -11219,7 +11220,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11230,7 +11231,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,33]
@@ -11245,7 +11246,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11256,7 +11257,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,45]
@@ -11271,7 +11272,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11282,7 +11283,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,32]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,57]
@@ -11298,7 +11299,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11327,7 +11328,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -11342,7 +11343,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11353,7 +11354,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,34]
@@ -11368,7 +11369,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11379,7 +11380,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,46]
@@ -11394,7 +11395,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11405,7 +11406,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,33]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,58]
@@ -11421,7 +11422,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11450,7 +11451,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -11465,7 +11466,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11476,7 +11477,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -11491,7 +11492,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11502,7 +11503,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,47]
@@ -11517,7 +11518,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11528,7 +11529,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,34]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,59]
@@ -11548,7 +11549,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11568,7 +11569,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -11583,7 +11584,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11594,7 +11595,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -11609,7 +11610,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11620,7 +11621,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,51]
@@ -11635,7 +11636,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11646,7 +11647,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,35]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,65]
@@ -11662,7 +11663,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11682,7 +11683,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -11697,7 +11698,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11708,7 +11709,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -11723,7 +11724,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11734,7 +11735,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,28]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,52]
@@ -11749,7 +11750,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11760,7 +11761,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,36]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,66]
@@ -11776,7 +11777,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11796,7 +11797,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -11811,7 +11812,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11822,7 +11823,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -11837,7 +11838,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11848,7 +11849,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,53]
@@ -11863,7 +11864,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11874,7 +11875,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,37]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,67]
@@ -11890,7 +11891,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -11910,7 +11911,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -11925,7 +11926,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -11936,7 +11937,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,40]
@@ -11951,7 +11952,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -11962,7 +11963,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,30]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,54]
@@ -11977,7 +11978,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -11988,7 +11989,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,38]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,68]
@@ -12004,7 +12005,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local n = e(N)
 		
@@ -12024,7 +12025,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -12039,7 +12040,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/11-15 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "11-15 DUREL (ref = lowest/5)"
 		
@@ -12050,7 +12051,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -12065,7 +12066,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (4/16-20 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "16-20 DUREL (ref = lowest/5)"
 		
@@ -12076,7 +12077,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,55]
@@ -12091,7 +12092,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (5/21-26 DUREL)
-			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		
 			local outcome_level = "21-26 DUREL (ref = lowest/5)"
 		
@@ -12102,7 +12103,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,39]
 				
 			// Now for interaction model
-			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+			mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,69]
@@ -12120,16 +12121,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit Y3155_cat ageAt28 if `var' != ., baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat ageAt28 if `var' != ., baseoutcome(1) rrr
 		est store base
-		mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat ageAt28 i.`var', baseoutcome(1) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr level(99.85)
+		mlogit Y3155_cat c.ageAt28##i.`var', baseoutcome(1) rrr
 		est store inter
 		
 		lrtest main inter
@@ -12145,7 +12146,9 @@ postclose mother_DUREL_cat
 postclose mother_DUREL_cat_lr
 
 
-**** Also want to get the likelihood ratio p-values for belief in God, religious affiliation and church attendance for the 2019 data as well, as more directly comparable with the intrinsic/extrinsic/total religiosity data (will also save coeffients as well, in case decide to use this too)
+
+********************************************************************************
+**** Also want to get the likelihood ratio p-values for belief in God, religious affiliation and church attendance for the 2019 data as well, as more directly comparable with the intrinsic/extrinsic/total religiosity data (will also save coefficients as well, in case decide to use this too)
 tab1 d810 Y3000, m
 
 *** Belief in God (2019)
@@ -12165,7 +12168,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'ageAt28' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit Y3000 `var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -12214,9 +12217,9 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3000 if `var' != ., baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit Y3000 `var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
@@ -12232,7 +12235,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
 		
-		mlogit Y3000 ageAt28 `var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 ageAt28 `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -12247,7 +12250,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,2]
 		
 		// Now for interaction model
-		mlogit Y3000 c.ageAt28##c.`var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 c.ageAt28##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,3]
@@ -12262,7 +12265,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (2/not sure)
-		mlogit Y3000 ageAt28 `var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 ageAt28 `var', baseoutcome(3) rrr
 		
 		local outcome_level = "Not sure (ref = No)"
 		local exp_level = "NA"
@@ -12274,7 +12277,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,5]
 				
 		// Now for interaction model
-		mlogit Y3000 c.ageAt28##c.`var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 c.ageAt28##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -12289,16 +12292,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3000 ageAt28 if `var' != ., baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 ageAt28 if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit Y3000 ageAt28 `var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 ageAt28 `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3000 c.ageAt28##c.`var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 c.ageAt28##c.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -12318,7 +12321,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -12341,7 +12344,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,6]
@@ -12356,7 +12359,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -12367,7 +12370,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,8]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -12382,7 +12385,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -12405,7 +12408,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -12420,7 +12423,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -12431,7 +12434,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,15]
@@ -12451,7 +12454,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -12474,7 +12477,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -12489,7 +12492,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -12500,7 +12503,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -12516,7 +12519,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -12539,7 +12542,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -12554,7 +12557,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -12565,7 +12568,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,18]
@@ -12581,7 +12584,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -12604,7 +12607,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -12619,7 +12622,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -12630,7 +12633,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -12650,7 +12653,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -12679,7 +12682,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -12694,7 +12697,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -12705,7 +12708,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -12721,7 +12724,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -12750,7 +12753,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -12765,7 +12768,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -12776,7 +12779,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -12792,7 +12795,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -12821,7 +12824,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -12836,7 +12839,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -12847,7 +12850,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -12863,7 +12866,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -12892,7 +12895,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -12907,7 +12910,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -12918,7 +12921,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -12938,7 +12941,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -12958,7 +12961,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -12973,7 +12976,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -12984,7 +12987,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -13000,7 +13003,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -13020,7 +13023,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -13035,7 +13038,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -13046,7 +13049,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -13062,7 +13065,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -13082,7 +13085,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -13097,7 +13100,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -13108,7 +13111,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -13124,7 +13127,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -13144,7 +13147,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -13159,7 +13162,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -13170,7 +13173,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -13186,7 +13189,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -13206,7 +13209,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,7]
 		
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,13]
@@ -13221,7 +13224,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/not sure)
-			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Not sure (ref = No)"
 		
@@ -13232,7 +13235,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -13250,16 +13253,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit Y3000 ageAt28 if `var' != ., baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 ageAt28 if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 ageAt28 i.`var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3000 c.ageAt28##i.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -13301,7 +13304,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'ageAt28' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit Y3040_grp `var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -13350,9 +13353,9 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3040_grp if `var' != ., baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit Y3040_grp `var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
@@ -13368,7 +13371,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
 		
-		mlogit Y3040_grp ageAt28 `var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp ageAt28 `var', baseoutcome(3) rrr
 		
 		local n = e(N)
 		
@@ -13383,7 +13386,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,2]
 		
 		// Now for interaction model
-		mlogit Y3040_grp c.ageAt28##c.`var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp c.ageAt28##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,3]
@@ -13398,7 +13401,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (2/Other)
-		mlogit Y3040_grp ageAt28 `var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp ageAt28 `var', baseoutcome(3) rrr
 		
 		local outcome_level = "Other (ref = None)"
 		local exp_level = "NA"
@@ -13410,7 +13413,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,5]
 				
 		// Now for interaction model
-		mlogit Y3040_grp c.ageAt28##c.`var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp c.ageAt28##c.`var', baseoutcome(3) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -13425,16 +13428,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3040_grp ageAt28 if `var' != ., baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp ageAt28 if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit Y3040_grp ageAt28 `var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp ageAt28 `var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3040_grp c.ageAt28##c.`var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp c.ageAt28##c.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -13454,7 +13457,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -13477,7 +13480,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,6]
@@ -13492,7 +13495,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -13503,7 +13506,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,8]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -13518,7 +13521,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -13541,7 +13544,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -13556,7 +13559,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -13567,7 +13570,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,15]
@@ -13587,7 +13590,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -13610,7 +13613,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,7]
@@ -13625,7 +13628,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -13636,7 +13639,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -13652,7 +13655,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -13675,7 +13678,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -13690,7 +13693,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -13701,7 +13704,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,18]
@@ -13717,7 +13720,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -13740,7 +13743,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -13755,7 +13758,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -13766,7 +13769,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -13786,7 +13789,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -13815,7 +13818,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,8]
@@ -13830,7 +13833,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -13841,7 +13844,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -13857,7 +13860,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -13886,7 +13889,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -13901,7 +13904,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -13912,7 +13915,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -13928,7 +13931,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -13957,7 +13960,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -13972,7 +13975,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -13983,7 +13986,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -13999,7 +14002,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -14028,7 +14031,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -14043,7 +14046,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -14054,7 +14057,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -14074,7 +14077,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -14094,7 +14097,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,3]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,9]
@@ -14109,7 +14112,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -14120,7 +14123,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -14136,7 +14139,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -14156,7 +14159,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,4]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,10]
@@ -14171,7 +14174,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -14182,7 +14185,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -14198,7 +14201,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -14218,7 +14221,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,5]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,11]
@@ -14233,7 +14236,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -14244,7 +14247,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -14260,7 +14263,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -14280,7 +14283,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,6]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,12]
@@ -14295,7 +14298,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -14306,7 +14309,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -14322,7 +14325,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local n = e(N)
 		
@@ -14342,7 +14345,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,7]
 		
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,13]
@@ -14357,7 +14360,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/Other)
-			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		
 			local outcome_level = "Other (ref = None)"
 		
@@ -14368,7 +14371,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+			mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -14386,16 +14389,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit Y3040_grp ageAt28 if `var' != ., baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp ageAt28 if `var' != ., baseoutcome(3) rrr
 		est store base
-		mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp ageAt28 i.`var', baseoutcome(3) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr level(99.85)
+		mlogit Y3040_grp c.ageAt28##i.`var', baseoutcome(3) rrr
 		est store inter
 		
 		lrtest main inter
@@ -14422,10 +14425,10 @@ tab Y3080_OccYr_rev
 
 
 ** Quick test of whether proportional odds assumption been violated in most basic model (with just age at birth). Ah, it has been violated, and gets worse if add in additional predictors. 
-ologit Y3080_OccYr_rev ageAt28, or level(99.85)
+ologit Y3080_OccYr_rev ageAt28, or
 brant, detail
 
-ologit Y3080_OccYr_rev ageAt28 i.IMD, or level(99.85)
+ologit Y3080_OccYr_rev ageAt28 i.IMD, or
 brant, detail
 
 
@@ -14449,7 +14452,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	
 	// Next, how we run the analysis will depend on the type of variable - So need to specify whether variable is continuous/binary (as these can be treated the same), or categorical. Will start with cont/binary variables - Although need to analyse 'ageAt28' separately first as will be adjusted for in all other models
 	if "`var'" == "ageAt28" {
-		mlogit Y3080_OccYr_rev `var', baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev `var', baseoutcome(0) rrr
 		
 		local n = e(N)
 		
@@ -14520,9 +14523,9 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3080_OccYr_rev if `var' != ., baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev if `var' != ., baseoutcome(0) rrr
 		est store base
-		mlogit Y3080_OccYr_rev `var', baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev `var', baseoutcome(0) rrr
 		est store main
 		
 		lrtest base main
@@ -14538,7 +14541,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 	// Next, analyse the rest of the continuous/binary variables
 	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "chLifeEvents_wgt" | "`var'" == "chLifeEvents_total" | "`var'" == "neighPercept" | "`var'" == "partnerAbsence" | "`var'" == "logicMemory" | "`var'" == "digitBack" | "`var'" == "spotWord" | "`var'" == "digitSymbol" | "`var'" == "verbal" | "`var'" == "logicMemory_delay" | "`var'" == "intel_factor" | "`var'" == "IPSM_interpAware" | "`var'" == "IPSM_approval" | "`var'" == "IPSM_sepAnx" | "`var'" == "IPSM_timidity" | "`var'" == "IPSM_fragility" | "`var'" == "IPSM_total" | "`var'" == "LoC_external" | "`var'" == "selfEsteem" {
 		
-		mlogit Y3080_OccYr_rev ageAt28 `var', baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev ageAt28 `var', baseoutcome(0) rrr
 		
 		local n = e(N)
 		
@@ -14553,7 +14556,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,5]
 		
 		// Now for interaction model
-		mlogit Y3080_OccYr_rev c.ageAt28##c.`var', baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev c.ageAt28##c.`var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,7]
@@ -14568,7 +14571,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (2/once month)
-		mlogit Y3080_OccYr_rev ageAt28 `var', baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev ageAt28 `var', baseoutcome(0) rrr
 		
 		local outcome_level = "Min once month (ref = Not at all)"
 		local exp_level = "NA"
@@ -14580,7 +14583,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,8]
 				
 		// Now for interaction model
-		mlogit Y3080_OccYr_rev c.ageAt28##c.`var', baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev c.ageAt28##c.`var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,11]
@@ -14595,7 +14598,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 		// Now onto the next reference category (3/once week)
-		mlogit Y3080_OccYr_rev ageAt28 `var', baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev ageAt28 `var', baseoutcome(0) rrr
 		
 		local outcome_level = "Min once week (ref = Not at all)"
 		local exp_level = "NA"
@@ -14607,7 +14610,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		local p = res[4,11]
 				
 		// Now for interaction model
-		mlogit Y3080_OccYr_rev c.ageAt28##c.`var', baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev c.ageAt28##c.`var', baseoutcome(0) rrr
 		
 		matrix res = r(table)
 		local coef_int = res[1,15]
@@ -14622,16 +14625,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 		
 		// And finally run the likelihood ratio tests
-		mlogit Y3080_OccYr_rev ageAt28 if `var' != ., baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev ageAt28 if `var' != ., baseoutcome(0) rrr
 		est store base
-		mlogit Y3080_OccYr_rev ageAt28 `var', baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev ageAt28 `var', baseoutcome(0) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3080_OccYr_rev c.ageAt28##c.`var', baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev c.ageAt28##c.`var', baseoutcome(0) rrr
 		est store inter
 		
 		lrtest main inter
@@ -14651,7 +14654,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Start with variables that have 2 categories (exc. reference)
 		if `cats' == 2 {
 		
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -14674,7 +14677,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,8]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,14]
@@ -14689,7 +14692,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -14700,7 +14703,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -14715,7 +14718,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -14726,7 +14729,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,30]
@@ -14742,7 +14745,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -14765,7 +14768,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,15]
@@ -14780,7 +14783,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -14791,7 +14794,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,14]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -14806,7 +14809,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -14817,7 +14820,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,31]
@@ -14837,7 +14840,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 3 categories (exc. reference)
 		if `cats' == 3 {
 		
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -14860,7 +14863,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,9]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,17]
@@ -14875,7 +14878,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -14886,7 +14889,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,15]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -14901,7 +14904,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -14912,7 +14915,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -14928,7 +14931,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -14951,7 +14954,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,18]
@@ -14966,7 +14969,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -14977,7 +14980,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,16]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,28]
@@ -14992,7 +14995,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -15003,7 +15006,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -15019,7 +15022,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -15042,7 +15045,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,19]
@@ -15057,7 +15060,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -15068,7 +15071,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,29]
@@ -15083,7 +15086,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -15094,7 +15097,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -15114,7 +15117,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 4 categories (exc. reference)
 		if `cats' == 4 {
 		
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -15143,7 +15146,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,10]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,20]
@@ -15158,7 +15161,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -15169,7 +15172,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,17]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,32]
@@ -15184,7 +15187,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (2/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -15195,7 +15198,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,24]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,44]
@@ -15211,7 +15214,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -15240,7 +15243,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,21]
@@ -15255,7 +15258,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -15266,7 +15269,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,18]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,33]
@@ -15281,7 +15284,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -15292,7 +15295,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,25]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,45]
@@ -15308,7 +15311,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -15337,7 +15340,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,22]
@@ -15352,7 +15355,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -15363,7 +15366,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,34]
@@ -15378,7 +15381,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -15389,7 +15392,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,26]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,46]
@@ -15405,7 +15408,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -15434,7 +15437,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -15449,7 +15452,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -15460,7 +15463,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,35]
@@ -15475,7 +15478,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -15486,7 +15489,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,47]
@@ -15506,7 +15509,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 		// Now to variables that have 5 categories (exc. reference)
 		if `cats' == 5 {
 		
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -15526,7 +15529,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,11]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,23]
@@ -15541,7 +15544,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -15552,7 +15555,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,19]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,37]
@@ -15567,7 +15570,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -15578,7 +15581,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,27]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,51]
@@ -15594,7 +15597,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 3)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -15614,7 +15617,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,12]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,24]
@@ -15629,7 +15632,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -15640,7 +15643,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,20]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,38]
@@ -15655,7 +15658,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -15666,7 +15669,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,28]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,52]
@@ -15682,7 +15685,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			
 			
 			// Move to the next category of the exposure (category 4)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -15702,7 +15705,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,13]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,25]
@@ -15717,7 +15720,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -15728,7 +15731,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,21]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,39]
@@ -15743,7 +15746,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -15754,7 +15757,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,29]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,53]
@@ -15770,7 +15773,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 				
 			// Move to the next category of the exposure (category 5)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -15790,7 +15793,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,14]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,26]
@@ -15805,7 +15808,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -15816,7 +15819,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,22]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,40]
@@ -15831,7 +15834,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 				
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -15842,7 +15845,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,30]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,54]
@@ -15858,7 +15861,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				
 			
 			// Move to the next category of the exposure (category 6)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local n = e(N)
 		
@@ -15878,7 +15881,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,15]
 		
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,27]
@@ -15893,7 +15896,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (2/once month)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once month (ref = Not at all)"
 		
@@ -15904,7 +15907,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,23]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,41]
@@ -15919,7 +15922,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 				(`coef_int') (`lci_int') (`uci_int') (`p_int') (`age_main') (`exp_main')
 			
 			// Now onto the next reference category (3/once week)
-			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		
 			local outcome_level = "Min once week (ref = Not at all)"
 		
@@ -15930,7 +15933,7 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 			local p = res[4,31]
 				
 			// Now for interaction model
-			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+			mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		
 			matrix res = r(table)
 			local coef_int = res[1,55]
@@ -15948,16 +15951,16 @@ foreach var of varlist ageAt28 nonWhiteEthnic maritalStatus mobility rural parit
 
 		
 		// And finally run the likelihood ratio tests for all these categorical exposures
-		mlogit Y3080_OccYr_rev ageAt28 if `var' != ., baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev ageAt28 if `var' != ., baseoutcome(0) rrr
 		est store base
-		mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev ageAt28 i.`var', baseoutcome(0) rrr
 		est store main
 		
 		lrtest base main
 		local lr_p_main = r(p)
 		
 		// And the interaction model
-		mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr level(99.85)
+		mlogit Y3080_OccYr_rev c.ageAt28##i.`var', baseoutcome(0) rrr
 		est store inter
 		
 		lrtest main inter
@@ -17045,6 +17048,8 @@ graph export ".\G0Mother_Results\ageResults.pdf", replace
 
 
 ** Create plot for ethnicity (ref = white)
+sum lci uci if exposure == "nonWhiteEthnic" & outcome_level != "NA"
+
 twoway (scatter level_num coef if outcome == "Belief" & ///
 		exposure == "nonWhiteEthnic", col(black) msize(small) msym(D)) ///
 		(rspike lci uci level_num if outcome == "Belief" & ///
@@ -17077,7 +17082,7 @@ twoway (scatter level_num coef if outcome == "Belief" & ///
 		xtitle("Relative risk ratio (ref = White)") ///
 		title("Other than White ethnicity and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.15 0.3 0.5 1 2 5 10 20, labsize(small)) ///
+		xlabel(0.2 0.3 0.5 1 2 5 10 15, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(ethnic_cat, replace)
@@ -17158,7 +17163,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = Never married)") ///
 		title("Marital status and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.1 0.2 0.3 0.5 1 2 3 5 10, labsize(small)) ///
+		xlabel(0.2 0.3 0.5 1 2 3 5 8, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "Married" 15 "Widowed/Divorced/Separated")) ///
@@ -17298,7 +17303,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = CSE/None)") ///
 		title("Education and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
-		xlabel(0.05 0.1 0.2 0.3 0.5 1 2 3 5 10, labsize(small)) ///
+		xlabel(0.1 0.2 0.3 0.5 1 2 3 5 8, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "Vocational" 15 "O-levels" 29 "A-levels" ///
@@ -17343,7 +17348,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (ref = lower [III manual/IV/V])") ///
 		title("Occupational Social Class and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.5 0.7 1 1.5 2 3 4, labsize(small)) ///
+		xlabel(0.8 1 1.5 2 3, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(socClass_cat, replace)
@@ -17386,7 +17391,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per unit increase in log income)") ///
 		title("Household income and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.5 0.7 1 1.5 2 3, labsize(small)) ///
+		xlabel(0.6 0.8 1 1.5 2 2.5, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(income_cat, replace)
@@ -17525,7 +17530,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = 1/Least Deprived)") ///
 		title("IMD and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
-		xlabel(0.2 0.3 0.5 1 2 3 5, labsize(small)) ///
+		xlabel(0.3 0.5 1 2 3, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "2" 15 "3" 29 "4" 43 "5/Most dep.") rows(1)) ///
@@ -17636,7 +17641,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = Owned/Mortgaged)") ///
 		title("Housing status and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
-		xlabel(0.1 0.2 0.3 0.5 1 2 3 5 10, labsize(small)) ///
+		xlabel(0.2 0.3 0.5 1 2 3 5, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "Rented" 15 "Council/HA" 29 "Other") ///
@@ -17806,7 +17811,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = 0 moves)") ///
 		title("Residential mobility and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
-		xlabel(0.2 0.3 0.5 1 2 3 5, labsize(small)) ///
+		xlabel(0.3 0.5 1 2 3 4, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "1" 15 "2" 29 "3" 43 "4" 57 "5+") rows(1)) ///
@@ -17850,7 +17855,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per unit increase in IPSM)") ///
 		title("Inter-personal sensitivity and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.97 0.98 0.99 1 1.01 1.02 1.03, labsize(small)) ///
+		xlabel(0.98 0.99 1 1.01 1.02, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(ipsm_cat, replace)
@@ -17893,7 +17898,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per unit increase in LoC)") ///
 		title("External Locus of Control and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.7 0.8 0.9 1 1.1 1.2 1.3 1.4, labsize(small)) ///
+		xlabel(0.7 0.8 0.9 1 1.1 1.2 1.3, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(loc_cat, replace)
@@ -17936,7 +17941,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per additional life event)") ///
 		title("Adverse childhood experiences and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.85 0.9 0.95 1 1.05 1.1 1.15, labsize(small)) ///
+		xlabel(0.9 0.95 1 1.05 1.1, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(ace_cat, replace)
@@ -17979,7 +17984,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (per unit increase in cog. ability)") ///
 		title("Cognitive ability and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.7 0.8 0.9 1 1.1 1.2 1.3 1.4, labsize(small)) ///
+		xlabel(0.7 0.8 0.9 1 1.1 1.2 1.3, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(cog_cat, replace)
@@ -18122,7 +18127,7 @@ twoway (scatter level_split coef_int if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = CSE/None)") ///
 		title("Education*Age Interaction and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
-		xlabel(0.6 0.8 1 1.2 1.4, labsize(small)) ///
+		xlabel(0.7 0.8 0.9 1 1.1 1.2, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "Vocational" 15 "O-levels" 29 "A-levels" ///
@@ -18167,7 +18172,7 @@ twoway (scatter level_num coef_int if outcome == "Belief" & exposure == ///
 		xtitle("Relative risk ratio (ref = lower [III manual/IV/V])") ///
 		title("Occupational Class*Age Interaction and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.8 0.9 1 1.1 1.2 1.3, labsize(small)) ///
+		xlabel(0.9 0.95 1 1.05 1.1 1.14, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(socClass_int, replace)
@@ -18320,7 +18325,7 @@ twoway (scatter level_split coef_int if outcome == "Belief" & exp_level == ///
 		xtitle("Relative risk ratio (ref = Owned/Mortgaged)") ///
 		title("Housing status*Age Interaction and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
-		xlabel(0.8 1 1.2 1.4 1.6 1.8, labsize(small)) ///
+		xlabel(0.8 1 1.2 1.4 1.6, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(order(1 "Rented" 15 "Council/HA" 29 "Other") ///
@@ -18383,7 +18388,7 @@ graph close _all
 * Age only model
 use ".\G0Mother_Results\G0Mother_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
 
-mlogit d810 ageAtBirth, rrr level(99.85) baseoutcome(3)
+mlogit d810 ageAtBirth, rrr baseoutcome(3)
 
 clear
 set obs 30
@@ -18410,8 +18415,8 @@ twoway (line p1 ageAtBirth) ///
 * As above, but trying to add CIs to the predicted probability plots
 use ".\G0Mother_Results\G0Mother_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
 
-mlogit d810 ageAtBirth, rrr level(99.85) baseoutcome(3)
-margins, at(ageAtBirth = (15(1)44)) level(99.85)
+mlogit d810 ageAtBirth, rrr baseoutcome(3)
+margins, at(ageAtBirth = (15(1)44))
 
 matrix res = r(table)
 matrix list res
@@ -18461,9 +18466,9 @@ twoway (line prob_yes ageAtBirth, col(black)) ///
 * Ethnicity predicted probs (at mean age)
 use ".\G0Mother_Results\G0Mother_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
 
-mlogit d810 ageAtBirth nonWhiteEthnic, rrr level(99.85) baseoutcome(3)
+mlogit d810 ageAtBirth nonWhiteEthnic, rrr baseoutcome(3)
 
-margins, atmeans at(nonWhiteEthnic = (0 1)) level(99.85)
+margins, atmeans at(nonWhiteEthnic = (0 1))
 
 matrix res = r(table)
 matrix list res
@@ -18502,7 +18507,7 @@ twoway (scatter prob v1_grp if inlist(v1, 1, 3, 5), col(black) msize(vsmall) msy
 * Ethnicity by age interaction predicted probs
 use ".\G0Mother_Results\G0Mother_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
 
-mlogit d810 c.ageAtBirth##c.nonWhiteEthnic, rrr level(99.85) baseoutcome(3)
+mlogit d810 c.ageAtBirth##c.nonWhiteEthnic, rrr baseoutcome(3)
 
 clear
 set obs 60
@@ -18537,8 +18542,8 @@ twoway (line p1 ageAtBirth if nonWhiteEthnic == 0, col(black)) ///
 * As above, but trying to add CIs to the predicted probability plots
 use ".\G0Mother_Results\G0Mother_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
 
-mlogit d810 c.ageAtBirth##c.nonWhiteEthnic, rrr level(99.85) baseoutcome(3)
-margins, at(nonWhiteEthnic = (0 1) ageAtBirth = (15(1)44)) level(99.85)
+mlogit d810 c.ageAtBirth##c.nonWhiteEthnic, rrr baseoutcome(3)
+margins, at(nonWhiteEthnic = (0 1) ageAtBirth = (15(1)44))
 
 matrix res = r(table)
 matrix list res
@@ -18608,8 +18613,8 @@ local inc_25 = r(p25)
 local inc_50 = r(p50)
 local inc_75 = r(p75)
 
-mlogit d810 ageAtBirth income, rrr level(99.85) baseoutcome(3)
-margins, atmeans at(income = (`inc_25' `inc_50' `inc_75')) level(99.85)
+mlogit d810 ageAtBirth income, rrr baseoutcome(3)
+margins, atmeans at(income = (`inc_25' `inc_50' `inc_75'))
 
 matrix res = r(table)
 matrix list res
@@ -18657,8 +18662,8 @@ local inc_25 = r(p25)
 local inc_50 = r(p50)
 local inc_75 = r(p75)
 
-mlogit d810 ageAtBirth income, rrr level(99.85) baseoutcome(3)
-margins, at(income = (`inc_25' `inc_50' `inc_75') ageAtBirth = (15(1)44)) level(99.85)
+mlogit d810 ageAtBirth income, rrr baseoutcome(3)
+margins, at(income = (`inc_25' `inc_50' `inc_75') ageAtBirth = (15(1)44))
 
 matrix res = r(table)
 matrix list res
@@ -18702,8 +18707,8 @@ twoway (line p1 ageAtBirth if income == `inc_25', col(black)) ///
 * And now interaction between age and education
 use ".\G0Mother_Results\G0Mother_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
 
-mlogit d810 c.ageAtBirth##i.education, rrr level(99.85) baseoutcome(3)
-margins i.education, at(ageAtBirth = (20 30 40)) level(99.85)
+mlogit d810 c.ageAtBirth##i.education, rrr baseoutcome(3)
+margins i.education, at(ageAtBirth = (20 30 40))
 capture drop p1 p2 p3
 predict p1 p2 p3
 sort ageAtBirth
