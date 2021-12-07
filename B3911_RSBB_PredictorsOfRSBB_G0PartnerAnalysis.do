@@ -16935,6 +16935,50 @@ replace outcome = "DUREL (cat)" if outcome == ""
 tab outcome, m
 
 
+** Save these results as CSV files to add to the SI
+
+* Add in the 2019 data (then drop after)
+append using ".\G0Partner_Results\partner_belief_2019_results.dta"
+replace outcome = "Belief_2019" if outcome == ""
+tab outcome, m
+
+append using ".\G0Partner_Results\partner_relig_2019_results.dta"
+replace outcome = "Relig_2019" if outcome == ""
+tab outcome, m
+
+append using ".\G0Partner_Results\partner_attend_2019_results.dta"
+replace outcome = "Attend_2019" if outcome == ""
+tab outcome, m
+
+* Save each result in turn
+format coef lci uci coef_int lci_int uci_int %9.3f
+format p p_int %9.5f
+
+outsheet exposure-p_int using ".\G0Partner_Results\belief_coefs.csv" if outcome == "Belief", comma replace
+
+outsheet exposure-p_int using ".\G0Partner_Results\relig_coefs.csv" if outcome == "Relig", comma replace
+
+outsheet exposure-p_int using ".\G0Partner_Results\attend_coefs.csv" if outcome == "Attend", comma replace
+
+outsheet exposure-p_int using ".\G0Partner_Results\IntrinsicCat_coefs.csv" if outcome == "Intrinsic (cat)", comma replace
+
+outsheet exposure-p_int using ".\G0Partner_Results\ExtrinFriends_coefs.csv" if outcome == "Extrinsic - friends", comma replace
+
+outsheet exposure-p_int using ".\G0Partner_Results\ExtrinPray_coefs.csv" if outcome == "Extrinsic - prayer", comma replace
+
+outsheet exposure-p_int using ".\G0Partner_Results\DUREL_coefs.csv" if outcome == "DUREL (cat)", comma replace
+
+outsheet exposure-p_int using ".\G0Partner_Results\belief_2019_coefs.csv" if outcome == "Belief_2019", comma replace
+
+outsheet exposure-p_int using ".\G0Partner_Results\relig_2019_coefs.csv" if outcome == "Relig_2019", comma replace
+
+outsheet exposure-p_int using ".\G0Partner_Results\attend_2019_coefs.csv" if outcome == "Attend_2019", comma replace
+
+* And now drop the 2019 data (as don't want to include these in the plots below)
+drop if outcome == "Belief_2019" | outcome == "Relig_2019" | outcome == "Attend_2019"
+tab outcome, m
+
+
 ** First, make a plot for the age results - As some outcomes are on different scales, will just use the results from multinomial regression for all outcomes (inc. intrinsic and total/DUREL religiosity, even though also ran linear regressions on these as well) - Having all variables on the same plot on the same scale makes things easier to visualise.
 capture drop level_num
 gen level_num = 0
@@ -18291,6 +18335,331 @@ twoway (scatter level_num coef_int if outcome == "Belief" & exposure == ///
 		
 graph export ".\G0Partner_Results\locResults_int.pdf", replace
 
+
+graph close _all
+
+
+
+*********************************************************************************
+*** Comparing pregnancy vs 2019 data side-by-side (for belief in God, religious affiliation and church attendance) to see whether effect sizes (and not just p-values) differ between these different RSBB waves
+
+** Wont do this for all exposures (as too many), but will focus on a few key ones
+use ".\G0Partner_Results\partner_belief_results.dta", clear
+gen outcome = "Belief_preg"
+
+append using ".\G0Partner_Results\partner_belief_2019_results.dta"
+replace outcome = "Belief_2019" if outcome == ""
+tab outcome, m
+
+append using ".\G0Partner_Results\partner_relig_results.dta"
+replace outcome = "Relig_preg" if outcome == ""
+tab outcome, m
+
+append using ".\G0Partner_Results\partner_relig_2019_results.dta"
+replace outcome = "Relig_2019" if outcome == ""
+tab outcome, m
+
+append using ".\G0Partner_Results\partner_attend_results.dta"
+replace outcome = "Attend_preg" if outcome == ""
+tab outcome, m
+
+append using ".\G0Partner_Results\partner_attend_2019_results.dta"
+replace outcome = "Attend_2019" if outcome == ""
+tab outcome, m
+
+* Keep just the exposures we're interested in
+keep if exposure == "highSocClass" | exposure == "IPSM_total" | exposure == "LoC_external" | exposure == "ageAt28" | exposure == "ageInPreg" | exposure == "education" | exposure == "income" | exposure == "intel_factor" | exposure == "maritalStatus" | exposure == "nonWhiteEthnic"
+
+* Recode the outcomes
+capture drop level_num
+gen level_num = 0
+replace level_num = 1 if outcome_level == "Not sure (ref = No)"
+replace level_num = 3 if outcome_level == "Christian (ref = None)"
+replace level_num = 4 if outcome_level == "Other (ref = None)"
+replace level_num = 6 if outcome_level == "Min once year (ref = Not at al"
+replace level_num = 7 if outcome_level == "Min once month (ref = Not at a"
+replace level_num = 8 if outcome_level == "Min once week (ref = Not at al"
+
+label define level_lb 0 "Belief in God - Yes (ref = No)" 1 "Belief in God - Not sure (ref = No)" 3 "Religious affiliation - Christian (ref = None)" 4 "Religious affiliation - Other (ref = None)" 6 "Church attendance - Min 1/Yr (ref = Not at all)" 7 "Church attendance - Min 1/Mth (ref = Not at all)" 8 "Church attendance - Min 1/Wk (ref = Not at all)", replace
+label values level_num level_lb
+tab level_num
+
+* And split by whether from pregnancy or 2019
+gen time = "preg" if outcome == "Belief_preg" | outcome == "Relig_preg" | outcome == "Attend_preg"
+replace time = "2019" if outcome == "Belief_2019" | outcome == "Relig_2019" | outcome == "Attend_2019"
+tab time
+
+capture drop level_split
+gen level_split = level_num - 0.2 if time == "preg"
+replace level_split = level_num + 0.2 if time == "2019"
+label values level_split level_lb
+tab level_split
+
+
+** Start with age plot
+replace exposure = "Age" if exposure == "ageInPreg" | exposure == "ageAt28"
+tab exposure
+
+* Min and max x-axis values
+sum lci uci if level_split < . & exposure == "Age"
+
+twoway (scatter level_split coef if time == "preg" & exposure == "Age", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_split if time == "preg" & exposure == "Age", ///
+			horizontal lwidth(thin) col(black)) ///
+		(scatter level_split coef if time == "2019" & exposure == "Age", ///
+			col(red) msize(small) msym(D)) ///
+		(rspike lci uci level_split if time == "2019" & exposure == "Age", ///
+			horizontal lwidth(thin) col(red)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio") ///
+		title("Age and RSBB - Pregnancy vs 2019", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.98 1 1.02 1.04 1.06 1.08, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) ///
+		angle(0)) legend(order(1 "Pregnancy data" 3 "2019 data")) ///
+		name(age, replace)
+		
+graph export ".\G0Partner_Results\Age_pregVs2019.pdf", replace
+
+
+** Now ethnicity plot
+sum lci uci if level_split < . & exposure == "nonWhiteEthnic"
+
+* Drop some cases with no data
+replace coef = . if exposure == "nonWhiteEthnic" & outcome_level == "Min once month (ref = Not at a" & time == "2019"
+replace lci = . if exposure == "nonWhiteEthnic" & outcome_level == "Min once month (ref = Not at a" & time == "2019"
+
+sum lci uci if level_split < . & exposure == "nonWhiteEthnic"
+
+twoway (scatter level_split coef if time == "preg" & exposure == "nonWhiteEthnic", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_split if time == "preg" & exposure == "nonWhiteEthnic", ///
+			horizontal lwidth(thin) col(black)) ///
+		(scatter level_split coef if time == "2019" & exposure == "nonWhiteEthnic", ///
+			col(red) msize(small) msym(D)) ///
+		(rspike lci uci level_split if time == "2019" & exposure == "nonWhiteEthnic", ///
+			horizontal lwidth(thin) col(red)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio") ///
+		title("Ethnicity and RSBB - Pregnancy vs 2019", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.3 0.5 1 2 3 5 10 25, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) ///
+		angle(0)) legend(order(1 "Pregnancy data" 3 "2019 data")) ///
+		name(ethnic, replace)
+		
+graph export ".\G0Partner_Results\Ethnic_pregVs2019.pdf", replace
+
+
+** Next marital status
+
+* Need to re-arrange level splitting here, as more than one marital status outcome
+capture drop level_split
+gen level_split = level_num - 0.2 - 0.08 if time == "preg" & exp_level == "Married (ref = Never married)"
+replace level_split = level_num - 0.2 + 0.08 if time == "2019" & exp_level == "Married (ref = Never married)"
+replace level_split = level_num + 0.2 - 0.08 if time == "preg" & exp_level == "Wid/Div/Sep (ref = Never married)"
+replace level_split = level_num + 0.2 + 0.08 if time == "2019" & exp_level == "Wid/Div/Sep (ref = Never married)"
+label values level_split level_lb
+tab level_split
+
+sum lci uci if level_split < . & exposure == "maritalStatus"
+
+twoway (scatter level_split coef if time == "preg" & exp_level == ///
+			"Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if time == "preg" & exp_level == ///
+			"Married (ref = Never married)", horizontal lwidth(thin) col(black)) ///
+		(scatter level_split coef if time == "2019" & exp_level == ///
+			"Married (ref = Never married)", col(black) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if time == "2019" & exp_level == ///
+			"Married (ref = Never married)", horizontal lwidth(thin) ///
+			col(black) lpattern(shortdash)) ///
+		(scatter level_split coef if time == "preg" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if time == "preg" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", horizontal lwidth(thin) col(red)) ///
+		(scatter level_split coef if time == "2019" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", col(red) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if time == "2019" & exp_level == ///
+			"Wid/Div/Sep (ref = Never married)", horizontal lwidth(thin) ///#
+			col(red) lpattern(shortdash)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio") ///
+		title("Marital status and RSBB - Pregnancy vs 2019", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.25 0.5 1 2 5 10 20 50, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(vsmall) ///
+		angle(0)) legend(order(2 "Married - preg" 4 "Married - 2019" ///
+			6 "Wid/Div/Sep - preg" 8 "Wid/Div/Sep - 2019") size(small)) ///
+		name(marital, replace)
+		
+graph export ".\G0Partner_Results\Marital_pregVs2019.pdf", replace
+
+
+** Next education
+
+* Need to re-arrange level splitting here, as more than one education outcome
+capture drop level_split
+gen level_split = level_num - 0.3 - 0.04 if time == "preg" & exp_level == "Vocational (ref = CSE/None)"
+replace level_split = level_num - 0.3 + 0.04 if time == "2019" & exp_level == "Vocational (ref = CSE/None)"
+replace level_split = level_num - 0.1 - 0.04 if time == "preg" & exp_level == "O-level (ref = CSE/None)"
+replace level_split = level_num - 0.1 + 0.04 if time == "2019" & exp_level == "O-level (ref = CSE/None)"
+replace level_split = level_num + 0.1 - 0.04 if time == "preg" & exp_level == "A-level (ref = CSE/None)"
+replace level_split = level_num + 0.1 + 0.04 if time == "2019" & exp_level == "A-level (ref = CSE/None)"
+replace level_split = level_num + 0.3 - 0.04 if time == "preg" & exp_level == "Degree (ref = CSE/None)"
+replace level_split = level_num + 0.3 + 0.04 if time == "2019" & exp_level == "Degree (ref = CSE/None)"
+label values level_split level_lb
+tab level_split
+
+sum lci uci if level_split < . & exposure == "education"
+
+twoway (scatter level_split coef if time == "preg" & exp_level == ///
+			"Vocational (ref = CSE/None)", col(black) msize(tiny) msym(D)) ///
+		(rspike lci uci level_split if time == "preg" & exp_level == ///
+			"Vocational (ref = CSE/None)", horizontal lwidth(vthin) col(black)) ///
+		(scatter level_split coef if time == "2019" & exp_level == ///
+			"Vocational (ref = CSE/None)", col(black) msize(tiny) msym(D)) ///
+		(rspike lci uci level_split if time == "2019" & exp_level == ///
+			"Vocational (ref = CSE/None)", horizontal lwidth(vthin) ///
+			col(black) lpattern(shortdash)) ///
+		(scatter level_split coef if time == "preg" & exp_level == ///
+			"O-level (ref = CSE/None)", col(red) msize(tiny) msym(D)) ///
+		(rspike lci uci level_split if time == "preg" & exp_level == ///
+			"O-level (ref = CSE/None)", horizontal lwidth(vthin) col(red)) ///
+		(scatter level_split coef if time == "2019" & exp_level == ///
+			"O-level (ref = CSE/None)", col(red) msize(tiny) msym(D)) ///
+		(rspike lci uci level_split if time == "2019" & exp_level == ///
+			"O-level (ref = CSE/None)", horizontal lwidth(vthin) ///#
+			col(red) lpattern(shortdash)) ///
+		(scatter level_split coef if time == "preg" & exp_level == ///
+			"A-level (ref = CSE/None)", col(blue) msize(tiny) msym(D)) ///
+		(rspike lci uci level_split if time == "preg" & exp_level == ///
+			"A-level (ref = CSE/None)", horizontal lwidth(vthin) col(blue)) ///
+		(scatter level_split coef if time == "2019" & exp_level == ///
+			"A-level (ref = CSE/None)", col(blue) msize(tiny) msym(D)) ///
+		(rspike lci uci level_split if time == "2019" & exp_level == ///
+			"A-level (ref = CSE/None)", horizontal lwidth(vthin) ///
+			col(blue) lpattern(shortdash)) ///
+		(scatter level_split coef if time == "preg" & exp_level == ///
+			"Degree (ref = CSE/None)", col(green) msize(tiny) msym(D)) ///
+		(rspike lci uci level_split if time == "preg" & exp_level == ///
+			"Degree (ref = CSE/None)", horizontal lwidth(vthin) col(green)) ///
+		(scatter level_split coef if time == "2019" & exp_level == ///
+			"Degree (ref = CSE/None)", col(green) msize(tiny) msym(D)) ///
+		(rspike lci uci level_split if time == "2019" & exp_level == ///
+			"Degree (ref = CSE/None)", horizontal lwidth(vthin) ///#
+			col(green) lpattern(shortdash)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio") ///
+		title("Education and RSBB - Pregnancy vs 2019", size(small)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.05 0.1 0.2 0.5 1 2 3 5 10, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(vsmall) ///
+		angle(0)) legend(order(2 "Vocational - preg" 4 "Vocational - 2019" ///
+			6 "O-level - preg" 8 "O-level - 2019" 10 "A-level - preg" ///
+			12 "A-level - 2019" 14 "Degree - preg" 16 "Degree - 2019") ///
+			size(vsmall) cols(4)) ///
+		name(edu, replace) xsize(8)
+		
+graph export ".\G0Partner_Results\Education_pregVs2019.pdf", replace
+
+
+** Next to occupational social class
+capture drop level_split
+gen level_split = level_num - 0.2 if time == "preg"
+replace level_split = level_num + 0.2 if time == "2019"
+label values level_split level_lb
+tab level_split
+
+sum lci uci if level_split < . & exposure == "highSocClass"
+
+twoway (scatter level_split coef if time == "preg" & exposure == "highSocClass", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_split if time == "preg" & exposure == "highSocClass", ///
+			horizontal lwidth(thin) col(black)) ///
+		(scatter level_split coef if time == "2019" & exposure == "highSocClass", ///
+			col(red) msize(small) msym(D)) ///
+		(rspike lci uci level_split if time == "2019" & exposure == "highSocClass", ///
+			horizontal lwidth(thin) col(red)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio") ///
+		title("Soc. Class and RSBB - Pregnancy vs 2019", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.6 0.8 1 1.5 2 3 5, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) ///
+		angle(0)) legend(order(1 "Pregnancy data" 3 "2019 data")) ///
+		name(socClass, replace)
+		
+graph export ".\G0Partner_Results\socClass_pregVs2019.pdf", replace
+
+
+** Next is income
+sum lci uci if level_split < . & exposure == "income"
+
+twoway (scatter level_split coef if time == "preg" & exposure == "income", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_split if time == "preg" & exposure == "income", ///
+			horizontal lwidth(thin) col(black)) ///
+		(scatter level_split coef if time == "2019" & exposure == "income", ///
+			col(red) msize(small) msym(D)) ///
+		(rspike lci uci level_split if time == "2019" & exposure == "income", ///
+			horizontal lwidth(thin) col(red)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio") ///
+		title("Income and RSBB - Pregnancy vs 2019", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.5 0.7 1 1.5 2 3, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) ///
+		angle(0)) legend(order(1 "Pregnancy data" 3 "2019 data")) ///
+		name(income, replace)
+		
+graph export ".\G0Partner_Results\income_pregVs2019.pdf", replace
+
+
+** Total IPSM
+sum lci uci if level_split < . & exposure == "IPSM_total"
+
+twoway (scatter level_split coef if time == "preg" & exposure == "IPSM_total", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_split if time == "preg" & exposure == "IPSM_total", ///
+			horizontal lwidth(thin) col(black)) ///
+		(scatter level_split coef if time == "2019" & exposure == "IPSM_total", ///
+			col(red) msize(small) msym(D)) ///
+		(rspike lci uci level_split if time == "2019" & exposure == "IPSM_total", ///
+			horizontal lwidth(thin) col(red)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio") ///
+		title("IPSM and RSBB - Pregnancy vs 2019", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.98 0.99 1 1.01 1.02 1.03, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) ///
+		angle(0)) legend(order(1 "Pregnancy data" 3 "2019 data")) ///
+		name(ipsm, replace)
+		
+graph export ".\G0Partner_Results\ipsm_pregVs2019.pdf", replace
+
+
+** External locus of control
+sum lci uci if level_split < . & exposure == "LoC_external"
+
+twoway (scatter level_split coef if time == "preg" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_split if time == "preg" & exposure == "LoC_external", ///
+			horizontal lwidth(thin) col(black)) ///
+		(scatter level_split coef if time == "2019" & exposure == "LoC_external", ///
+			col(red) msize(small) msym(D)) ///
+		(rspike lci uci level_split if time == "2019" & exposure == "LoC_external", ///
+			horizontal lwidth(thin) col(red)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio") ///
+		title("External LoC and RSBB - Pregnancy vs 2019", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.7 0.8 0.9 1 1.1 1.2, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) ///
+		angle(0)) legend(order(1 "Pregnancy data" 3 "2019 data")) ///
+		name(LoC, replace)
+		
+graph export ".\G0Partner_Results\loc_pregVs2019.pdf", replace
 
 graph close _all
 

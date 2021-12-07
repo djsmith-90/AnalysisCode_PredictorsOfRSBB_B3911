@@ -13988,6 +13988,28 @@ replace outcome = "DUREL (cat)" if outcome == ""
 tab outcome, m
 
 
+** Save these results as CSV files to add to the SI
+
+* Save each result in turn
+format coef lci uci coef_int lci_int uci_int %9.3f
+format p p_int %9.5f
+
+outsheet exposure-p_int using ".\G1_Results\belief_coefs.csv" if outcome == "Belief", comma replace
+
+outsheet exposure-p_int using ".\G1_Results\relig_coefs.csv" if outcome == "Relig", comma replace
+
+outsheet exposure-p_int using ".\G1_Results\attend_coefs.csv" if outcome == "Attend", comma replace
+
+outsheet exposure-p_int using ".\G1_Results\IntrinsicCat_coefs.csv" if outcome == "Intrinsic (cat)", comma replace
+
+outsheet exposure-p_int using ".\G1_Results\ExtrinFriends_coefs.csv" if outcome == "Extrinsic - friends", comma replace
+
+outsheet exposure-p_int using ".\G1_Results\ExtrinPray_coefs.csv" if outcome == "Extrinsic - prayer", comma replace
+
+outsheet exposure-p_int using ".\G1_Results\DUREL_coefs.csv" if outcome == "DUREL (cat)", comma replace
+
+
+
 ** First, make a plot for the age results - As some outcomes are on different scales, will just use the results from multinomial regression for all outcomes (inc. intrinsic and total/DUREL religiosity, even though also ran linear regressions on these as well) - Having all variables on the same plot on the same scale makes things easier to visualise.
 capture drop level_num
 gen level_num = 0
