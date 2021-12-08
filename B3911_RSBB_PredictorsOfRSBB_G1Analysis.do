@@ -13843,7 +13843,7 @@ reshape wide lr_p_main lr_p_int, i(exp_num) j (outcome) string
 
 order exp_num lr_p_mainBelief lr_p_intBelief lr_p_mainReligion lr_p_intReligion lr_p_mainAttend lr_p_intAttend lr_p_mainIntrins lr_p_intIntrins lr_p_mainExtrin_fr lr_p_intExtrin_fr lr_p_mainExtrin_pr lr_p_intExtrin_pr lr_p_mainDUREL lr_p_intDUREL
 
-format %9.5f lr_p_mainBelief-lr_p_intDUREL
+format %9.4f lr_p_mainBelief-lr_p_intDUREL
 
 outsheet exp_num-lr_p_intDUREL using ".\G1_Results\pvalue_results.csv", comma replace
 
@@ -13992,7 +13992,7 @@ tab outcome, m
 
 * Save each result in turn
 format coef lci uci coef_int lci_int uci_int %9.3f
-format p p_int %9.5f
+format p p_int %9.4f
 
 outsheet exposure-p_int using ".\G1_Results\belief_coefs.csv" if outcome == "Belief", comma replace
 
