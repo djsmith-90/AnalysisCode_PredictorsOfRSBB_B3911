@@ -16978,6 +16978,10 @@ outsheet exposure-p_int using ".\G0Partner_Results\attend_2019_coefs.csv" if out
 drop if outcome == "Belief_2019" | outcome == "Relig_2019" | outcome == "Attend_2019"
 tab outcome, m
 
+* Convert format back to default format (so axis on plots display correctly)
+format coef lci uci coef_int lci_int uci_int %9.0g
+format p p_int %10.0g
+
 
 ** First, make a plot for the age results - As some outcomes are on different scales, will just use the results from multinomial regression for all outcomes (inc. intrinsic and total/DUREL religiosity, even though also ran linear regressions on these as well) - Having all variables on the same plot on the same scale makes things easier to visualise.
 capture drop level_num
@@ -17039,7 +17043,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == "ageInPreg",
 		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
 		title("Age and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(, labsize(small)) ///
+		xlabel(0.95 1 1.05 1.1, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8 10 11 12 14 15 16 18 19 20 22 23 24 25 ///
 		, valuelabel labsize(vsmall) ///
 		angle(0)) legend(off) name(age_cat, replace)
@@ -18664,7 +18668,586 @@ graph export ".\G0Partner_Results\loc_pregVs2019.pdf", replace
 graph close _all
 
 
-** For the multinomial regression results, as interpretation not intuitive, could convert to predicted probabilities using the 'margins' command? (see: https://stats.idre.ucla.edu/stata/dae/multinomiallogistic-regression/) - Have started this in the G0 mothers file; see there for example code.
+*********************************************************************************
+** For the multinomial regression results, as interpretation not intuitive, could convert to predicted probabilities using the 'margins' command? (see: https://stats.idre.ucla.edu/stata/dae/multinomiallogistic-regression/). Some - pretty rough - predicted probability plots are below.
+
+* Age only model (plot with 95% CIs)
+use ".\G0Partner_Results\G0Partner_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit pb150 ageInPreg, rrr baseoutcome(3)
+margins, at(ageInPreg = (15(1)70))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageInPreg = fill(15 16)
+gen prob_yes = .
+gen lci_yes = .
+gen uci_yes = .
+gen prob_notSure = .
+gen lci_notSure = .
+gen uci_notSure = .
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+
+forvalues i = 1(1)`n' {
+	replace prob_yes = res[1,`i'] if _n == `i'
+	replace lci_yes = res[5,`i'] if _n == `i'
+	replace uci_yes = res[6,`i'] if _n == `i'
+	replace prob_notSure = res[1,`n' + `i'] if _n == `i'
+	replace lci_notSure = res[5,`n' + `i'] if _n == `i'
+	replace uci_notSure = res[6,`n' + `i'] if _n == `i'
+	replace prob_no = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_no = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_no = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_yes ageInPreg, col(black)) ///
+	(rarea lci_yes uci_yes ageInPreg, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_notSure ageInPreg, col(red)) ///
+	(rarea lci_notSure uci_notSure ageInPreg, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_no ageInPreg, col(blue)) ///
+	(rarea lci_no uci_no ageInPreg, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Belief in God/divine power", size(medium)) ///
+	legend(order(1 "Believer" 3 "Not sure" 5 "Non-believer") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(age_bel, replace)
+	
+** Repeat for other RSBB outcomes and combine plots together
+
+* Religion
+use ".\G0Partner_Results\G0Partner_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit pb153_grp ageInPreg, rrr baseoutcome(3)
+margins, at(ageInPreg = (15(1)70))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageInPreg = fill(15 16)
+gen prob_xian = .
+gen lci_xian = .
+gen uci_xian = .
+gen prob_other = .
+gen lci_other = .
+gen uci_other = .
+gen prob_none = .
+gen lci_none = .
+gen uci_none = .
+
+forvalues i = 1(1)`n' {
+	replace prob_xian = res[1,`i'] if _n == `i'
+	replace lci_xian = res[5,`i'] if _n == `i'
+	replace uci_xian = res[6,`i'] if _n == `i'
+	replace prob_other = res[1,`n' + `i'] if _n == `i'
+	replace lci_other = res[5,`n' + `i'] if _n == `i'
+	replace uci_other = res[6,`n' + `i'] if _n == `i'
+	replace prob_none = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_none = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_none = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_xian ageInPreg, col(black)) ///
+	(rarea lci_xian uci_xian ageInPreg, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_other ageInPreg, col(red)) ///
+	(rarea lci_other uci_other ageInPreg, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_none ageInPreg, col(blue)) ///
+	(rarea lci_none uci_none ageInPreg, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious affiliation", size(medium)) ///
+	legend(order(1 "Christian" 3 "Other" 5 "None") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(age_relig, replace)
+	
+	
+* Attend church
+use ".\G0Partner_Results\G0Partner_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit pb155_rev ageInPreg, rrr baseoutcome(0)
+margins, at(ageInPreg = (15(1)70))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen ageInPreg = fill(15 16)
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+gen prob_yr = .
+gen lci_yr = .
+gen uci_yr = .
+gen prob_mth = .
+gen lci_mth = .
+gen uci_mth = .
+gen prob_wk = .
+gen lci_wk = .
+gen uci_wk = .
+
+forvalues i = 1(1)`n' {
+	replace prob_no = res[1,`i'] if _n == `i'
+	replace lci_no = res[5,`i'] if _n == `i'
+	replace uci_no = res[6,`i'] if _n == `i'
+	replace prob_yr = res[1,`n' + `i'] if _n == `i'
+	replace lci_yr = res[5,`n' + `i'] if _n == `i'
+	replace uci_yr = res[6,`n' + `i'] if _n == `i'
+	replace prob_mth = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_mth = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_mth = res[6,`n' + `n' + `i'] if _n == `i'
+	replace prob_wk = res[1,`n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_wk = res[5,`n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_wk = res[6,`n' + `n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_no ageInPreg, col(black)) ///
+	(rarea lci_no uci_no ageInPreg, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_yr ageInPreg, col(red)) ///
+	(rarea lci_yr uci_yr ageInPreg, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_mth ageInPreg, col(blue)) ///
+	(rarea lci_mth uci_mth ageInPreg, lcol(black) lwidth(vthin) fcol(blue%20)) ///
+	(line prob_wk ageInPreg, col(green)) ///
+	(rarea lci_wk uci_wk ageInPreg, lcol(black) lwidth(vthin) fcol(green%20)), ///
+	xscale(range(13 72)) xlabel(15(5)72, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Attendance at place of worship", size(medium)) ///
+	legend(order(1 "Not at all" 3 "1/yr" 5 "1/mth" 7 "1/wk") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(age_attend, replace)
+	
+* Intrinsic religiosity - Need to change to 'ageAt28' for this
+use ".\G0Partner_Results\G0Partner_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit FC3153_cat ageAt28, rrr baseoutcome(1)
+margins, at(ageAt28 = (41(1)96))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen ageAt28 = fill(41 42)
+gen prob_1 = .
+gen lci_1 = .
+gen uci_1 = .
+gen prob_2 = .
+gen lci_2 = .
+gen uci_2 = .
+gen prob_3 = .
+gen lci_3 = .
+gen uci_3 = .
+gen prob_4 = .
+gen lci_4 = .
+gen uci_4 = .
+
+forvalues i = 1(1)`n' {
+	replace prob_1 = res[1,`i'] if _n == `i'
+	replace lci_1 = res[5,`i'] if _n == `i'
+	replace uci_1 = res[6,`i'] if _n == `i'
+	replace prob_2 = res[1,`n' + `i'] if _n == `i'
+	replace lci_2 = res[5,`n' + `i'] if _n == `i'
+	replace uci_2 = res[6,`n' + `i'] if _n == `i'
+	replace prob_3 = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_3 = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_3 = res[6,`n' + `n' + `i'] if _n == `i'
+	replace prob_4 = res[1,`n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_4 = res[5,`n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_4 = res[6,`n' + `n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_1 ageAt28, col(black)) ///
+	(rarea lci_1 uci_1 ageAt28, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_2 ageAt28, col(red)) ///
+	(rarea lci_2 uci_2 ageAt28, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_3 ageAt28, col(blue)) ///
+	(rarea lci_3 uci_3 ageAt28, lcol(black) lwidth(vthin) fcol(blue%20)) ///
+	(line prob_4 ageAt28, col(green)) ///
+	(rarea lci_4 uci_4 ageAt28, lcol(black) lwidth(vthin) fcol(green%20)), ///
+	xscale(range(40 98)) xlabel(45(5)95, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in 2019") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Intrinsic religiosity", size(medium)) ///
+	legend(order(1 "3" 3 "4-7" 5 "8-11" 7 "12-15") rows(1) size(small) ///
+		symxsize(*0.5)) ///
+	name(age_intrin, replace)
+	
+* Extrinsic religiosity (friends)
+use ".\G0Partner_Results\G0Partner_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit FC3160_new ageAt28, rrr baseoutcome(1)
+margins, at(ageAt28 = (41(1)96))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen ageAt28 = fill(41 42)
+gen prob_1 = .
+gen lci_1 = .
+gen uci_1 = .
+gen prob_2 = .
+gen lci_2 = .
+gen uci_2 = .
+gen prob_3 = .
+gen lci_3 = .
+gen uci_3 = .
+gen prob_4 = .
+gen lci_4 = .
+gen uci_4 = .
+
+forvalues i = 1(1)`n' {
+	replace prob_1 = res[1,`i'] if _n == `i'
+	replace lci_1 = res[5,`i'] if _n == `i'
+	replace uci_1 = res[6,`i'] if _n == `i'
+	replace prob_2 = res[1,`n' + `i'] if _n == `i'
+	replace lci_2 = res[5,`n' + `i'] if _n == `i'
+	replace uci_2 = res[6,`n' + `i'] if _n == `i'
+	replace prob_3 = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_3 = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_3 = res[6,`n' + `n' + `i'] if _n == `i'
+	replace prob_4 = res[1,`n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_4 = res[5,`n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_4 = res[6,`n' + `n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_1 ageAt28, col(black)) ///
+	(rarea lci_1 uci_1 ageAt28, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_2 ageAt28, col(red)) ///
+	(rarea lci_2 uci_2 ageAt28, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_3 ageAt28, col(blue)) ///
+	(rarea lci_3 uci_3 ageAt28, lcol(black) lwidth(vthin) fcol(blue%20)) ///
+	(line prob_4 ageAt28, col(green)) ///
+	(rarea lci_4 uci_4 ageAt28, lcol(black) lwidth(vthin) fcol(green%20)), ///
+	xscale(range(40 98)) xlabel(45(5)95, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in 2019") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Extrinsic religiosity - Friends", size(medium)) ///
+	legend(order(1 "Agree" 3 "Not sure" 5 "Disagree" 7 "N/A") ///
+		rows(1) size(small) symxsize(*0.5)) ///
+	name(age_ext_fr, replace)
+	
+* Extrinsic religiosity (prayer)
+use ".\G0Partner_Results\G0Partner_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit FC3170_new ageAt28, rrr baseoutcome(1)
+margins, at(ageAt28 = (41(1)96))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen ageAt28 = fill(41 42)
+gen prob_1 = .
+gen lci_1 = .
+gen uci_1 = .
+gen prob_2 = .
+gen lci_2 = .
+gen uci_2 = .
+gen prob_3 = .
+gen lci_3 = .
+gen uci_3 = .
+gen prob_4 = .
+gen lci_4 = .
+gen uci_4 = .
+
+forvalues i = 1(1)`n' {
+	replace prob_1 = res[1,`i'] if _n == `i'
+	replace lci_1 = res[5,`i'] if _n == `i'
+	replace uci_1 = res[6,`i'] if _n == `i'
+	replace prob_2 = res[1,`n' + `i'] if _n == `i'
+	replace lci_2 = res[5,`n' + `i'] if _n == `i'
+	replace uci_2 = res[6,`n' + `i'] if _n == `i'
+	replace prob_3 = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_3 = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_3 = res[6,`n' + `n' + `i'] if _n == `i'
+	replace prob_4 = res[1,`n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_4 = res[5,`n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_4 = res[6,`n' + `n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_1 ageAt28, col(black)) ///
+	(rarea lci_1 uci_1 ageAt28, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_2 ageAt28, col(red)) ///
+	(rarea lci_2 uci_2 ageAt28, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_3 ageAt28, col(blue)) ///
+	(rarea lci_3 uci_3 ageAt28, lcol(black) lwidth(vthin) fcol(blue%20)) ///
+	(line prob_4 ageAt28, col(green)) ///
+	(rarea lci_4 uci_4 ageAt28, lcol(black) lwidth(vthin) fcol(green%20)), ///
+	xscale(range(40 98)) xlabel(45(5)95, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in 2019") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Extrinsic religiosity - Prayer", size(medium)) ///
+	legend(order(1 "Agree" 3 "Not sure" 5 "Disagree" 7 "N/A") ///
+		rows(1) size(small) symxsize(*0.5)) ///
+	name(age_ext_pr, replace)
+	
+* Total religiosity
+use ".\G0Partner_Results\G0Partner_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit FC3155_cat ageAt28, rrr baseoutcome(1)
+margins, at(ageAt28 = (41(1)96))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/5
+
+clear 
+set obs `n'
+egen ageAt28 = fill(41 42)
+gen prob_1 = .
+gen lci_1 = .
+gen uci_1 = .
+gen prob_2 = .
+gen lci_2 = .
+gen uci_2 = .
+gen prob_3 = .
+gen lci_3 = .
+gen uci_3 = .
+gen prob_4 = .
+gen lci_4 = .
+gen uci_4 = .
+gen prob_5 = .
+gen lci_5 = .
+gen uci_5 = .
+
+forvalues i = 1(1)`n' {
+	replace prob_1 = res[1,`i'] if _n == `i'
+	replace lci_1 = res[5,`i'] if _n == `i'
+	replace uci_1 = res[6,`i'] if _n == `i'
+	replace prob_2 = res[1,`n' + `i'] if _n == `i'
+	replace lci_2 = res[5,`n' + `i'] if _n == `i'
+	replace uci_2 = res[6,`n' + `i'] if _n == `i'
+	replace prob_3 = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_3 = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_3 = res[6,`n' + `n' + `i'] if _n == `i'
+	replace prob_4 = res[1,`n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_4 = res[5,`n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_4 = res[6,`n' + `n' + `n' + `i'] if _n == `i'
+	replace prob_5 = res[1,`n' + `n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_5 = res[5,`n' + `n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_5 = res[6,`n' + `n' + `n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_1 ageAt28, col(black)) ///
+	(rarea lci_1 uci_1 ageAt28, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_2 ageAt28, col(red)) ///
+	(rarea lci_2 uci_2 ageAt28, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_3 ageAt28, col(blue)) ///
+	(rarea lci_3 uci_3 ageAt28, lcol(black) lwidth(vthin) fcol(blue%20)) ///
+	(line prob_4 ageAt28, col(green)) ///
+	(rarea lci_4 uci_4 ageAt28, lcol(black) lwidth(vthin) fcol(green%20)) ///
+	(line prob_5 ageAt28, col(orange)) ///
+	(rarea lci_5 uci_5 ageAt28, lcol(black) lwidth(vthin) fcol(orange%20)), ///
+	xscale(range(40 98)) xlabel(45(5)95, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in 2019") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Total religiosity", size(medium)) ///
+	legend(order(1 "5" 3 "6-10" 5 "11-15" 7 "16-20" 9 "21-26") ///
+		rows(1) size(small) symxsize(*0.5)) ///
+	name(age_total, replace)
+	
+* Combine these plots together
+*graph combine age_bel age_relig age_attend age_intrin age_ext_fr age_ext_pr age_total, ycommon iscale(0.5) rows(2) xsize(10)
+
+* This doesn't look great, so will split into two plots
+graph combine age_bel age_relig age_attend, iscale(0.5) rows(2)
+
+graph export ".\G0Partner_Results\agePredProbs_combined1.pdf", replace
+
+graph combine age_intrin age_ext_fr age_ext_pr age_total, iscale(0.5) rows(2)
+
+graph export ".\G0Partner_Results\agePredProbs_combined2.pdf", replace
+
+graph close _all
+
+
+** And now interaction between age and education
+use ".\G0Partner_Results\G0Partner_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+* Belief in God
+mlogit pb150 c.ageInPreg##i.education, rrr baseoutcome(3)
+margins i.education, at(ageInPreg = (20 30 40))
+capture drop p1 p2 p3
+predict p1 p2 p3
+sort ageInPreg
+twoway (line p1 ageInPreg if education == 1) ///
+	(line p1 ageInPreg if education == 2) ///
+	(line p1 ageInPreg if education == 3) ///
+	(line p1 ageInPreg if education == 4) ///
+	(line p1 ageInPreg if education == 5), ///
+	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	title("Belief in God - Yes", size(medium)) ///
+	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
+	cols(5) size(small)) ///
+	name(yes, replace)
+	
+twoway (line p2 ageInPreg if education == 1) ///
+	(line p2 ageInPreg if education == 2) ///
+	(line p2 ageInPreg if education == 3) ///
+	(line p2 ageInPreg if education == 4) ///
+	(line p2 ageInPreg if education == 5), ///
+	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	title("Belief in God - Not sure", size(medium)) ///
+	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
+	cols(5) size(small)) ///
+	name(notSure, replace)
+	
+twoway (line p3 ageInPreg if education == 1) ///
+	(line p3 ageInPreg if education == 2) ///
+	(line p3 ageInPreg if education == 3) ///
+	(line p3 ageInPreg if education == 4) ///
+	(line p3 ageInPreg if education == 5), ///
+	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	title("Belief in God - No", size(medium)) ///
+	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
+	cols(5) size(small)) ///
+	name(no, replace)
+	
+grc1leg yes notSure no, ycommon
+
+graph export ".\G0Partner_Results\eduAgeIntPredProbs_belief.pdf", replace
+
+* Religious affiliation
+mlogit pb153_grp c.ageInPreg##i.education, rrr baseoutcome(3)
+margins i.education, at(ageInPreg = (20 30 40))
+capture drop p1 p2 p3
+predict p1 p2 p3
+sort ageInPreg
+twoway (line p1 ageInPreg if education == 1) ///
+	(line p1 ageInPreg if education == 2) ///
+	(line p1 ageInPreg if education == 3) ///
+	(line p1 ageInPreg if education == 4) ///
+	(line p1 ageInPreg if education == 5), ///
+	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	title("Religious affiliation - Christian", size(medium)) ///
+	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
+	cols(5) size(small)) ///
+	name(Xian, replace)
+	
+twoway (line p2 ageInPreg if education == 1) ///
+	(line p2 ageInPreg if education == 2) ///
+	(line p2 ageInPreg if education == 3) ///
+	(line p2 ageInPreg if education == 4) ///
+	(line p2 ageInPreg if education == 5), ///
+	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	title("Religious affiliation - Other", size(medium)) ///
+	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
+	cols(5) size(small)) ///
+	name(other, replace)
+	
+twoway (line p3 ageInPreg if education == 1) ///
+	(line p3 ageInPreg if education == 2) ///
+	(line p3 ageInPreg if education == 3) ///
+	(line p3 ageInPreg if education == 4) ///
+	(line p3 ageInPreg if education == 5), ///
+	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	title("Religious affiliation - None", size(medium)) ///
+	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
+	cols(5) size(small)) ///
+	name(none, replace)
+	
+grc1leg Xian other none, ycommon
+
+graph export ".\G0Partner_Results\eduAgeIntPredProbs_relig.pdf", replace
+
+* Chuch attendance
+mlogit pb155_rev c.ageInPreg##i.education, rrr baseoutcome(0)
+margins i.education, at(ageInPreg = (20 30 40))
+capture drop p1 p2 p3
+predict p1 p2 p3 p4
+sort ageInPreg
+twoway (line p1 ageInPreg if education == 1) ///
+	(line p1 ageInPreg if education == 2) ///
+	(line p1 ageInPreg if education == 3) ///
+	(line p1 ageInPreg if education == 4) ///
+	(line p1 ageInPreg if education == 5), ///
+	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	title("Church attendance - Not at all", size(medium)) ///
+	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
+	cols(5) size(small)) ///
+	name(never, replace)
+	
+twoway (line p2 ageInPreg if education == 1) ///
+	(line p2 ageInPreg if education == 2) ///
+	(line p2 ageInPreg if education == 3) ///
+	(line p2 ageInPreg if education == 4) ///
+	(line p2 ageInPreg if education == 5), ///
+	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	title("Church attendance - Min 1/year", size(medium)) ///
+	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
+	cols(5) size(small)) ///
+	name(year, replace)
+	
+twoway (line p3 ageInPreg if education == 1) ///
+	(line p3 ageInPreg if education == 2) ///
+	(line p3 ageInPreg if education == 3) ///
+	(line p3 ageInPreg if education == 4) ///
+	(line p3 ageInPreg if education == 5), ///
+	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	title("Church attendance - Min 1/month", size(medium)) ///
+	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
+	cols(5) size(small)) ///
+	name(month, replace)
+	
+twoway (line p4 ageInPreg if education == 1) ///
+	(line p4 ageInPreg if education == 2) ///
+	(line p4 ageInPreg if education == 3) ///
+	(line p4 ageInPreg if education == 4) ///
+	(line p4 ageInPreg if education == 5), ///
+	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	title("Church attendance - Min 1/week", size(medium)) ///
+	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
+	cols(5) size(small)) ///
+	name(week, replace)
+	
+grc1leg never year month week, ycommon
+
+graph export ".\G0Partner_Results\eduAgeIntPredProbs_attend.pdf", replace
+
+graph close _all
 
 
 

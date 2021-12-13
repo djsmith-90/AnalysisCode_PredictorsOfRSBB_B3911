@@ -17024,6 +17024,10 @@ outsheet exposure-p_int using ".\G0Mother_Results\attend_2019_coefs.csv" if outc
 drop if outcome == "Belief_2019" | outcome == "Relig_2019" | outcome == "Attend_2019"
 tab outcome, m
 
+* Convert format back to default format (so axis on plots display correctly)
+format coef lci uci coef_int lci_int uci_int %9.0g
+format p p_int %10.0g
+
 
 **** Now make the actual plots
 
