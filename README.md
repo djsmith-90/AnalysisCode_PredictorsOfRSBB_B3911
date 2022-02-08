@@ -1,15 +1,16 @@
 ## Git repository for ALSPAC 'Predictors of RSBB' analysis code (B3911)
 
-This repository contains four Stata .do files; the first of which processes the raw data
-ready for analysis, the second one contains the G0 mothers analyses, the third analyses
-the G0 partner/father data, and the final one analyses the G1 child data.
+This repository contains five Stata .do files:
+ - "B3911_RSBB_PredictorsOfRSBB_DataCleaning.do" processes the raw data ready for analysis
+ - "B3911_RSBB_PredictorsOfRSBB_G0MotherAnalysis.do" is the G0 mothers analyses for demographic and SEP variables
+ - "B3911_RSBB_PredictorsOfRSBB_G0PartnerAnalysis.do" is the G0 partners/fathers analyses for demographics and SEP
+ - "B3911_RSBB_PredictorsOfRSBB_G1Analysis.do" is the G1 child analyses for demographics and SEP
+ - "B3911_RSBB_PredictorsOfRSBB_cognitive.do" is the analysis file for the cognitive/psychological variables (G0 and G1 combined)
 
-Each of the three analysis files performs an 'exposome-wide association study' (ExWAS)
-exploring associations between three broad categories of exposures (socioeconomic/material 
-security factors, psychological/cognitive measures, and demographic variables) and various
-religious/spiritual beliefs and behaviours outcomes (belief in God/divine power, religious
-affiliation, attendance at church/place of worship, intrinsic religiosity, extrinsic
-religiosity and total DUREL religiosity score).
+Each of the analysis files performs analyses exploring associations between the broad categories of exposures 
+noted above (demographic and socioeconomic/material security factors in one set of scripts, and psychological/cognitive 
+factors in another) and various religious/spiritual beliefs and behaviours outcomes (belief in God/divine power, 
+religious affiliation and attendance at church/place of worship).
 
 In addition to a log file, these scripts also save out most of the results used in the
 tables of the paper and creates plots of the results.

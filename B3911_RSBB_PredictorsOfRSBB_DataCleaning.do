@@ -509,6 +509,13 @@ replace c686a = . if c686a < 0
 tab c686a, m
 tab c686a
 
+* Father's highest education
+tab c706a, m
+
+replace c706a = . if c706a < 0
+tab c706a, m
+tab c706a
+
 * Occupational social class - Will split into low (III manual, IV and V) and high (!, II and III non-manual))
 tab c755, m
 
@@ -521,6 +528,28 @@ numlabel occ_lb, add
 label value c755_grp occ_lb
 tab c755_grp, m
 tab c755_grp
+
+* Maternal occupational social class - Will split into low (III manual, IV and V) and high (!, II and III non-manual))
+tab c_sc_mgm, m
+
+replace c_sc_mgm = . if c_sc_mgm < 0 | c_sc_mgm == 65
+tab c_sc_mgm, m
+
+recode c_sc_mgm (1 2 3 = 1) (4 5 6 = 0), gen(c_sc_mgm_grp)
+label value c_sc_mgm_grp occ_lb
+tab c_sc_mgm_grp, m
+tab c_sc_mgm_grp
+
+* Paternal occupational social class - Will split into low (III manual, IV and V) and high (!, II and III non-manual))
+tab c_sc_mgf, m
+
+replace c_sc_mgf = . if c_sc_mgf < 0 | c_sc_mgf == 65
+tab c_sc_mgf, m
+
+recode c_sc_mgf (1 2 3 = 1) (4 5 6 = 0), gen(c_sc_mgf_grp)
+label value c_sc_mgf_grp occ_lb
+tab c_sc_mgf_grp, m
+tab c_sc_mgf_grp
 
 * Household income (weekly - log)
 sum logavinceq
@@ -579,6 +608,28 @@ sum c432 c433, d
 
 hist c432, freq width(1)
 hist c433, freq width(1)
+
+* Family got poorer in childhood
+tab c429a, m
+
+replace c429a = . if c429a < 0
+replace c429a = 0 if c429a == 2
+label define poor_lb 0 "No" 1 "Yes"
+numlabel poor_lb, add
+label value c429a poor_lb
+tab c429a, m
+tab c429a
+
+* Access to car
+tab a053, m
+
+replace a053 = . if a053 < 0
+replace a053 = 0 if a053 == 2
+label define car_lb 0 "No" 1 "Yes"
+numlabel car_lb, add
+label value a053 car_lb
+tab a053, m
+tab a053
 
 * Household crowding index
 tab a551, m
@@ -790,22 +841,19 @@ replace c666a = . if c666a < 0
 tab c666a, m
 tab c666a
 
-* Highest mother's education (need to construct this from questions from 'PL' questionnaire)
-tab1 pl4040-pl4055, m
+* Highest mother's education
+tab pb359a, m
 
-* Start by coding if university degree, then A-levels, then vocational, and then CSE/GCSE (note: O-levels not asked about here, so not 100% comparable with other education variables)
-gen partner_mum_edu = .
-replace partner_mum_edu = 4 if pl4051 == 1
-replace partner_mum_edu = 3 if pl4042 == 1 & partner_mum_edu == .
-replace partner_mum_edu = 2 if (pl4043 == 1 | pl4044 == 1 | pl4045 == 1 | pl4046 == 1 | pl4047 == 1 | pl4048 == 1 | pl4049 == 1 | pl4050 == 1) & partner_mum_edu == .
-replace partner_mum_edu = 1 if (pl4040 == 1 | pl4041 == 1 | pl4052 == 1) & partner_mum_edu == .
-tab partner_mum_edu, m
+replace pb359a = . if pb359a < 0
+tab pb359a, m
+tab pb359a
 
-label define edu_lb 1 "None/CSE/GCSE" 2 "Vocational" 3 "A-level" 4 "Degree"
-numlabel edu_lb, add
-label values partner_mum_edu edu_lb
-tab partner_mum_edu, m
-tab partner_mum_edu
+* Highest father's education
+tab pb376a, m
+
+replace pb376a = . if pb376a < 0
+tab pb376a, m
+tab pb376a
 
 * Occupational social class - Will split into low (III manual, IV and V) and high (!, II and III non-manual))
 tab c765, m
@@ -817,6 +865,28 @@ recode c765 (1 2 3 = 1) (4 5 6 = 0), gen(c765_grp)
 label value c765_grp occ_lb
 tab c765_grp, m
 tab c765_grp
+
+* Mother's occupational social class - Will split into low (III manual, IV and V) and high (!, II and III non-manual))
+tab pb_sc_pgm, m
+
+replace pb_sc_pgm = . if pb_sc_pgm < 0 | pb_sc_pgm == 65
+tab pb_sc_pgm, m
+
+recode pb_sc_pgm (1 2 3 = 1) (4 5 6 = 0), gen(pb_sc_pgm_grp)
+label value pb_sc_pgm_grp occ_lb
+tab pb_sc_pgm_grp, m
+tab pb_sc_pgm_grp
+
+* Father's occupational social class - Will split into low (III manual, IV and V) and high (!, II and III non-manual))
+tab pb_sc_pgf, m
+
+replace pb_sc_pgf = . if pb_sc_pgf < 0 | pb_sc_pgf == 65
+tab pb_sc_pgf, m
+
+recode pb_sc_pgf (1 2 3 = 1) (4 5 6 = 0), gen(pb_sc_pgf_grp)
+label value pb_sc_pgf_grp occ_lb
+tab pb_sc_pgf_grp, m
+tab pb_sc_pgf_grp
 
 * Financial difficulties - Combine into yes vs no
 tab pb184, m
@@ -841,6 +911,15 @@ sum pb481 pb482, d
 
 hist pb481, freq width(1)
 hist pb482, freq width(1)
+
+* Family got poorer in childhood
+tab pb479a, m
+
+replace pb479a = . if pb479a < 0
+replace pb479a = 0 if pb479a == 2
+label values pb479a poor_lb
+tab pb479a, m
+tab pb479a
 
 * Self-reported neighbourhood quality index - Unlike the mother's data on this, for the partners/fathers this scale was changed mid-way through data collection. Most partners answered the same as the mothers (on a scale of 'usually', 'sometimes' or 'never'), while ~1,000 answered on a binary 'yes' vs 'no' response. As not compariable - and more have data - will use the three-item reponse
 tab1 pa024-pa029a, m
@@ -1414,7 +1493,7 @@ keep aln mult_mum_Y ///
 d810 d813 d813_grp d816 Y3153 Y3153_cat Y3160 Y3170 Y3155 Y3155_cat ///
 Y3000 Y3040 Y3040_grp Y3080_OccNever Y3080_OccYr Y3080 ///
 mz028b Y9992 c800_grp a525_grp a005_grp jan1993ur01ind_grp b032_grp ///
-c645a c686a c755_grp logavinceq jan1993imd2010q5_M jan1993Townsendq5_M a006_grp b594_grp c432 c433 a551 a636 partner_ab ///
+c645a c686a c706a c755_grp c_sc_mgf_grp c_sc_mgm_grp logavinceq jan1993imd2010q5_M jan1993Townsendq5_M a006_grp b594_grp c429a c432 c433 a053 a551 a636 partner_ab ///
 logic_mem-logic_mem_delay fom_cog_factor1 b916-b921 d842 h151b 
 
 * For mult_mums who have more than one pregnancy enrolled in ALSPAC, just keep one pregnancy (plus drop ALNs where only child enrolled, not the mum)
@@ -1454,7 +1533,7 @@ keep aln mult_mum_Y ///
 pb150 pb153 pb153_grp pb155 FC3153 FC3153_cat FC3160 FC3170 FC3155 FC3155_cat ///
 FC3000 FC3040 FC3040_grp FC3080_OccNever FC3080_OccYr FC3080 ///
 pb910 FC9992 c801_grp pa065_grp pa005_grp jan1993ur01ind_grp b032_grp ///
-c666a partner_mum_edu c765_grp logavinceq jan1993imd2010q5_M jan1993Townsendq5_M a006_grp pb184_grp pb481 pb482 a551 neighbour_qual ///
+c666a pb359a pb376a c765_grp pb_sc_pgm_grp pb_sc_pgf_grp logavinceq jan1993imd2010q5_M jan1993Townsendq5_M a006_grp pb184_grp pb479a pb481 pb482 a053 a551 neighbour_qual ///
 pb546-pb551 pa782 esteem_prorated 
 
 * For mult_mums who have more than one pregnancy enrolled in ALSPAC, just keep one pregnancy (for this, will assume mult mum pregnancies both have the same partner/father) - Plus drop ALNs where only child enrolled, not the mum)
@@ -1494,7 +1573,7 @@ frame change g1
 keep aln qlet kz011b ///
 YPG3000 YPG3040 YPG3040_grp YPG3080_OccNever YPG3080_OccYr YPG3080 YPG3153 YPG3153_cat YPG3160 YPG3170 YPG3155 YPG3155_cat ///
 YPG8000 mz028b kz021 a525_grp c804 a005_grp jan2020ur01ind_grp b032_grp parent ///
-yp_edu c645a c755_grp logavinceq jan2020imd2010q5 jan2020Townsendq5 a006_grp yp_finDiffs physical_abuse_0_16yrs-ACEcat_classic_0_16yrs a551 a636 father_ab age_FA ///
+yp_edu c645a c666a c755_grp c765_grp logavinceq jan2020imd2010q5 jan2020Townsendq5 a006_grp yp_finDiffs physical_abuse_0_16yrs-ACEcat_classic_0_16yrs a053 a551 a636 father_ab age_FA ///
 f8ws110 f8ws111 f8ws112 fh6280 FKWI1030 FKWI1050 fg7360-fg7364 f8lc125 loc_age16 FJCQ1001 f8dv440a triangles_total kr554a skuse16 autism25 kq348a tc4025e prosocial25 CCXD860a f8se125 f8se126
 
 * Drop if not alive at 1 year of age
