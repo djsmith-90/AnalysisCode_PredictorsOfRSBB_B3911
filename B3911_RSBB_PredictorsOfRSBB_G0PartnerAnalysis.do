@@ -143,7 +143,7 @@ graph export ".\G0Partner_Results\corr_heatplot_demoOnly.pdf", replace
 
 * Save matrix as Excel file
 putexcel set ".\G0Partner_Results\corrMatrix_demoOnly.xlsx", replace
-putexcel A1=matrix(cor_demo), names
+putexcel A1=matrix(cor_demo), names nformat(number_d2)
 
 * And now for associations of demographic variables with unordered categorical variable marital status (and save to a CSV file)
 capture postclose marital_corrs_demoOnly
@@ -182,7 +182,7 @@ graph export ".\G0Partner_Results\corr_heatplot_socioOnly.pdf", replace
 
 * Save matrix as Excel file
 putexcel set ".\G0Partner_Results\corrMatrix_socioOnly.xlsx", replace
-putexcel A1=matrix(cor_socio), names
+putexcel A1=matrix(cor_socio), names nformat(number_d2)
 
 
 * And now for associations of socioeconomic variables with unordered categorical variable home ownership status (and save to a CSV file)
@@ -222,7 +222,7 @@ graph export ".\G0Partner_Results\corr_heatplot_all.pdf", replace
 
 * Save matrix as Excel file
 putexcel set ".\G0Partner_Results\corrMatrix_all.xlsx", replace
-putexcel A1=matrix(cor_all), names
+putexcel A1=matrix(cor_all), names nformat(number_d2)
 
 	
 * And now for associations of all other exposures variables with unordered categorical variables marital status and home ownership status
