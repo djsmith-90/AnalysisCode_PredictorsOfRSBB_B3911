@@ -27,6 +27,12 @@ use "G0Partner_PredictorsOfRSBB_B3911.dta", clear
 *ssc install grc1leg, replace
 
 
+** For this analysis, as only have RSBB data for core participants, will drop all non-core pregnancies
+tab in_core, m
+drop if in_core == 2
+drop in_core
+
+
 **********************************************************************************
 *** Descriptive statistics
 
@@ -77,6 +83,10 @@ foreach var of varlist a053-neighbour_qual {
 	else {
 		sum `var'
 		sum `var', d
+		quietly misstable sum `var'
+		local missing = r(N_eq_dot)
+		local percent = (`missing' / _N) * 100
+		display "Variable " "`var'" " has " `missing' " missing values ( " `percent' " %). "
 	}
 }
 

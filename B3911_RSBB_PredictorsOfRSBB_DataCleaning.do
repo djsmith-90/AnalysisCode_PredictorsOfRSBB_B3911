@@ -1489,7 +1489,7 @@ frame copy main mother
 frame change mother
 
 * Keep just G0 mother variables we are interested in
-keep aln mult_mum_Y ///
+keep aln mult_mum_Y in_core ///
 d810 d813 d813_grp d816 Y3153 Y3153_cat Y3160 Y3170 Y3155 Y3155_cat ///
 Y3000 Y3040 Y3040_grp Y3080_OccNever Y3080_OccYr Y3080 ///
 mz028b Y9992 c800_grp a525_grp a005_grp jan1993ur01ind_grp b032_grp ///
@@ -1529,7 +1529,7 @@ frame copy main partner
 frame change partner
 
 * Keep just variables we are interested in
-keep aln mult_mum_Y ///
+keep aln mult_mum_Y in_core ///
 pb150 pb153 pb153_grp pb155 FC3153 FC3153_cat FC3160 FC3170 FC3155 FC3155_cat ///
 FC3000 FC3040 FC3040_grp FC3080_OccNever FC3080_OccYr FC3080 ///
 pb910 FC9992 c801_grp pa065_grp pa005_grp jan1993ur01ind_grp b032_grp ///
