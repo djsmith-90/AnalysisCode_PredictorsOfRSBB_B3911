@@ -596,6 +596,12 @@ label values b594_grp fin_lb
 tab b594_grp, m
 tab b594_grp
 
+* Financial difficulties score
+tab c525, m
+
+replace c525 = . if c525 < 0
+tab c525
+
 * Traumatic life events in childhood (< 17 years of age) - Both weighted and unweighted scores (weighted = occurred and impact had in participant; unweighted = whether event occurred or not)
 tab1 c432 c433, m
 
@@ -898,6 +904,12 @@ recode pb184 (5 = 0) (1/4 = 1), gen(pb184_grp)
 label values pb184_grp fin_lb
 tab pb184_grp, m
 tab pb184_grp
+
+* Financial difficulties score
+tab pd685, m
+
+replace pd685 = . if pd685 < 0
+tab pd685
 
 * Traumatic life events in childhood (< 17 years of age) - Both weighted and unweighted scores (weighted = occurred and impact had in participant; unweighted = whether event occurred or not)
 tab1 pb481 pb482, m
@@ -1493,7 +1505,7 @@ keep aln mult_mum_Y in_core ///
 d810 d813 d813_grp d816 Y3153 Y3153_cat Y3160 Y3170 Y3155 Y3155_cat ///
 Y3000 Y3040 Y3040_grp Y3080_OccNever Y3080_OccYr Y3080 ///
 mz028b Y9992 c800_grp a525_grp a005_grp jan1993ur01ind_grp b032_grp ///
-c645a c686a c706a c755_grp c_sc_mgf_grp c_sc_mgm_grp logavinceq jan1993imd2010q5_M jan1993Townsendq5_M a006_grp b594_grp c429a c432 c433 a053 a551 a636 partner_ab ///
+c645a c686a c706a c755_grp c_sc_mgf_grp c_sc_mgm_grp logavinceq jan1993imd2010q5_M jan1993Townsendq5_M a006_grp b594_grp c525 c429a c432 c433 a053 a551 a636 partner_ab ///
 logic_mem-logic_mem_delay fom_cog_factor1 b916-b921 d842 h151b 
 
 * For mult_mums who have more than one pregnancy enrolled in ALSPAC, just keep one pregnancy (plus drop ALNs where only child enrolled, not the mum)
@@ -1533,7 +1545,7 @@ keep aln mult_mum_Y in_core ///
 pb150 pb153 pb153_grp pb155 FC3153 FC3153_cat FC3160 FC3170 FC3155 FC3155_cat ///
 FC3000 FC3040 FC3040_grp FC3080_OccNever FC3080_OccYr FC3080 ///
 pb910 FC9992 c801_grp pa065_grp pa005_grp jan1993ur01ind_grp b032_grp ///
-c666a pb359a pb376a c765_grp pb_sc_pgm_grp pb_sc_pgf_grp logavinceq jan1993imd2010q5_M jan1993Townsendq5_M a006_grp pb184_grp pb479a pb481 pb482 a053 a551 neighbour_qual ///
+c666a pb359a pb376a c765_grp pb_sc_pgm_grp pb_sc_pgf_grp logavinceq jan1993imd2010q5_M jan1993Townsendq5_M a006_grp pb184_grp pd685 pb479a pb481 pb482 a053 a551 neighbour_qual ///
 pb546-pb551 pa782 esteem_prorated 
 
 * For mult_mums who have more than one pregnancy enrolled in ALSPAC, just keep one pregnancy (for this, will assume mult mum pregnancies both have the same partner/father) - Plus drop ALNs where only child enrolled, not the mum)

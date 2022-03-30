@@ -112,7 +112,7 @@ desc a053-neighbour_qual
 * First, order variables into categories of 'demographic' and 'socioeconomic/material insecurity' (FC9992 is age at @28 RSBB questionnaire, so will pop at end as not needed here)
 order aln-pb155 ///
 pb910 c801_grp pa065_grp pa005_grp jan1993ur01ind_grp b032_grp ///
-c666a pb359a pb376a c765_grp pb_sc_pgm_grp pb_sc_pgf_grp logavinceq jan1993imd2010q5_M jan1993Townsendq5_M a006_grp pb184_grp pb479a a053 a551 neighbour_qual ///
+c666a pb359a pb376a c765_grp pb_sc_pgm_grp pb_sc_pgf_grp logavinceq jan1993imd2010q5_M jan1993Townsendq5_M a006_grp pb184_grp pd685 pb479a a053 a551 neighbour_qual ///
 FC9992
 
 * Next, rename all these exposures so they are more intuitive and can be read easier on the correlation heatmaps below
@@ -135,6 +135,7 @@ rename pb479a poorerChildhood
 rename a053 accessToCar
 rename a006_grp housing 
 rename pb184_grp financeDiffs
+rename pd685 financeDiffsScore
 rename a551 crowding
 rename neighbour_qual neighPercept
 rename FC9992 ageAt28
@@ -179,7 +180,7 @@ restore
 
 
 ** Now repeat for socioeconomic/material insecurity variables (to exclude housing status [housing], as is an unordered categorical variable)
-corr education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs poorerChildhood accessToCar crowding neighPercept
+corr education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept
 
 matrix cor_socio = r(C)
 
@@ -200,7 +201,7 @@ capture postclose housing_corrs_socioOnly
 postfile housing_corrs_socioOnly str30 variable corr ///
 	using ".\G0Partner_Results\housing_corrs_socioOnly.dta", replace
 	
-foreach var of varlist education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs poorerChildhood accessToCar crowding neighPercept {
+foreach var of varlist education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept {
 	quietly mlogit housing `var'
 	local r2 = e(r2_p)
 	display "Estimated correlation for " "`var'" " on home ownership status is: " round((sqrt(`r2')), .001)
@@ -219,7 +220,7 @@ restore
 
 	
 *** Finally, repeat this on all of the exposures together (excluding unordered cateogorical variables housing status and marital status)
-corr ageInPreg nonWhiteEthnic mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs poorerChildhood accessToCar crowding neighPercept
+corr ageInPreg nonWhiteEthnic mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept
 
 matrix cor_all = r(C)
 
@@ -242,7 +243,7 @@ capture postclose marital_corrs_all
 postfile marital_corrs_all str30 variable corr ///
 	using ".\G0Partner_Results\marital_corrs_all.dta", replace
 	
-foreach var of varlist ageInPreg nonWhiteEthnic mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep housing financeDiffs poorerChildhood accessToCar crowding neighPercept {
+foreach var of varlist ageInPreg nonWhiteEthnic mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep housing financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept {
 	quietly mlogit maritalStatus `var'
 	local r2 = e(r2_p)
 	display "Estimated correlation for " "`var'" " on marital status is: " round((sqrt(`r2')), .001)
@@ -265,7 +266,7 @@ capture postclose housing_corrs_all
 postfile housing_corrs_all str30 variable corr ///
 	using ".\G0Partner_Results\housing_corrs_all.dta", replace
 	
-foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs poorerChildhood accessToCar crowding neighPercept {
+foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept {
 	quietly mlogit housing `var'
 	local r2 = e(r2_p)
 	display "Estimated correlation for " "`var'" " on home ownership status is: " round((sqrt(`r2')), .001)
@@ -291,8 +292,8 @@ restore
 *** Start with belief in God/divine power - As is a unordered categorical variable, will use multinomial regression (with 'no' as baseline/reference category)
 tab pb150, m
 
-** This will be quite complicated, as want to post results to file, but as exposures differ extracting the results will be variable specific. To adjust for multiple corrections will use conservative bonferroni adjustment when constructing confidence intervals and interpreting p-values - As 21 exposures, a Bonferroni p-value threshold of 0.05/21 = 0.0024.
-display 0.05/21
+** This will be quite complicated, as want to post results to file, but as exposures differ extracting the results will be variable specific. To adjust for multiple corrections will use conservative bonferroni adjustment when constructing confidence intervals and interpreting p-values - As 22 exposures, a Bonferroni p-value threshold of 0.05/22 = 0.0023.
+display 0.05/22
 
 ** We also want to store both estimates adjusting for age (other than for the age-only model), and also the interaction between age and the exposure, to see whether it's moderated by age. Again, this makes the set-up a bit more complicated.
 
@@ -310,7 +311,7 @@ capture postclose partner_belief_r2
 postfile partner_belief_r2 str30 exposure r2_main r2_int ///
 	using ".\G0Partner_Results\partner_belief_results_r2.dta", replace
 
-foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep housing financeDiffs poorerChildhood accessToCar crowding neighPercept {
+foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep housing financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept {
 	
 	// Save the exposure variable as a macro
 	local exp = "`var'"
@@ -387,7 +388,7 @@ foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural par
 	}
 	
 	// Next, analyse the rest of the continuous/binary variables
-	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "highSocClass_mat" | "`var'" == "highSocClass_pat" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "poorerChildhood" | "`var'" == "accessToCar" | "`var'" == "neighPercept" {
+	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "highSocClass_mat" | "`var'" == "highSocClass_pat" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "financeDiffsScore" | "`var'" == "poorerChildhood" | "`var'" == "accessToCar" | "`var'" == "neighPercept" {
 		
 		mlogit pb150 ageInPreg `var', baseoutcome(3) rrr
 		
@@ -1490,7 +1491,7 @@ capture postclose partner_relig_r2
 postfile partner_relig_r2 str30 exposure r2_main r2_int ///
 	using ".\G0Partner_Results\partner_relig_results_r2.dta", replace
 
-foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep housing financeDiffs poorerChildhood accessToCar crowding neighPercept {
+foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep housing financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept {
 	
 	// Save the exposure variable as a macro
 	local exp = "`var'"
@@ -1567,7 +1568,7 @@ foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural par
 	}
 	
 	// Next, analyse the rest of the continuous/binary variables
-	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "highSocClass_mat" | "`var'" == "highSocClass_pat" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "poorerChildhood" | "`var'" == "accessToCar" | "`var'" == "neighPercept" {
+	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "highSocClass_mat" | "`var'" == "highSocClass_pat" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "financeDiffsScore" | "`var'" == "poorerChildhood" | "`var'" == "accessToCar" | "`var'" == "neighPercept" {
 		
 		mlogit pb153_grp ageInPreg `var', baseoutcome(3) rrr
 		
@@ -2683,7 +2684,7 @@ capture postclose partner_attend_r2
 postfile partner_attend_r2 str30 exposure r2_main r2_int ///
 	using ".\G0Partner_Results\partner_attend_results_r2.dta", replace
 
-foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep housing financeDiffs poorerChildhood accessToCar crowding neighPercept {
+foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep housing financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept {
 	
 	// Save the exposure variable as a macro
 	local exp = "`var'"
@@ -2782,7 +2783,7 @@ foreach var of varlist ageInPreg nonWhiteEthnic maritalStatus mobility rural par
 	}
 	
 	// Next, analyse the rest of the continuous/binary variables
-	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "highSocClass_mat" | "`var'" == "highSocClass_pat" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "poorerChildhood" | "`var'" == "accessToCar" | "`var'" == "neighPercept" {
+	else if "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "highSocClass" | "`var'" == "highSocClass_mat" | "`var'" == "highSocClass_pat" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "financeDiffsScore" | "`var'" == "poorerChildhood" | "`var'" == "accessToCar" | "`var'" == "neighPercept" {
 		
 		mlogit pb155_rev ageInPreg `var', baseoutcome(0) rrr
 		
@@ -4302,22 +4303,22 @@ sum logp_int
 
 ** Start with likelihood ratio results comparing null model to model including exposure
 
-* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 21 exposures, will do 0.05/21)
-local bon_thresh = -log10(0.05/21)
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 22 exposures, will do 0.05/22)
+local bon_thresh = -log10(0.05/22)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Belief in God/divine power - Main effect") ///
 	name(belief_main, replace)
 	
 graph export ".\G0Partner_Results\belief_mainEffect_pvalues.pdf", replace
 	
 * And repeat for interaction effect (exclude 'age' here, as can't interact with itself!)
-local bon_thresh = -log10(0.05/20)
+local bon_thresh = -log10(0.05/21)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_int if exp_num != 1, ///
@@ -4325,14 +4326,14 @@ twoway (scatter exp_num logp_int if exp_num != 1, ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(2(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Belief in God/divine power - Age interaction") ///
 	name(belief_int, replace)
 	
 graph export ".\G0Partner_Results\belief_ageInteraction_pvalues.pdf", replace
 	
 ** Combine these results on the same plot
-local bon_thresh = -log10(0.05/21)
+local bon_thresh = -log10(0.05/22)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
@@ -4341,7 +4342,7 @@ twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Belief in God/divine power") ///
 	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
 	name(belief_both, replace)
@@ -4397,22 +4398,22 @@ sum logp_int
 
 ** Start with likelihood ratio results comparing null model to model including exposure
 
-* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 21 exposures, will do 0.05/21)
-local bon_thresh = -log10(0.05/21)
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 22 exposures, will do 0.05/22)
+local bon_thresh = -log10(0.05/22)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Religious affiliation - Main effect") ///
 	name(relig_main, replace)
 	
 graph export ".\G0Partner_Results\relig_mainEffect_pvalues.pdf", replace
 	
 * And repeat for interaction effect (exclude 'age' here, as can't interact with itself!)
-local bon_thresh = -log10(0.05/20)
+local bon_thresh = -log10(0.05/21)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_int if exp_num != 1, ///
@@ -4420,14 +4421,14 @@ twoway (scatter exp_num logp_int if exp_num != 1, ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(2(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Religious affiliation - Age interaction") ///
 	name(relig_int, replace)
 	
 graph export ".\G0Partner_Results\relig_ageInteraction_pvalues.pdf", replace
 	
 ** Combine these results on the same plot
-local bon_thresh = -log10(0.05/21)
+local bon_thresh = -log10(0.05/22)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
@@ -4436,7 +4437,7 @@ twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Religious affiliation") ///
 	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
 	name(relig_both, replace)
@@ -4492,22 +4493,22 @@ sum logp_int
 
 ** Start with likelihood ratio results comparing null model to model including exposure
 
-* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 21 exposures, will do 0.05/21)
-local bon_thresh = -log10(0.05/21)
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 22 exposures, will do 0.05/22)
+local bon_thresh = -log10(0.05/22)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Church attendance - Main effect") ///
 	name(attend_main, replace)
 	
 graph export ".\G0Partner_Results\attend_mainEffect_pvalues.pdf", replace
 	
 * And repeat for interaction effect (exclude 'age' here, as can't interact with itself!)
-local bon_thresh = -log10(0.05/20)
+local bon_thresh = -log10(0.05/21)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_int if exp_num != 1, ///
@@ -4515,14 +4516,14 @@ twoway (scatter exp_num logp_int if exp_num != 1, ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(2(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Church attendance - Age interaction") ///
 	name(attend_int, replace)
 	
 graph export ".\G0Partner_Results\attend_ageInteraction_pvalues.pdf", replace
 	
 ** Combine these results on the same plot
-local bon_thresh = -log10(0.05/21)
+local bon_thresh = -log10(0.05/22)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
@@ -4531,7 +4532,7 @@ twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Church attendance") ///
 	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
 	name(attend_both, replace)
@@ -4557,7 +4558,7 @@ append using ".\G0Partner_Results\attend_pvalues.dta"
 ** Now look at combined results
 
 * Pregnancy vars main effects
-local bon_thresh = -log10(0.05/21)
+local bon_thresh = -log10(0.05/22)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main if outcome == "Belief", ///
@@ -4569,7 +4570,7 @@ twoway (scatter exp_num logp_main if outcome == "Belief", ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(small) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(small) angle(0)) ///
 	title("Main effects") ///
 	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
 		3 "Church attendance") rows(1) size(small)) ///
@@ -4578,7 +4579,7 @@ twoway (scatter exp_num logp_main if outcome == "Belief", ///
 graph export ".\G0Partner_Results\beliefReligAttend_mainEffects_pvalues.pdf", replace
 
 * Pregnancy vars interaction effects
-local bon_thresh = -log10(0.05/20)
+local bon_thresh = -log10(0.05/21)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_int if outcome == "Belief" & exp_num != 1, ///
@@ -4590,7 +4591,7 @@ twoway (scatter exp_num logp_int if outcome == "Belief" & exp_num != 1, ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)21, valuelabel labsize(small) angle(0)) ///
+	ylabel(2(1)22, valuelabel labsize(small) angle(0)) ///
 	title("Age interaction") ///
 	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
 		3 "Church attendance") rows(1) size(small)) ///
@@ -4705,7 +4706,7 @@ tab exp_num
 ** Start with pseduo-R2 values comparing null model to model including exposure
 twoway (scatter exp_num r2_main, col(black) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Belief in God/divine power - Main effect") ///
 	name(belief_main, replace)
 	
@@ -4715,7 +4716,7 @@ graph export ".\G0Partner_Results\belief_mainEffect_r2.pdf", replace
 twoway (scatter exp_num r2_int if exp_num != 1, ///
 		col(black) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(2(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Belief in God/divine power - Age interaction") ///
 	name(belief_int, replace)
 	
@@ -4726,7 +4727,7 @@ twoway (scatter exp_num r2_main, col(black) msize(small) msym(D)) ///
 	(scatter exp_num r2_int if exp_num != 1, ///
 		col(red) msize(small) msym(D)), ///, ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Belief in God/divine power") ///
 	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
 	name(belief_both, replace)
@@ -4774,7 +4775,7 @@ tab exp_num
 ** Start with pseduo-R2 values comparing null model to model including exposure
 twoway (scatter exp_num r2_main, col(black) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Religious affiliation - Main effect") ///
 	name(relig_main, replace)
 	
@@ -4784,7 +4785,7 @@ graph export ".\G0Partner_Results\relig_mainEffect_r2.pdf", replace
 twoway (scatter exp_num r2_int if exp_num != 1, ///
 		col(black) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(2(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Religious affiliation - Age interaction") ///
 	name(relig_int, replace)
 	
@@ -4795,7 +4796,7 @@ twoway (scatter exp_num r2_main, col(black) msize(small) msym(D)) ///
 	(scatter exp_num r2_int if exp_num != 1, ///
 		col(red) msize(small) msym(D)), ///, ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Religious affiliation") ///
 	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
 	name(relig_both, replace)
@@ -4843,7 +4844,7 @@ tab exp_num
 ** Start with pseduo-R2 values comparing null model to model including exposure
 twoway (scatter exp_num r2_main, col(black) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Church attendance - Main effect") ///
 	name(attend_main, replace)
 	
@@ -4853,7 +4854,7 @@ graph export ".\G0Partner_Results\attend_mainEffect_r2.pdf", replace
 twoway (scatter exp_num r2_int if exp_num != 1, ///
 		col(black) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(2(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Church attendance - Age interaction") ///
 	name(attend_int, replace)
 	
@@ -4864,7 +4865,7 @@ twoway (scatter exp_num r2_main, col(black) msize(small) msym(D)) ///
 	(scatter exp_num r2_int if exp_num != 1, ///
 		col(red) msize(small) msym(D)), ///, ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(vsmall) angle(0)) ///
 	title("Church attendance") ///
 	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
 	name(attend_both, replace)
@@ -4897,7 +4898,7 @@ twoway (scatter exp_num r2_main if outcome == "Belief", ///
 	(scatter exp_num r2_main if outcome == "Church attendance", ///
 		col(blue) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)21, valuelabel labsize(small) angle(0)) ///
+	ylabel(1(1)22, valuelabel labsize(small) angle(0)) ///
 	title("Main effects") ///
 	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
 		3 "Church attendance") rows(1) size(small)) ///
@@ -4913,7 +4914,7 @@ twoway (scatter exp_num r2_int if outcome == "Belief" & exp_num != 1, ///
 	(scatter exp_num r2_int if outcome == "Church attendance" & exp_num != 1, ///
 		col(blue) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)21, valuelabel labsize(small) angle(0)) ///
+	ylabel(2(1)22, valuelabel labsize(small) angle(0)) ///
 	title("Age interaction") ///
 	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
 		3 "Church attendance") rows(1) size(small)) ///
