@@ -6253,4 +6253,55 @@ graph export ".\G0Mother_Results\eduAgeIntPredProbs_attend.pdf", replace
 graph close _all
 	
 
+********************************************************************************	
+*** Example code demonstrating collider bias (figure S28)
+clear
+set obs 64
+
+* Create 'age' variable (0 = under 50;  1 = over 50)
+egen age = fill(0 1 0 1)
+tab age
+
+* Create 'religious belief' variable (0 = no belief; 1 = belief; 75% of people aged over 50 believe in God, but only 25% of people aged under 50 believe in God)
+egen belief = fill(0 0 0 1 0 1 1 1 0 0 0 1 0 1 1 1)
+tab belief
+tab belief age, col
+
+* Create 'married' variable (0 - not married; 1 = married; 25% of people aged under 50 who do not believe in God are married; 50% of under 50s who believe are married; 50% of over 50s who believe are married; and 75% of over 50s who believe are married)
+egen married = fill(0 0 0 0 0 0 0 0 0 0 0 1 0 1 0 1 ///	
+	0 1 0 1 0 1 1 1 1 1 1 1 1 1 1 1 ///	
+	0 0 0 0 0 0 0 0 0 0 0 1 0 1 0 1 ///	
+	0 1 0 1 0 1 1 1 1 1 1 1 1 1 1 1)
+tab married
+table (married) (age belief), nototals
+table (married) (age belief), statistic(percent, across(married)) nototals
+
+** Calculate 'true' odds ratio (OR = 9) of age on RSBB (excluding 'married', as we know that 'married' is a collider, as it is caused by both 'age' and 'religious belief') - Will calculate both manually and via logistic regression
+tab belief age, col
+display (0.75/0.25) / (0.25/0.75) 
+logistic belief age
+
+* Now, if we include the collider 'married' in this model, the odds ratio is biased to 6.75
+logistic belief age married
+
+* Can also show this manually within each strata of 'married'
+tab belief age if married == 1, col
+display (0.6/0.4) / (0.1818/0.8182)
+logistic belief age if married == 1
+
+tab belief age if married == 0, col
+display (0.8182/0.1818) / (0.4/0.6)
+logistic belief age if married == 0
+
+
+*** Can also bias away from the null if age and belief go in opposite directions for the collider (say, age increases the probability of being married but belief in God decreases it)
+egen married2 = fill(0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 ///	
+	1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 ///	
+	0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 ///	
+	1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1)
+tab married2
+logistic belief age
+logistic belief age married2
+
+clear
 	
