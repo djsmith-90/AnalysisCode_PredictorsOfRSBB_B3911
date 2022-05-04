@@ -5701,8 +5701,8 @@ twoway (line prob_yes ageInPreg, col(black)) ///
 	(rarea lci_no uci_no ageInPreg, lcol(black) lwidth(vthin) fcol(blue%20)), ///
 	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age in pregnancy") ytitle("Predicted probability") yscale(titlegap(2)) ///
-	title("Belief in God/divine power", size(medium)) ///
-	legend(order(1 "Believer" 3 "Not sure" 5 "Non-believer") ///
+	title("Religious belief", size(large)) ///
+	legend(order(1 "Yes" 3 "Not sure" 5 "No") ///
 	rows(1) size(small) symxsize(*0.5)) ///
 	name(age_bel, replace)
 	
@@ -5755,7 +5755,7 @@ twoway (line prob_xian ageInPreg, col(black)) ///
 	(rarea lci_none uci_none ageInPreg, lcol(black) lwidth(vthin) fcol(blue%20)), ///
 	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age in pregnancy") ytitle("Predicted probability") yscale(titlegap(2)) ///
-	title("Religious affiliation", size(medium)) ///
+	title("Religious affiliation", size(large)) ///
 	legend(order(1 "Christian" 3 "Other" 5 "None") ///
 	rows(1) size(small) symxsize(*0.5)) ///
 	name(age_relig, replace)
@@ -5815,7 +5815,7 @@ twoway (line prob_no ageInPreg, col(black)) ///
 	(rarea lci_wk uci_wk ageInPreg, lcol(black) lwidth(vthin) fcol(green%20)), ///
 	xscale(range(13 72)) xlabel(15(5)72, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age in pregnancy") ytitle("Predicted probability") yscale(titlegap(2)) ///
-	title("Attendance at place of worship", size(medium)) ///
+	title("Religious attendance", size(large)) ///
 	legend(order(1 "Not at all" 3 "1/yr" 5 "1/mth" 7 "1/wk") ///
 	rows(1) size(small) symxsize(*0.5)) ///
 	name(age_attend, replace)
@@ -5845,7 +5845,7 @@ twoway (line p1 ageInPreg if education == 1) ///
 	(line p1 ageInPreg if education == 5), ///
 	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
-	title("Belief in God - Yes", size(medium)) ///
+	title("Religious belief - Yes", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(yes, replace)
@@ -5857,7 +5857,7 @@ twoway (line p2 ageInPreg if education == 1) ///
 	(line p2 ageInPreg if education == 5), ///
 	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
-	title("Belief in God - Not sure", size(medium)) ///
+	title("Religious belief - Not sure", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(notSure, replace)
@@ -5869,7 +5869,7 @@ twoway (line p3 ageInPreg if education == 1) ///
 	(line p3 ageInPreg if education == 5), ///
 	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
-	title("Belief in God - No", size(medium)) ///
+	title("Religious belief - No", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(no, replace)
@@ -5937,7 +5937,7 @@ twoway (line p1 ageInPreg if education == 1) ///
 	(line p1 ageInPreg if education == 5), ///
 	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
-	title("Church attendance - Not at all", size(medium)) ///
+	title("Religious attendance - Not at all", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(never, replace)
@@ -5949,7 +5949,7 @@ twoway (line p2 ageInPreg if education == 1) ///
 	(line p2 ageInPreg if education == 5), ///
 	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
-	title("Church attendance - Min 1/year", size(medium)) ///
+	title("Religious attendance - Min 1/year", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(year, replace)
@@ -5961,7 +5961,7 @@ twoway (line p3 ageInPreg if education == 1) ///
 	(line p3 ageInPreg if education == 5), ///
 	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
-	title("Church attendance - Min 1/month", size(medium)) ///
+	title("Religious attendance - Min 1/month", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(month, replace)
@@ -5973,7 +5973,7 @@ twoway (line p4 ageInPreg if education == 1) ///
 	(line p4 ageInPreg if education == 5), ///
 	xscale(range(13 72)) xlabel(15(5)70, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
-	title("Church attendance - Min 1/week", size(medium)) ///
+	title("Religious attendance - Min 1/week", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(week, replace)

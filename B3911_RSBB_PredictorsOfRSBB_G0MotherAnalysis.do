@@ -5726,8 +5726,8 @@ twoway (line prob_yes ageAtBirth, col(black)) ///
 	(rarea lci_no uci_no ageAtBirth, lcol(black) lwidth(vthin) fcol(blue%20)), ///
 	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age at birth") ytitle("Predicted probability") yscale(titlegap(2)) ///
-	title("Belief in God/divine power", size(medium)) ///
-	legend(order(1 "Believer" 3 "Not sure" 5 "Non-believer") ///
+	title("Religious belief", size(large)) ///
+	legend(order(1 "Yes" 3 "Not sure" 5 "No") ///
 	rows(1) size(small) symxsize(*0.5)) ///
 	name(age_bel, replace)
 	
@@ -5780,7 +5780,7 @@ twoway (line prob_xian ageAtBirth, col(black)) ///
 	(rarea lci_none uci_none ageAtBirth, lcol(black) lwidth(vthin) fcol(blue%20)), ///
 	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age at birth") ytitle("Predicted probability") yscale(titlegap(2)) ///
-	title("Religious affiliation", size(medium)) ///
+	title("Religious affiliation", size(large)) ///
 	legend(order(1 "Christian" 3 "Other" 5 "None") ///
 	rows(1) size(small) symxsize(*0.5)) ///
 	name(age_relig, replace)
@@ -5840,7 +5840,7 @@ twoway (line prob_no ageAtBirth, col(black)) ///
 	(rarea lci_wk uci_wk ageAtBirth, lcol(black) lwidth(vthin) fcol(green%20)), ///
 	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age at birth") ytitle("Predicted probability") yscale(titlegap(2)) ///
-	title("Attendance at place of worship", size(medium)) ///
+	title("Religious attendance", size(large)) ///
 	legend(order(1 "Not at all" 3 "1/yr" 5 "1/mth" 7 "1/wk") ///
 	rows(1) size(small) symxsize(*0.5)) ///
 	name(age_attend, replace)
@@ -5929,7 +5929,7 @@ twoway (line p1 ageAtBirth if nonWhiteEthnic == 0, col(black)) ///
 	6 "Other than White non-believer") cols(2) size(small)) ///
 	name(eth_int, replace)
 	
-graph export ".\G0Mother_Results\athnicAgePredProbs.pdf", replace
+graph export ".\G0Mother_Results\ethnicAgePredProbs.pdf", replace
 	
 	
 * As above, but trying to add CIs to the predicted probability plots
@@ -6113,7 +6113,7 @@ twoway (line p1 ageAtBirth if education == 1) ///
 	(line p1 ageAtBirth if education == 5), ///
 	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age at birth") ytitle("Predicted probability") ///
-	title("Belief in God - Yes", size(medium)) ///
+	title("Religious belief - Yes", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(yes, replace)
@@ -6125,7 +6125,7 @@ twoway (line p2 ageAtBirth if education == 1) ///
 	(line p2 ageAtBirth if education == 5), ///
 	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age at birth") ytitle("Predicted probability") ///
-	title("Belief in God - Not sure", size(medium)) ///
+	title("Religious belief - Not sure", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(notSure, replace)
@@ -6137,7 +6137,7 @@ twoway (line p3 ageAtBirth if education == 1) ///
 	(line p3 ageAtBirth if education == 5), ///
 	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age at birth") ytitle("Predicted probability") ///
-	title("Belief in God - No", size(medium)) ///
+	title("Religious belief - No", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(no, replace)
@@ -6192,7 +6192,7 @@ grc1leg Xian other none, ycommon
 
 graph export ".\G0Mother_Results\eduAgeIntPredProbs_relig.pdf", replace
 
-* Chuch attendance
+* Church attendance
 mlogit d816_rev c.ageAtBirth##i.education, rrr baseoutcome(0)
 margins i.education, at(ageAtBirth = (20 30 40))
 capture drop p1 p2 p3
@@ -6205,7 +6205,7 @@ twoway (line p1 ageAtBirth if education == 1) ///
 	(line p1 ageAtBirth if education == 5), ///
 	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age at birth") ytitle("Predicted probability") ///
-	title("Church attendance - Not at all", size(medium)) ///
+	title("Religious attendance - Not at all", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(never, replace)
@@ -6217,7 +6217,7 @@ twoway (line p2 ageAtBirth if education == 1) ///
 	(line p2 ageAtBirth if education == 5), ///
 	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age at birth") ytitle("Predicted probability") ///
-	title("Church attendance - Min 1/year", size(medium)) ///
+	title("Religious attendance - Min 1/year", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(year, replace)
@@ -6229,7 +6229,7 @@ twoway (line p3 ageAtBirth if education == 1) ///
 	(line p3 ageAtBirth if education == 5), ///
 	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age at birth") ytitle("Predicted probability") ///
-	title("Church attendance - Min 1/month", size(medium)) ///
+	title("Religious attendance - Min 1/month", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(month, replace)
@@ -6241,7 +6241,7 @@ twoway (line p4 ageAtBirth if education == 1) ///
 	(line p4 ageAtBirth if education == 5), ///
 	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
 	xtitle("Age at birth") ytitle("Predicted probability") ///
-	title("Church attendance - Min 1/week", size(medium)) ///
+	title("Religious attendance - Min 1/week", size(medium)) ///
 	legend(order(1 "CSE/None" 2 "Vocational" 3 "O-level" 4 "A-level" 5 "Degree") ///
 	cols(5) size(small)) ///
 	name(week, replace)
