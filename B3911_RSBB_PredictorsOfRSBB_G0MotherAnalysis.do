@@ -4572,8 +4572,8 @@ twoway (scatter exp_num logp_main if outcome == "Belief", ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
 	ylabel(1(1)23, valuelabel labsize(small) angle(0)) ///
 	title("Main effects") ///
-	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
-		3 "Church attendance") rows(1) size(small)) ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
 	name(preg_main, replace)
 
 graph export ".\G0Mother_Results\beliefReligAttend_mainEffects_pvalues.pdf", replace
@@ -4593,8 +4593,8 @@ twoway (scatter exp_num logp_int if outcome == "Belief" & exp_num != 1, ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
 	ylabel(2(1)23, valuelabel labsize(small) angle(0)) ///
 	title("Age interaction") ///
-	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
-		3 "Church attendance") rows(1) size(small)) ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
 	name(preg_int, replace)
 
 graph export ".\G0Mother_Results\beliefReligAttend_ageInt_pvalues.pdf", replace
@@ -4901,8 +4901,8 @@ twoway (scatter exp_num r2_main if outcome == "Belief", ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
 	ylabel(1(1)23, valuelabel labsize(small) angle(0)) ///
 	title("Main effects") ///
-	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
-		3 "Church attendance") rows(1) size(small)) ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
 	name(preg_main, replace)
 
 graph export ".\G0Mother_Results\beliefReligAttend_mainEffects_r2.pdf", replace
@@ -4917,8 +4917,8 @@ twoway (scatter exp_num r2_int if outcome == "Belief" & exp_num != 1, ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
 	ylabel(2(1)23, valuelabel labsize(small) angle(0)) ///
 	title("Age interaction") ///
-	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
-		3 "Church attendance") rows(1) size(small)) ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
 	name(preg_int, replace)
 
 graph export ".\G0Mother_Results\beliefReligAttend_ageInt_r2.pdf", replace
