@@ -232,6 +232,13 @@ heatplot cor_all, color(hcl, diverging intensity(1)) ///
 * Save heatmap
 graph export ".\G0Mother_Results\corr_heatplot_all.pdf", replace
 
+* And save in .EPS format
+heatplot cor_all, color(hcl, diverging intensity(1)) ///
+	lower nodiagonal cuts(-1.05(0.1)1.05) xlabel(, angle(45) labsize(vsmall)) ///
+	ylabel(, labsize(vsmall)) legend(subtitle("")) ysize(10) xsize(14)
+	
+graph export ".\G0Mother_Results\corr_heatplot_all.eps", replace
+
 * Save matrix as Excel file
 putexcel set ".\G0Mother_Results\corrMatrix_all.xlsx", replace
 putexcel A1=matrix(cor_all), names nformat(number_d2)
@@ -4605,6 +4612,10 @@ graph combine preg_main preg_int, ysize(3) xsize(6)
 
 graph export ".\G0Mother_Results\allData_pvalues.pdf", replace
 
+* And convert to EPS format for Wellcome Open Research formatting (also have to enlarge size, else resolution is terrible)
+graph combine preg_main preg_int, ysize(10) xsize(20)
+graph export ".\G0Mother_Results\allData_pvalues.eps", replace
+
 graph close _all
 
 
@@ -4929,6 +4940,10 @@ graph combine preg_main preg_int, ysize(3) xsize(6)
 
 graph export ".\G0Mother_Results\allData_r2.pdf", replace
 
+* And save as .EPS format
+graph combine preg_main preg_int, ysize(10) xsize(20)
+graph export ".\G0Mother_Results\allData_r2.eps", replace
+
 graph close _all
 
 
@@ -5021,6 +5036,28 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == "ageAtBirth"
 		legend(off) name(age_cat, replace)
 		
 graph export ".\G0Mother_Results\ageResults.pdf", replace
+
+* Save save in .EPS format
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "ageAtBirth", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & ///
+			exposure == "ageAtBirth", horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "ageAtBirth", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & ///
+			exposure == "ageAtBirth", horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "ageAtBirth", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & ///
+			exposure == "ageAtBirth", horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Age and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(age_cat, replace) ysize(10) xsize(14)
+		
+graph export ".\G0Mother_Results\ageResults.eps", replace
 
 
 ** Create plot for ethnicity (ref = white)
@@ -5172,6 +5209,67 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		name(edu_cat, replace)
 		
 graph export ".\G0Mother_Results\eduResults.pdf", replace
+
+* And save in .EPS format
+twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"Vocational (ref = CSE/None)", col(black) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"Vocational (ref = CSE/None)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"Vocational (ref = CSE/None)", col(black) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"Vocational (ref = CSE/None)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"Vocational (ref = CSE/None)", col(black) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"Vocational (ref = CSE/None)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"O-level (ref = CSE/None)", col(red) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"O-level (ref = CSE/None)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"O-level (ref = CSE/None)", col(red) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"O-level (ref = CSE/None)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"O-level (ref = CSE/None)", col(red) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"O-level (ref = CSE/None)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"A-level (ref = CSE/None)", col(blue) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"A-level (ref = CSE/None)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"A-level (ref = CSE/None)", col(blue) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"A-level (ref = CSE/None)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"A-level (ref = CSE/None)", col(blue) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"A-level (ref = CSE/None)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"Degree (ref = CSE/None)", col(green) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"Degree (ref = CSE/None)", horizontal col(green)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"Degree (ref = CSE/None)", col(green) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"Degree (ref = CSE/None)", horizontal col(green)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"Degree (ref = CSE/None)", col(green) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"Degree (ref = CSE/None)", horizontal col(green)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio (ref = CSE/None)") ///
+		title("Education and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
+		xlabel(0.5 1 2 3 5 8, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(order(1 "Vocational" 7 "O-levels" 13 "A-levels" ///
+			19 "Degree") rows(1)) ///
+		name(edu_cat, replace) ysize(10) xsize(14)
+		
+graph export ".\G0Mother_Results\eduResults.eps", replace
 	
 
 ** Create plot for occupational social class (ref = lower)

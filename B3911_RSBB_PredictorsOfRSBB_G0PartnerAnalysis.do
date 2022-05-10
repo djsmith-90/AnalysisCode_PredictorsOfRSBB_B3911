@@ -4605,6 +4605,10 @@ graph combine preg_main preg_int, ysize(3) xsize(6)
 
 graph export ".\G0Partner_Results\allData_pvalues.pdf", replace
 
+* And save as .EPS format
+graph combine preg_main preg_int, ysize(10) xsize(20)
+graph export ".\G0Partner_Results\allData_pvalues.eps", replace
+
 graph close _all
 
 
