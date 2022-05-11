@@ -100,6 +100,28 @@ misstable sum d810-d816, all
 misstable sum mz028b-partner_ab, all
 
 
+** Also want to get descriptive stats for each exposure split by each RSBB outcome category
+foreach var of varlist mz028b-partner_ab {
+	quietly distinct `var'
+	local unique = r(ndistinct)
+	
+	display ""
+	display "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	display "Variable " "`var'" " has " `unique' " values."
+	
+	if `unique' < 10 {
+		tab d810 `var', col
+		tab d813_grp `var', col
+		tab d816 `var', col
+	}
+	else {
+		tab d810, sum(`var')
+		tab d813_grp, sum(`var')
+		tab d816, sum(`var')
+	}
+}
+
+
 
 **********************************************************************************
 *** Correlations between exposures

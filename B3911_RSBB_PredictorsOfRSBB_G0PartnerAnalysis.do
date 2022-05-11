@@ -100,6 +100,28 @@ misstable sum pb150-pb155, all
 misstable sum a053-neighbour_qual, all
 
 
+** Also want to get descriptive stats for each exposure split by each RSBB outcome category
+foreach var of varlist a053-neighbour_qual {
+	quietly distinct `var'
+	local unique = r(ndistinct)
+	
+	display ""
+	display "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	display "Variable " "`var'" " has " `unique' " values."
+	
+	if `unique' < 10 {
+		tab pb150 `var', col
+		tab pb153_grp `var', col
+		tab pb155 `var', col
+	}
+	else {
+		tab pb150, sum(`var')
+		tab pb153_grp, sum(`var')
+		tab pb155, sum(`var')
+	}
+}
+
+
 
 **********************************************************************************
 *** Correlations between exposures

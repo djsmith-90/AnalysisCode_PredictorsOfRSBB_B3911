@@ -92,6 +92,27 @@ misstable sum d810-d816, all
 misstable sum mz028b-fom_cog_factor1, all
 
 
+** Also want to get descriptive stats for each exposure split by each RSBB outcome category
+foreach var of varlist mz028b-fom_cog_factor1 {
+	quietly distinct `var'
+	local unique = r(ndistinct)
+	
+	display ""
+	display "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	display "Variable " "`var'" " has " `unique' " values."
+	
+	if `unique' < 10 {
+		tab d810 `var', col
+		tab d813_grp `var', col
+		tab d816 `var', col
+	}
+	else {
+		tab d810, sum(`var')
+		tab d813_grp, sum(`var')
+		tab d816, sum(`var')
+	}
+}
+
 
 **********************************************************************************
 *** Correlations between exposures
@@ -606,6 +627,28 @@ misstable sum pb150-pb155, all
 
 * Exposures
 misstable sum pb910 pb546-pb551 pa782 esteem_prorated, all
+
+
+** Also want to get descriptive stats for each exposure split by each RSBB outcome category
+foreach var of varlist pb910 pb546-pb551 pa782 esteem_prorated {
+	quietly distinct `var'
+	local unique = r(ndistinct)
+	
+	display ""
+	display "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	display "Variable " "`var'" " has " `unique' " values."
+	
+	if `unique' < 10 {
+		tab pb150 `var', col
+		tab pb153_grp `var', col
+		tab pb155 `var', col
+	}
+	else {
+		tab pb150, sum(`var')
+		tab pb153_grp, sum(`var')
+		tab pb155, sum(`var')
+	}
+}
 
 
 
@@ -1123,6 +1166,28 @@ misstable sum YPG3000-YPG3080_OccYr, all
 
 * Exposures
 misstable sum male YPG8000 f8ws110 f8ws111 f8ws112 fh6280 FKWI1030 FKWI1050 fg7360-fg7364 f8lc125 loc_age16 FJCQ1001 f8dv440a triangles_total kr554a skuse16 autism25 kq348a tc4025e prosocial25 CCXD860a f8se125 f8se126, all
+
+
+** Also want to get descriptive stats for each exposure split by each RSBB outcome category
+foreach var of varlist male YPG8000 f8ws110 f8ws111 f8ws112 fh6280 FKWI1030 FKWI1050 fg7360-fg7364 f8lc125 loc_age16 FJCQ1001 f8dv440a triangles_total kr554a skuse16 autism25 kq348a tc4025e prosocial25 CCXD860a f8se125 f8se126 {
+	quietly distinct `var'
+	local unique = r(ndistinct)
+	
+	display ""
+	display "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	display "Variable " "`var'" " has " `unique' " values."
+	
+	if `unique' < 10 {
+		tab YPG3000 `var', col
+		tab YPG3040_grp `var', col
+		tab YPG3080 `var', col
+	}
+	else {
+		tab YPG3000, sum(`var')
+		tab YPG3040_grp, sum(`var')
+		tab YPG3080, sum(`var')
+	}
+}
 
 
 

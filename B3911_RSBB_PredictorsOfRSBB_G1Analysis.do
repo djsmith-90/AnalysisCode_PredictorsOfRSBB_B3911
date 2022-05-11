@@ -97,6 +97,27 @@ misstable sum YPG3000-YPG3080_OccYr, all
 misstable sum male-age_FA, all
 
 
+** Also want to get descriptive stats for each exposure split by each RSBB outcome category
+foreach var of varlist male-age_FA {
+	quietly distinct `var'
+	local unique = r(ndistinct)
+	
+	display ""
+	display "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	display "Variable " "`var'" " has " `unique' " values."
+	
+	if `unique' < 10 {
+		tab YPG3000 `var', col
+		tab YPG3040_grp `var', col
+		tab YPG3080 `var', col
+	}
+	else {
+		tab YPG3000, sum(`var')
+		tab YPG3040_grp, sum(`var')
+		tab YPG3080, sum(`var')
+	}
+}
+
 
 **********************************************************************************
 *** Correlations between exposures
