@@ -1103,6 +1103,12 @@ label value parent parent_lb
 tab parent, m
 tab parent
 
+* No measure of marital status for G1, so will use 'living with a partner' at the RSBB time-point as a proxy
+tab YPG1052, m
+
+replace YPG1052 = . if YPG1052 < 0
+tab YPG1052, m
+
 
 ** Socioeconomic/material insecurity factors
 
@@ -1123,6 +1129,24 @@ tab jan2020Townsendq5, m
 replace jan2020Townsendq5 = . if jan2020Townsendq5 < 0
 tab jan2020Townsendq5, m
 tab jan2020Townsendq5
+
+* Employed at time of RSBB questionnaire
+tab1 YPG1000 YPG1001 YPG1002 YPG1009, m
+
+foreach var of varlist YPG1000 YPG1001 YPG1002 YPG1009 {
+	replace `var' = . if `var' < 0
+	tab `var', m
+}
+
+gen yp_employed = .
+replace yp_employed = 0 if YPG1000 < . | YPG1001 < . | YPG1002 < . | YPG1009 < .
+replace yp_employed = 1 if YPG1000 == 1 | YPG1001 == 1 | YPG1002 == 1 | YPG1009 == 1
+tab yp_employed, m
+
+label define employ_lb 0 "No" 1 "Yes"
+numlabel employ_lb, add
+label values yp_employed employ_lb
+tab yp_employed, m
 
 * Financial difficulties - Combine into yes vs no - Use repeatedly-collected data from 5 recent questionnaires
 tab1 YPB6190 YPC2360 YPD1210 YPE6710 YPF6220, m
@@ -1146,12 +1170,42 @@ tab yp_finDiffs, m
 tab yp_finDiffs
 
 * Traumatic life events/adverse childhood experiences in childhood (< 17 years of age; more details on how these variables were derived can be found here: https://wellcomeopenresearch.org/articles/3-106/v1)
-desc physical_abuse_0_16yrs-ACEcat_classic_0_16yrs
+desc clon100-clon123
 
-sum physical_abuse_0_16yrs-ACEcat_classic_0_16yrs
+sum clon100-clon123
 
-tab1 physical_abuse_0_16yrs-ACEcat_classic_0_16yrs, m
-tab1 physical_abuse_0_16yrs-ACEcat_classic_0_16yrs
+foreach var of varlist clon100-clon123 {
+	replace `var' = . if `var' < 0
+}
+
+sum clon100-clon123
+
+tab1 clon100-clon123, m
+tab1 clon100-clon123
+
+* YP income (at age 26) - Combine some categories together
+tab YPE6020, m
+
+replace YPE6020 = . if YPE6020 < 0
+tab YPE6020, m
+
+recode YPE6020 (0 1 = 1) (2 = 2) (3 = 3) (4 = 4) (5 6 7 = 5), gen(yp_income)
+tab yp_income, m
+
+label define income_lb 1 "£0-£499" 2 "£500-£999" 3 "£1000-£1499" 4 "£1500-£1999" 5 "£2000 and above"
+numlabel income_lb, add
+label values yp_income income_lb
+tab yp_income, m
+
+* YP housing status (at age 28) - Combine some categories together
+tab YPG1060, m
+
+replace YPG1060 = . if YPG1060 < 0
+tab YPG1060, m
+
+recode YPG1060 (1 2 = 1) (4 = 2) (3 = 3) (5 = 4), gen(yp_housing)
+label values yp_housing housing_lb
+tab yp_housing, m
 
 * Biological father absence in childhood (combine time points at ages 3, 4, 8, 10 and 18, working backwards - Will construct both binary 'father absence' variable, and 'age at father absence' categorical variable [never vs 0-4 vs 5 or older]; for the latter, will just use age 8, 10 and 18 data)
 tab1 h400 h401 j374 j375 n8050 n8051 q3050 q3051 t1055 t1056, m
@@ -1584,8 +1638,8 @@ frame change g1
 * Keep just variables we are interested in
 keep aln qlet kz011b ///
 YPG3000 YPG3040 YPG3040_grp YPG3080_OccNever YPG3080_OccYr YPG3080 YPG3153 YPG3153_cat YPG3160 YPG3170 YPG3155 YPG3155_cat ///
-YPG8000 mz028b kz021 a525_grp c804 a005_grp jan2020ur01ind_grp b032_grp parent ///
-yp_edu c645a c666a c755_grp c765_grp logavinceq jan2020imd2010q5 jan2020Townsendq5 a006_grp yp_finDiffs physical_abuse_0_16yrs-ACEcat_classic_0_16yrs a053 a551 a636 father_ab age_FA ///
+YPG8000 mz028b kz021 YPG1052 a525_grp c804 a005_grp jan2020ur01ind_grp jan1993ur01ind_grp b032_grp parent ///
+yp_edu c645a c666a yp_employed c755_grp c765_grp yp_income logavinceq jan2020imd2010q5 jan1993imd2010q5_M jan2020Townsendq5 jan1993Townsendq5_M yp_housing a006_grp yp_finDiffs c525 clon100-clon123 a053 a551 a636 father_ab age_FA ///
 f8ws110 f8ws111 f8ws112 fh6280 FKWI1030 FKWI1050 fg7360-fg7364 f8lc125 loc_age16 FJCQ1001 f8dv440a triangles_total kr554a skuse16 autism25 kq348a tc4025e prosocial25 CCXD860a f8se125 f8se126
 
 * Drop if not alive at 1 year of age

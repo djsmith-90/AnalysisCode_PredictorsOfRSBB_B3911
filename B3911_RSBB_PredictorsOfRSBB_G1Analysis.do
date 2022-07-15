@@ -38,12 +38,20 @@ drop YPG3153 YPG3153_cat YPG3160 YPG3170 YPG3155 YPG3155_cat
 
 * Also drop the cognitive/psychological variables (as will focus on these in another paper), and also the adverse childhood experiences variables
 drop f8ws110 f8ws111 f8ws112 fh6280 FKWI1030 FKWI1050 fg7360-fg7364 f8lc125 loc_age16 FJCQ1001 f8dv440a triangles_total kr554a skuse16 autism25 kq348a tc4025e prosocial25 CCXD860a f8se125 f8se126
-drop physical_abuse_0_16yrs-parental_separation_0_16yrs social_support_child_0_16yrs-ACEcat_classic_0_16yrs
+drop clon100-clon109 clon114-clon123
 
 ** Using the 'distinct' command (see above), for each variable inspect the number of unque values; if < 10 then display table, while if >= 10 then displays means/SDs/IQRs
 
+* Recode the attendance var first, so that categories are 'at least once a month', 'at least once a year', 'occasionally' and 'not at all'
+tab1 YPG3080*, m
+recode YPG3080 (1 2 = 1) (3 = 2) (4 = 3) (5 = 4), gen(YPG3080_alt)
+label define attend2_lb 1 "Min once a month" 2 "Min once a year" 3 "Occasionally" 4 "Not at all"
+numlabel attend2_lb, add
+label values YPG3080_alt attend2_lb
+tab YPG3080_alt
+
 * Outcomes
-foreach var of varlist YPG3000-YPG3080_OccYr {
+foreach var of varlist YPG3000-YPG3080_OccYr YPG3080_alt {
 	quietly distinct `var'
 	local unique = r(ndistinct)
 	
@@ -109,12 +117,12 @@ foreach var of varlist male-age_FA {
 	if `unique' < 10 {
 		tab YPG3000 `var', col
 		tab YPG3040_grp `var', col
-		tab YPG3080 `var', col
+		tab YPG3080_alt `var', col
 	}
 	else {
 		tab YPG3000, sum(`var')
 		tab YPG3040_grp, sum(`var')
-		tab YPG3080, sum(`var')
+		tab YPG3080_alt, sum(`var')
 	}
 }
 
@@ -125,43 +133,51 @@ foreach var of varlist male-age_FA {
 ** Explore correlations between exposures to see how inter-related these factors are
 desc male-age_FA
 
-* Most variables are either continuous, ordered categories, or binary variables, so will just use standard pearson correlations for these. Only unordered categories are mother's home ownership (owned/mortaged vs renting vs counci/housing association vs other) and marital status (never married vs married vs widowed/divorced/separated). So will exclude these two variables from the correlation matrix and calculate their associations using these variables as outcomes in a multinomial regression and square-rooting the pseudo-R2 value (similar to how the 'rexposome' package in R for ExWAS analyses does)
+* Most variables are either continuous, ordered categories, or binary variables, so will just use standard pearson correlations for these. Only unordered categories are home ownership status (of YP and mother; owned/mortaged vs renting vs counci/housing association vs other) and mother;s marital status (never married vs married vs widowed/divorced/separated). So will exclude these three variables from the correlation matrix and calculate their associations using these variables as outcomes in a multinomial regression and square-rooting the pseudo-R2 value (similar to how the 'rexposome' package in R for ExWAS analyses does)
 
 * First, order variables into categories of 'demographic' and 'socioeconomic/material insecurity'
-order aln-YPG3080_OccYr ///
-YPG8000 mz028b male c804 a525_grp a005_grp jan2020ur01ind_grp b032_grp parent ///
-yp_edu c645a c666a c755_grp c765_grp logavinceq jan2020imd2010q5 jan2020Townsendq5 a006_grp yp_finDiffs social_class_0_16yrs financial_difficulties_0_16yrs neighbourhood_0_16yrs a053 a551 a636 father_ab age_FA
+order aln-YPG3080_OccYr YPG3080_alt ///
+YPG8000 mz028b male c804 YPG1052 a525_grp a005_grp jan2020ur01ind_grp jan1993ur01ind_grp parent b032_grp ///
+yp_edu c645a c666a yp_employed c755_grp c765_grp clon111 yp_income logavinceq jan2020imd2010q5 jan1993Townsendq5_M jan2020Townsendq5 jan1993imd2010q5_M yp_housing a006_grp yp_finDiffs clon112 c525 a053 a551 clon113 a636 father_ab age_FA
 
 * Next, rename all these exposures so they are more intuitive and can be read easier on the correlation heatmaps below
 rename YPG8000 ageAt28
 rename mz028b mother_ageAtBirth
 rename c804 nonWhiteEthnic
-rename a525_grp maritalStatus
-rename a005_grp mobility 
+rename YPG1052 livePartner
+rename a525_grp maritalStatus_mat
+rename a005_grp mobility_mat
 rename jan2020ur01ind_grp rural
-rename b032_grp parity
+rename jan1993ur01ind_grp rural_mat
+rename b032_grp parity_mat
 rename yp_edu education
-rename c645a maternalEdu
-rename c666a paternalEdu
+rename c645a education_mat
+rename c666a education_pat
+rename yp_employed employed
 rename c755_grp highSocClass_mat
 rename c765_grp highSocClass_pat
-rename logavinceq income
+rename clon111 lowSocClass_0_16
+rename yp_income income
+rename logavinceq income_parents
 rename jan2020imd2010q5 IMD
+rename jan1993Townsendq5_M IMD_mat
 rename jan2020Townsendq5 townsendDep
-rename a006_grp housing 
+rename jan1993imd2010q5_M townsendDep_mat
+rename yp_housing housing
+rename a006_grp housing_mat
 rename yp_finDiffs financeDiffs
-rename social_class_0_16yrs lowSocClass_0_16
-rename financial_difficulties_0_16yrs financeDiffs_0_16
-rename neighbourhood_0_16yrs badNeigh_0_16
-rename a053 accessToCar
-rename a551 crowding
-rename a636 neighPercept
+rename clon112 financeDiffs_0_16
+rename c525 financeDiffsScore_mat
+rename a053 accessToCar_parents
+rename a551 crowding_birth
+rename clon113 badNeigh_0_16
+rename a636 neighPercept_mat
 rename father_ab fatherAbsence
 rename age_FA age_fatherAbsence
 
 
 * Associations between demographic factors (excluding marital status; a525_grp) - Then make heat map of correlations (heatplot code adapted from: https://www.stata.com/meeting/germany19/slides/germany19_Jann.pdf)
-corr ageAt28 mother_ageAtBirth nonWhiteEthnic mobility rural parity parent
+pwcorr ageAt28 mother_ageAtBirth male nonWhiteEthnic livePartner mobility_mat rural rural_mat parent parity_mat
 
 matrix cor_demo = r(C)
 matrix list cor_demo
@@ -181,10 +197,10 @@ capture postclose marital_corrs_demoOnly
 postfile marital_corrs_demoOnly str30 variable corr ///
 	using ".\G1_Results\marital_corrs_demoOnly.dta", replace
 
-foreach var of varlist ageAt28 mother_ageAtBirth nonWhiteEthnic mobility rural parity parent {
-	quietly mlogit maritalStatus `var'
+foreach var of varlist ageAt28 mother_ageAtBirth male nonWhiteEthnic livePartner mobility_mat rural rural_mat parent parity_mat {
+	quietly mlogit maritalStatus_mat `var'
 	local r2 = e(r2_p)
-	display "Estimated correlation for " "`var'" " on marital status is: " round((sqrt(`r2')), .001)
+	display "Estimated correlation for " "`var'" " on mother's marital status is: " round((sqrt(`r2')), .001)
 	
 	post marital_corrs_demoOnly ("`var'") (sqrt(`r2'))
 }
@@ -199,8 +215,8 @@ outsheet using ".\G1_Results\marital_corrs_demoOnly.csv", comma replace
 restore
 
 
-** Now repeat for socioeconomic/material insecurity variables (to exclude housing status [housing], as is an unordered categorical variable)
-corr education-townsendDep financeDiffs-age_fatherAbsence
+** Now repeat for socioeconomic/material insecurity variables (to exclude housing status [housing and housing_mat], as are unordered categorical variables)
+pwcorr education-townsendDep_mat financeDiffs-age_fatherAbsence
 
 matrix cor_socio = r(C)
 
@@ -221,9 +237,16 @@ capture postclose housing_corrs_socioOnly
 postfile housing_corrs_socioOnly str30 variable corr ///
 	using ".\G1_Results\housing_corrs_socioOnly.dta", replace
 	
-foreach var of varlist education-townsendDep financeDiffs-age_fatherAbsence {
+foreach var of varlist education-townsendDep_mat housing_mat financeDiffs-age_fatherAbsence {
 	quietly mlogit housing `var'
 	local r2 = e(r2_p)
+	
+	* Using categorical notation for unordered variables
+	if "`var'" == "housing_mat" {
+		quietly mlogit housing i.`var'
+		local r2 = e(r2_p)
+	}
+	
 	display "Estimated correlation for " "`var'" " on home ownership status is: " round((sqrt(`r2')), .001)
 
 	post housing_corrs_socioOnly ("`var'") (sqrt(`r2'))
@@ -238,9 +261,40 @@ list, clean
 outsheet using ".\G1_Results\housing_corrs_socioOnly.csv", comma replace
 restore
 
+
+** And repeat for mother's home ownership status
+capture postclose housingMat_corrs_socioOnly
+postfile housingMat_corrs_socioOnly str30 variable corr ///
+	using ".\G1_Results\housingMat_corrs_socioOnly.dta", replace
+	
+foreach var of varlist education-townsendDep_mat housing financeDiffs-age_fatherAbsence {
+	quietly mlogit housing_mat `var'
+	local r2 = e(r2_p)
+	
+	* Using categorical notation for unordered variables
+	if "`var'" == "housing" {
+		quietly mlogit housing_mat i.`var'
+		local r2 = e(r2_p)
+	}
+	
+	display "Estimated correlation for " "`var'" " on mother's home ownership status is: " round((sqrt(`r2')), .001)
+
+	post housingMat_corrs_socioOnly ("`var'") (sqrt(`r2'))
+}
+
+postclose housingMat_corrs_socioOnly
+
+* Read in this file and save as CSV file, so easier to access (use 'preserve' and 'restore' to keep main file in memory)
+preserve
+use ".\G1_Results\housingMat_corrs_socioOnly.dta", clear
+list, clean
+outsheet using ".\G1_Results\housingMat_corrs_socioOnly.csv", comma replace
+restore
+
+
 	
 *** Finally, repeat this on all of the exposures together (excluding unordered cateogorical variables housing status and marital status)
-corr ageAt28 mother_ageAtBirth nonWhiteEthnic mobility rural parity parent education-townsendDep financeDiffs-age_fatherAbsence
+pwcorr ageAt28 mother_ageAtBirth male nonWhiteEthnic livePartner mobility_mat rural rural_mat parent parity_mat education-townsendDep_mat financeDiffs-age_fatherAbsence
 
 matrix cor_all = r(C)
 
@@ -256,16 +310,23 @@ putexcel set ".\G1_Results\corrMatrix_all.xlsx", replace
 putexcel A1=matrix(cor_all), names
 
 	
-* And now for associations of all other exposures variables with unordered categorical variables marital status and home ownership status
+* And now for associations of all other exposures variables with unordered categorical variables marital status, YPs home ownership status and mother's home ownership status
 
 * Marital status
 capture postclose marital_corrs_all
 postfile marital_corrs_all str30 variable corr ///
 	using ".\G1_Results\marital_corrs_all.dta", replace
 	
-foreach var of varlist ageAt28 mother_ageAtBirth nonWhiteEthnic mobility rural parity parent education-townsendDep financeDiffs-age_fatherAbsence {
+foreach var of varlist ageAt28 mother_ageAtBirth male nonWhiteEthnic livePartner mobility_mat rural rural_mat parent parity_mat education-townsendDep_mat housing housing_mat financeDiffs-age_fatherAbsence {
 	quietly mlogit maritalStatus `var'
 	local r2 = e(r2_p)
+	
+	* Using categorical notation for unordered variables
+	if "`var'" == "housing" | "`var'" == "housing_mat" {
+		quietly mlogit maritalStatus_mat i.`var'
+		local r2 = e(r2_p)
+	}
+	
 	display "Estimated correlation for " "`var'" " on marital status is: " round((sqrt(`r2')), .001)
 
 	post marital_corrs_all ("`var'") (sqrt(`r2'))
@@ -286,8 +347,15 @@ capture postclose housing_corrs_all
 postfile housing_corrs_all str30 variable corr ///
 	using ".\G1_Results\housing_corrs_all.dta", replace
 	
-foreach var of varlist ageAt28 mother_ageAtBirth nonWhiteEthnic mobility rural parity parent education-townsendDep financeDiffs-age_fatherAbsence {
+foreach var of varlist ageAt28 mother_ageAtBirth male nonWhiteEthnic livePartner maritalStatus_mat mobility_mat rural rural_mat parent parity_mat education-townsendDep_mat housing_mat financeDiffs-age_fatherAbsence {
 	quietly mlogit housing `var'
+	
+	* Using categorical notation for unordered variables
+	if "`var'" == "maritalStatus_mat" | "`var'" == "housing_mat" {
+		quietly mlogit housing i.`var'
+		local r2 = e(r2_p)
+	}
+	
 	local r2 = e(r2_p)
 	display "Estimated correlation for " "`var'" " on home ownership status is: " round((sqrt(`r2')), .001)
 
@@ -305,6 +373,37 @@ outsheet using ".\G1_Results\housing_corrs_all.csv", comma replace
 restore
 
 
+* Mother's housing status
+capture postclose housingMat_corrs_all
+postfile housingMat_corrs_all str30 variable corr ///
+	using ".\G1_Results\housingMat_corrs_all.dta", replace
+	
+foreach var of varlist ageAt28 mother_ageAtBirth male nonWhiteEthnic livePartner maritalStatus_mat mobility_mat rural rural_mat parent parity_mat education-townsendDep_mat housing financeDiffs-age_fatherAbsence {
+	quietly mlogit housing_mat `var'
+	
+	* Using categorical notation for unordered variables
+	if "`var'" == "maritalStatus_mat" | "`var'" == "housing" {
+		quietly mlogit housing_mat i.`var'
+		local r2 = e(r2_p)
+	}
+	
+	local r2 = e(r2_p)
+	display "Estimated correlation for " "`var'" " on mother's home ownership status is: " round((sqrt(`r2')), .001)
+
+
+	post housingMat_corrs_all ("`var'") (sqrt(`r2'))
+}
+
+postclose housingMat_corrs_all
+
+* Read in this file and save as CSV file, so easier to access (use 'preserve' and 'restore' to keep main file in memory)
+preserve
+use ".\G1_Results\housingMat_corrs_all.dta", clear
+list, clean
+outsheet using ".\G1_Results\housingMat_corrs_all.csv", comma replace
+restore
+
+
 
 ************************************************************************************
 *** Next, we want to run the actual analyses
@@ -312,8 +411,8 @@ restore
 *** Start with belief in God/divine power - As is a unordered categorical variable, will use multinomial regression (with 'no' as baseline/reference category)
 tab YPG3000, m
 
-** This will be quite complicated, as want to post results to file, but as exposures differ extracting the results will be variable specific. To adjust for multiple corrections will use conservative bonferroni adjustment when constructing confidence intervals and interpreting p-values - As 27 exposures, will a Bonferroni p-value threshold of 0.05/27 = 0.0019.
-display 0.05/27
+** This will be quite complicated, as want to post results to file, but as exposures differ extracting the results will be variable specific. To adjust for multiple corrections will use conservative bonferroni adjustment when interpreting p-values - As 35 exposures, will a Bonferroni p-value threshold of 0.05/35 = 0.0014.
+display 0.05/35
 
 ** We also want to store both estimates adjusting for age and sex, and also the interaction between sex and the exposure (as all G1s are of a similar age, will only explore interactions with sex, not age), to see whether it's moderated by sex. Again, this makes the set-up a bit more complicated.
 
@@ -497,7 +596,7 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 	}
 	
 	// Next, analyse the rest of the continuous/binary variables
-	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "parent" | "`var'" == "highSocClass_mat" |  "`var'" == "highSocClass_pat" |  "`var'" == "lowSocClass_0_16" | "`var'" == "financeDiffs_0_16" | "`var'" == "badNeigh_0_16" | "`var'" == "accessToCar" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "neighPercept" | "`var'" == "fatherAbsence" | {
+	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "livePartner" | "`var'" == "rural" | "`var'" == "rural_mat" | "`var'" == "parent" | "`var'" == "employed" | "`var'" == "highSocClass_mat" |  "`var'" == "highSocClass_pat" |  "`var'" == "lowSocClass_0_16" | "`var'" == "income_parents" | "`var'" == "financeDiffs" | "`var'" == "financeDiffs_0_16" | "`var'" == " financeDiffsScore_mat" | "`var'" == "accessToCar_parents" | "`var'" == "badNeigh_0_16" | "`var'" == "neighPercept_mat" | "`var'" == "fatherAbsence" {
 		
 		mlogit YPG3000 ageAt28 male `var', baseoutcome(3) rrr
 		
@@ -602,10 +701,10 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Yes (ref = No)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maritalStatus" {
+			if "`var'" == "maritalStatus_mat" {
 				local exp_level = "Married (ref = Never married)"
 			}
-			else if "`var'" == "parity" {
+			else if "`var'" == "parity_mat" {
 				local exp_level = "1 (ref = 0)"
 			}
 			else if "`var'" == "age_fatherAbsence" {
@@ -669,10 +768,10 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Yes (ref = No)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maritalStatus" {
+			if "`var'" == "maritalStatus_mat" {
 				local exp_level = "Wid/Div/Sep (ref = Never married)"
 			}
-			else if "`var'" == "parity" {
+			else if "`var'" == "parity_mat" {
 				local exp_level = "2 or more (ref = 0)"
 			}
 			else if "`var'" == "age_fatherAbsence" {
@@ -747,7 +846,10 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			else if "`var'" == "housing" {
 				local exp_level = "Rent (ref = Own/Mortgage)"
 			}
-			else if "`var'" == "crowding" {
+			else if "`var'" == "housing_mat" {
+				local exp_level = "Rent (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding_birth" {
 				local exp_level = "> 0.5 to 0.75 (ref = <= 0.5)"
 			}
 			
@@ -815,7 +917,10 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			else if "`var'" == "housing" {
 				local exp_level = "Council/HA (ref = Own/Mortgage)"
 			}
-			else if "`var'" == "crowding" {
+			else if "`var'" == "housing_mat" {
+				local exp_level = "Council/HA (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding_birth" {
 				local exp_level = "> 0.75 to 1 (ref = <= 0.5)"
 			}
 			
@@ -883,7 +988,10 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			else if "`var'" == "housing" {
 				local exp_level = "Other (ref = Own/Mortgage)"
 			}
-			else if "`var'" == "crowding" {
+			else if "`var'" == "housing_mat" {
+				local exp_level = "Other (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding_birth" {
 				local exp_level = "> 1 (ref = <= 0.5)"
 			}
 			
@@ -949,17 +1057,26 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Yes (ref = No)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maternalEdu" {
+			if "`var'" == "education_mat" {
 				local exp_level = "Vocational (ref = CSE/None)"
 			}
-			if "`var'" == "paternalEdu" {
+			if "`var'" == "education_pat" {
 				local exp_level = "Vocational (ref = CSE/None)"
 			}
 			else if "`var'" == "IMD" {
 				local exp_level = "2 (ref = 1/Least dep.)"
 			}
+			else if "`var'" == "IMD_mat" {
+				local exp_level = "2 (ref = 1/Least dep.)"
+			}
 			else if "`var'" == "townsendDep" {
 				local exp_level = "2 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep_mat" {
+				local exp_level = "2 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "income" {
+				local exp_level = "£500-£999 (ref = £0-£499)"
 			}
 			
 			// Now extract the relevant statistics		
@@ -1020,17 +1137,26 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Yes (ref = No)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maternalEdu" {
+			if "`var'" == "education_mat" {
 				local exp_level = "O-level (ref = CSE/None)"
 			}
-			if "`var'" == "paternalEdu" {
+			if "`var'" == "education_pat" {
 				local exp_level = "O-level (ref = CSE/None)"
 			}
 			else if "`var'" == "IMD" {
 				local exp_level = "3 (ref = 1/Least dep.)"
 			}
+			else if "`var'" == "IMD_mat" {
+				local exp_level = "3 (ref = 1/Least dep.)"
+			}
 			else if "`var'" == "townsendDep" {
 				local exp_level = "3 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep_mat" {
+				local exp_level = "3 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "income" {
+				local exp_level = "£1000-£1499 (ref = £0-£499)"
 			}
 			
 			// Now extract the relevant statistics		
@@ -1091,17 +1217,26 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Yes (ref = No)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maternalEdu" {
+			if "`var'" == "education_mat" {
 				local exp_level = "A-level (ref = CSE/None)"
 			}
-			if "`var'" == "paternalEdu" {
+			if "`var'" == "education_pat" {
 				local exp_level = "A-level (ref = CSE/None)"
 			}
 			else if "`var'" == "IMD" {
 				local exp_level = "4 (ref = 1/Least dep.)"
 			}
+			else if "`var'" == "IMD_mat" {
+				local exp_level = "4 (ref = 1/Least dep.)"
+			}
 			else if "`var'" == "townsendDep" {
 				local exp_level = "4 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep_mat" {
+				local exp_level = "4 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "income" {
+				local exp_level = "£1500-£1999 (ref = £0-£499)"
 			}
 			
 			// Now extract the relevant statistics		
@@ -1162,17 +1297,26 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Yes (ref = No)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maternalEdu" {
+			if "`var'" == "education_mat" {
 				local exp_level = "Degree (ref = CSE/None)"
 			}
-			if "`var'" == "paternalEdu" {
+			if "`var'" == "education_pat" {
 				local exp_level = "Degree (ref = CSE/None)"
 			}
 			else if "`var'" == "IMD" {
 				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
 			}
+			else if "`var'" == "IMD_mat" {
+				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
 			else if "`var'" == "townsendDep" {
 				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep_mat" {
+				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "income" {
+				local exp_level = "£2000 and above (ref = £0-£499)"
 			}
 			
 			// Now extract the relevant statistics		
@@ -1237,7 +1381,7 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Yes (ref = No)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "1 move (ref = 0 moves)"
 			}
 			
@@ -1299,7 +1443,7 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Yes (ref = No)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "2 moves (ref = 0 moves)"
 			}
 			
@@ -1361,7 +1505,7 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Yes (ref = No)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "3 moves (ref = 0 moves)"
 			}
 			
@@ -1423,7 +1567,7 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Yes (ref = No)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "4 moves (ref = 0 moves)"
 			}
 			
@@ -1485,7 +1629,7 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Yes (ref = No)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "5 + moves (ref = 0 moves)"
 			}
 			
@@ -1770,7 +1914,7 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 	}
 	
 	// Next, analyse the rest of the continuous/binary variables
-	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "parent" | "`var'" == "highSocClass_mat" |  "`var'" == "highSocClass_pat" |  "`var'" == "lowSocClass_0_16" | "`var'" == "financeDiffs_0_16" | "`var'" == "badNeigh_0_16" | "`var'" == "accessToCar" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "neighPercept" | "`var'" == "fatherAbsence" | {
+	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "livePartner" | "`var'" == "rural" | "`var'" == "rural_mat" | "`var'" == "parent" | "`var'" == "employed" | "`var'" == "highSocClass_mat" |  "`var'" == "highSocClass_pat" |  "`var'" == "lowSocClass_0_16" | "`var'" == "income_parents" | "`var'" == "financeDiffs" | "`var'" == "financeDiffs_0_16" | "`var'" == " financeDiffsScore_mat" | "`var'" == "accessToCar_parents" | "`var'" == "badNeigh_0_16" | "`var'" == "neighPercept_mat" | "`var'" == "fatherAbsence" {
 		
 		mlogit YPG3040_grp ageAt28 male `var', baseoutcome(3) rrr
 		
@@ -1875,10 +2019,10 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			local outcome_level = "Christian (ref = None)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maritalStatus" {
+			if "`var'" == "maritalStatus_mat" {
 				local exp_level = "Married (ref = Never married)"
 			}
-			else if "`var'" == "parity" {
+			else if "`var'" == "parity_mat" {
 				local exp_level = "1 (ref = 0)"
 			}
 			else if "`var'" == "age_fatherAbsence" {
@@ -1942,10 +2086,10 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			local outcome_level = "Christian (ref = None)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maritalStatus" {
+			if "`var'" == "maritalStatus_mat" {
 				local exp_level = "Wid/Div/Sep (ref = Never married)"
 			}
-			else if "`var'" == "parity" {
+			else if "`var'" == "parity_mat" {
 				local exp_level = "2 or more (ref = 0)"
 			}
 			else if "`var'" == "age_fatherAbsence" {
@@ -2020,7 +2164,10 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			else if "`var'" == "housing" {
 				local exp_level = "Rent (ref = Own/Mortgage)"
 			}
-			else if "`var'" == "crowding" {
+			else if "`var'" == "housing_mat" {
+				local exp_level = "Rent (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding_birth" {
 				local exp_level = "> 0.5 to 0.75 (ref = <= 0.5)"
 			}
 			
@@ -2088,7 +2235,10 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			else if "`var'" == "housing" {
 				local exp_level = "Council/HA (ref = Own/Mortgage)"
 			}
-			else if "`var'" == "crowding" {
+			else if "`var'" == "housing_mat" {
+				local exp_level = "Council/HA (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding_birth" {
 				local exp_level = "> 0.75 to 1 (ref = <= 0.5)"
 			}
 			
@@ -2156,7 +2306,10 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			else if "`var'" == "housing" {
 				local exp_level = "Other (ref = Own/Mortgage)"
 			}
-			else if "`var'" == "crowding" {
+			else if "`var'" == "housing_mat" {
+				local exp_level = "Other (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding_birth" {
 				local exp_level = "> 1 (ref = <= 0.5)"
 			}
 			
@@ -2222,17 +2375,26 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			local outcome_level = "Christian (ref = None)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maternalEdu" {
+			if "`var'" == "education_mat" {
 				local exp_level = "Vocational (ref = CSE/None)"
 			}
-			if "`var'" == "paternalEdu" {
+			if "`var'" == "education_pat" {
 				local exp_level = "Vocational (ref = CSE/None)"
 			}
 			else if "`var'" == "IMD" {
 				local exp_level = "2 (ref = 1/Least dep.)"
 			}
+			else if "`var'" == "IMD_mat" {
+				local exp_level = "2 (ref = 1/Least dep.)"
+			}
 			else if "`var'" == "townsendDep" {
 				local exp_level = "2 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep_mat" {
+				local exp_level = "2 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "income" {
+				local exp_level = "£500-£999 (ref = £0-£499)"
 			}
 			
 			// Now extract the relevant statistics		
@@ -2293,17 +2455,26 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			local outcome_level = "Christian (ref = None)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maternalEdu" {
+			if "`var'" == "education_mat" {
 				local exp_level = "O-level (ref = CSE/None)"
 			}
-			if "`var'" == "paternalEdu" {
+			if "`var'" == "education_pat" {
 				local exp_level = "O-level (ref = CSE/None)"
 			}
 			else if "`var'" == "IMD" {
 				local exp_level = "3 (ref = 1/Least dep.)"
 			}
+			else if "`var'" == "IMD_mat" {
+				local exp_level = "3 (ref = 1/Least dep.)"
+			}
 			else if "`var'" == "townsendDep" {
 				local exp_level = "3 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep_mat" {
+				local exp_level = "3 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "income" {
+				local exp_level = "£1000-£1499 (ref = £0-£499)"
 			}
 			
 			// Now extract the relevant statistics		
@@ -2364,17 +2535,26 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			local outcome_level = "Christian (ref = None)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maternalEdu" {
+			if "`var'" == "education_mat" {
 				local exp_level = "A-level (ref = CSE/None)"
 			}
-			if "`var'" == "paternalEdu" {
+			if "`var'" == "education_pat" {
 				local exp_level = "A-level (ref = CSE/None)"
 			}
 			else if "`var'" == "IMD" {
 				local exp_level = "4 (ref = 1/Least dep.)"
 			}
+			else if "`var'" == "IMD_mat" {
+				local exp_level = "4 (ref = 1/Least dep.)"
+			}
 			else if "`var'" == "townsendDep" {
 				local exp_level = "4 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep_mat" {
+				local exp_level = "4 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "income" {
+				local exp_level = "£1500-£1999 (ref = £0-£499)"
 			}
 			
 			// Now extract the relevant statistics		
@@ -2435,17 +2615,26 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			local outcome_level = "Christian (ref = None)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maternalEdu" {
+			if "`var'" == "education_mat" {
 				local exp_level = "Degree (ref = CSE/None)"
 			}
-			if "`var'" == "paternalEdu" {
+			if "`var'" == "education_pat" {
 				local exp_level = "Degree (ref = CSE/None)"
 			}
 			else if "`var'" == "IMD" {
 				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
 			}
+			else if "`var'" == "IMD_mat" {
+				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
 			else if "`var'" == "townsendDep" {
 				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep_mat" {
+				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "income" {
+				local exp_level = "£2000 and above (ref = £0-£499)"
 			}
 			
 			// Now extract the relevant statistics		
@@ -2510,7 +2699,7 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			local outcome_level = "Christian (ref = None)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "1 move (ref = 0 moves)"
 			}
 			
@@ -2572,7 +2761,7 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			local outcome_level = "Christian (ref = None)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "2 moves (ref = 0 moves)"
 			}
 			
@@ -2634,7 +2823,7 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			local outcome_level = "Christian (ref = None)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "3 moves (ref = 0 moves)"
 			}
 			
@@ -2696,7 +2885,7 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			local outcome_level = "Christian (ref = None)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "4 moves (ref = 0 moves)"
 			}
 			
@@ -2758,7 +2947,7 @@ foreach var of varlist ageAt28-age_fatherAbsence  {
 			local outcome_level = "Christian (ref = None)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "5 + moves (ref = 0 moves)"
 			}
 			
@@ -2865,11 +3054,11 @@ label values YPG3080_rev attend_rev_lb
 tab YPG3080_rev
 
 
-** Quick test of whether proportional odds assumption been violated in most basic model (with just age at birth). Ah, it has been violated. 
-ologit YPG3080_rev ageAt28, or
+** Quick test of whether proportional odds assumption been violated in most basic model (with just sex and age at 28). Ah, it has been violated. 
+ologit YPG3080_rev ageAt28 male, or
 brant, detail
 
-ologit YPG3080_rev ageAt28 i.IMD, or
+ologit YPG3080_rev ageAt28 male i.IMD, or
 brant, detail
 
 
@@ -3105,7 +3294,7 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 	}
 	
 	// Next, analyse the rest of the continuous/binary variables
-	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "rural" | "`var'" == "parent" | "`var'" == "highSocClass_mat" |  "`var'" == "highSocClass_pat" |  "`var'" == "lowSocClass_0_16" | "`var'" == "financeDiffs_0_16" | "`var'" == "badNeigh_0_16" | "`var'" == "accessToCar" | "`var'" == "income" | "`var'" == "financeDiffs" | "`var'" == "neighPercept" | "`var'" == "fatherAbsence" | {
+	else if "`var'" == "mother_ageAtBirth" | "`var'" == "nonWhiteEthnic" | "`var'" == "livePartner" | "`var'" == "rural" | "`var'" == "rural_mat" | "`var'" == "parent" | "`var'" == "employed" | "`var'" == "highSocClass_mat" |  "`var'" == "highSocClass_pat" |  "`var'" == "lowSocClass_0_16" | "`var'" == "income_parents" | "`var'" == "financeDiffs" | "`var'" == "financeDiffs_0_16" | "`var'" == " financeDiffsScore_mat" | "`var'" == "accessToCar_parents" | "`var'" == "badNeigh_0_16" | "`var'" == "neighPercept_mat" | "`var'" == "fatherAbsence" {
 		
 		mlogit YPG3080_rev ageAt28 male `var', baseoutcome(0) rrr
 		
@@ -3237,10 +3426,10 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Occasionally (ref = Not at all)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maritalStatus" {
+			if "`var'" == "maritalStatus_mat" {
 				local exp_level = "Married (ref = Never married)"
 			}
-			else if "`var'" == "parity" {
+			else if "`var'" == "parity_mat" {
 				local exp_level = "1 (ref = 0)"
 			}
 			else if "`var'" == "age_fatherAbsence" {
@@ -3331,10 +3520,10 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Occasionally (ref = Not at all)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maritalStatus" {
+			if "`var'" == "maritalStatus_mat" {
 				local exp_level = "Wid/Div/Sep (ref = Never married)"
 			}
-			else if "`var'" == "parity" {
+			else if "`var'" == "parity_mat" {
 				local exp_level = "2 or more (ref = 0)"
 			}
 			else if "`var'" == "age_fatherAbsence" {
@@ -3435,7 +3624,10 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			else if "`var'" == "housing" {
 				local exp_level = "Rent (ref = Own/Mortgage)"
 			}
-			else if "`var'" == "crowding" {
+			else if "`var'" == "housing_mat" {
+				local exp_level = "Rent (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding_birth" {
 				local exp_level = "> 0.5 to 0.75 (ref = <= 0.5)"
 			}
 			
@@ -3529,7 +3721,10 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			else if "`var'" == "housing" {
 				local exp_level = "Council/HA (ref = Own/Mortgage)"
 			}
-			else if "`var'" == "crowding" {
+			else if "`var'" == "housing_mat" {
+				local exp_level = "Council/HA (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding_birth" {
 				local exp_level = "> 0.75 to 1 (ref = <= 0.5)"
 			}
 			
@@ -3623,7 +3818,10 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			else if "`var'" == "housing" {
 				local exp_level = "Other (ref = Own/Mortgage)"
 			}
-			else if "`var'" == "crowding" {
+			else if "`var'" == "housing_mat" {
+				local exp_level = "Other (ref = Own/Mortgage)"
+			}
+			else if "`var'" == "crowding_birth" {
 				local exp_level = "> 1 (ref = <= 0.5)"
 			}
 			
@@ -3715,17 +3913,26 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Occasionally (ref = Not at all)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maternalEdu" {
+			if "`var'" == "education_mat" {
 				local exp_level = "Vocational (ref = CSE/None)"
 			}
-			if "`var'" == "paternalEdu" {
+			if "`var'" == "education_pat" {
 				local exp_level = "Vocational (ref = CSE/None)"
 			}
 			else if "`var'" == "IMD" {
 				local exp_level = "2 (ref = 1/Least dep.)"
 			}
+			else if "`var'" == "IMD_mat" {
+				local exp_level = "2 (ref = 1/Least dep.)"
+			}
 			else if "`var'" == "townsendDep" {
 				local exp_level = "2 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep_mat" {
+				local exp_level = "2 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "income" {
+				local exp_level = "£500-£999 (ref = £0-£499)"
 			}
 			
 			// Now extract the relevant statistics		
@@ -3812,17 +4019,26 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Occasionally (ref = Not at all)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maternalEdu" {
+			if "`var'" == "education_mat" {
 				local exp_level = "O-level (ref = CSE/None)"
 			}
-			if "`var'" == "paternalEdu" {
+			if "`var'" == "education_pat" {
 				local exp_level = "O-level (ref = CSE/None)"
 			}
 			else if "`var'" == "IMD" {
 				local exp_level = "3 (ref = 1/Least dep.)"
 			}
+			else if "`var'" == "IMD_mat" {
+				local exp_level = "3 (ref = 1/Least dep.)"
+			}
 			else if "`var'" == "townsendDep" {
 				local exp_level = "3 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep_mat" {
+				local exp_level = "3 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "income" {
+				local exp_level = "£1000-£1499 (ref = £0-£499)"
 			}
 			
 			// Now extract the relevant statistics		
@@ -3909,17 +4125,26 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Occasionally (ref = Not at all)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maternalEdu" {
+			if "`var'" == "education_mat" {
 				local exp_level = "A-level (ref = CSE/None)"
 			}
-			if "`var'" == "paternalEdu" {
+			if "`var'" == "education_pat" {
 				local exp_level = "A-level (ref = CSE/None)"
 			}
 			else if "`var'" == "IMD" {
 				local exp_level = "4 (ref = 1/Least dep.)"
 			}
+			else if "`var'" == "IMD_mat" {
+				local exp_level = "4 (ref = 1/Least dep.)"
+			}
 			else if "`var'" == "townsendDep" {
 				local exp_level = "4 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep_mat" {
+				local exp_level = "4 (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "income" {
+				local exp_level = "£1500-£1999 (ref = £0-£499)"
 			}
 			
 			// Now extract the relevant statistics		
@@ -4006,17 +4231,26 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Occasionally (ref = Not at all)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "maternalEdu" {
+			if "`var'" == "education_mat" {
 				local exp_level = "Degree (ref = CSE/None)"
 			}
-			if "`var'" == "paternalEdu" {
+			if "`var'" == "education_pat" {
 				local exp_level = "Degree (ref = CSE/None)"
 			}
 			else if "`var'" == "IMD" {
 				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
 			}
+			else if "`var'" == "IMD_mat" {
+				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
 			else if "`var'" == "townsendDep" {
 				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "townsendDep_mat" {
+				local exp_level = "5/Most dep. (ref = 1/Least dep.)"
+			}
+			else if "`var'" == "income" {
+				local exp_level = "£2000 and above (ref = £0-£499)"
 			}
 			
 			// Now extract the relevant statistics		
@@ -4107,7 +4341,7 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Occasionally (ref = Not at all)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "1 move (ref = 0 moves)"
 			}
 			
@@ -4195,7 +4429,7 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Occasionally (ref = Not at all)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "2 moves (ref = 0 moves)"
 			}
 			
@@ -4283,7 +4517,7 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Occasionally (ref = Not at all)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "3 moves (ref = 0 moves)"
 			}
 			
@@ -4371,7 +4605,7 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Occasionally (ref = Not at all)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "4 moves (ref = 0 moves)"
 			}
 			
@@ -4459,7 +4693,7 @@ foreach var of varlist ageAt28-age_fatherAbsence {
 			local outcome_level = "Occasionally (ref = Not at all)"
 			
 			// Specify the level of the categorical exposure variable
-			if "`var'" == "mobility" {
+			if "`var'" == "mobility_mat" {
 				local exp_level = "5 + moves (ref = 0 moves)"
 			}
 			
@@ -4633,22 +4867,22 @@ sum logp_int
 
 ** Start with likelihood ratio results comparing null model to model including exposure
 
-* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 27 exposures, will do 0.05/27)
-local bon_thresh = -log10(0.05/27)
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 35 exposures, will do 0.05/35)
+local bon_thresh = -log10(0.05/35)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(vsmall) angle(0)) ///
-	title("Belief in God/divine power - Main effect") ///
+	ylabel(1(1)35, valuelabel labsize(vsmall) angle(0)) ///
+	title("Religious belief - Main effect") ///
 	name(belief_main, replace)
 	
 graph export ".\G1_Results\belief_mainEffect_pvalues.pdf", replace
 	
 * And repeat for interaction effect (exclude 'sex' here, as can't interact with itself!)
-local bon_thresh = -log10(0.05/26)
+local bon_thresh = -log10(0.05/34)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_int if exp_num != 1, ///
@@ -4656,14 +4890,14 @@ twoway (scatter exp_num logp_int if exp_num != 1, ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)27, valuelabel labsize(tiny) angle(0)) ///
-	title("Belief in God/divine power - Age interaction") ///
+	ylabel(2(1)35, valuelabel labsize(tiny) angle(0)) ///
+	title("Religious belief - Sex interaction") ///
 	name(belief_int, replace)
 	
-graph export ".\G1_Results\belief_ageInteraction_pvalues.pdf", replace
+graph export ".\G1_Results\belief_sexInteraction_pvalues.pdf", replace
 	
 ** Combine these results on the same plot
-local bon_thresh = -log10(0.05/27)
+local bon_thresh = -log10(0.05/35)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
@@ -4672,9 +4906,9 @@ twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(tiny) angle(0)) ///
-	title("Belief in God/divine power") ///
-	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
+	ylabel(1(1)35, valuelabel labsize(tiny) angle(0)) ///
+	title("Religious belief") ///
+	legend(order(1 "Main effect" 2 "Sex interaction") size(small)) ///
 	name(belief_both, replace)
 
 graph export ".\G1_Results\belief_mainAndInt_pvalues.pdf", replace
@@ -4733,22 +4967,22 @@ sum logp_int
 
 ** Start with likelihood ratio results comparing null model to model including exposure
 
-* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 27 exposures, will do 0.05/27)
-local bon_thresh = -log10(0.05/27)
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 35 exposures, will do 0.05/35)
+local bon_thresh = -log10(0.05/35)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(tiny) angle(0)) ///
+	ylabel(1(1)35, valuelabel labsize(tiny) angle(0)) ///
 	title("Religious affiliation - Main effect") ///
 	name(relig_main, replace)
 	
 graph export ".\G1_Results\relig_mainEffect_pvalues.pdf", replace
 	
 * And repeat for interaction effect (exclude 'sex' here, as can't interact with itself!)
-local bon_thresh = -log10(0.05/26)
+local bon_thresh = -log10(0.05/34)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_int if exp_num != 1, ///
@@ -4756,14 +4990,14 @@ twoway (scatter exp_num logp_int if exp_num != 1, ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)27, valuelabel labsize(tiny) angle(0)) ///
+	ylabel(2(1)35, valuelabel labsize(tiny) angle(0)) ///
 	title("Religious affiliation - Sex interaction") ///
 	name(relig_int, replace)
 	
 graph export ".\G1_Results\relig_sexInteraction_pvalues.pdf", replace
 	
 ** Combine these results on the same plot
-local bon_thresh = -log10(0.05/27)
+local bon_thresh = -log10(0.05/35)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
@@ -4772,7 +5006,7 @@ twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(tiny) angle(0)) ///
+	ylabel(1(1)35, valuelabel labsize(tiny) angle(0)) ///
 	title("Religious affiliation") ///
 	legend(order(1 "Main effect" 2 "Sex interaction") size(small)) ///
 	name(relig_both, replace)
@@ -4833,22 +5067,22 @@ sum logp_int
 
 ** Start with likelihood ratio results comparing null model to model including exposure
 
-* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 27 exposures, will do 0.05/27)
-local bon_thresh = -log10(0.05/27)
+* Display two thresholds; standard 0.05 and Bonferroni-corrected one (as 35 exposures, will do 0.05/35)
+local bon_thresh = -log10(0.05/35)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)), ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(tiny) angle(0)) ///
-	title("Church attendance - Main effect") ///
+	ylabel(1(1)35, valuelabel labsize(tiny) angle(0)) ///
+	title("Religious attendance - Main effect") ///
 	name(attend_main, replace)
 	
 graph export ".\G1_Results\attend_mainEffect_pvalues.pdf", replace
 	
 * And repeat for interaction effect (exclude 'sex' here, as can't interact with itself!)
-local bon_thresh = -log10(0.05/26)
+local bon_thresh = -log10(0.05/34)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_int if exp_num != 1, ///
@@ -4856,14 +5090,14 @@ twoway (scatter exp_num logp_int if exp_num != 1, ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)27, valuelabel labsize(tiny) angle(0)) ///
-	title("Church attendance - Sex interaction") ///
+	ylabel(2(1)35, valuelabel labsize(tiny) angle(0)) ///
+	title("Religious attendance - Sex interaction") ///
 	name(attend_int, replace)
 	
 graph export ".\G1_Results\attend_sexInteraction_pvalues.pdf", replace
 	
 ** Combine these results on the same plot
-local bon_thresh = -log10(0.05/27)
+local bon_thresh = -log10(0.05/35)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
@@ -4872,8 +5106,8 @@ twoway (scatter exp_num logp_main, col(black) msize(small) msym(D)) ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(tiny) angle(0)) ///
-	title("Church attendance") ///
+	ylabel(1(1)35, valuelabel labsize(tiny) angle(0)) ///
+	title("Religious attendance") ///
 	legend(order(1 "Main effect" 2 "Sex interaction") size(small)) ///
 	name(attend_both, replace)
 
@@ -4898,7 +5132,7 @@ append using ".\G1_Results\attend_pvalues.dta"
 ** Now look at combined results
 
 * Belief/religion/church vars main effects
-local bon_thresh = -log10(0.05/27)
+local bon_thresh = -log10(0.05/35)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_main if outcome == "Belief", ///
@@ -4910,16 +5144,16 @@ twoway (scatter exp_num logp_main if outcome == "Belief", ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)35, valuelabel labsize(vsmall) angle(0)) ///
 	title("Main effects") ///
-	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
-		3 "Church attendance") rows(1) size(small)) ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
 	name(belRelCh_main, replace)
 
 graph export ".\G1_Results\beliefReligAttend_mainEffects_pvalues.pdf", replace
 
 * Belief/religion/church vars interaction effects
-local bon_thresh = -log10(0.05/26)
+local bon_thresh = -log10(0.05/34)
 local thresh_05 = -log10(0.05)
 
 twoway (scatter exp_num logp_int if outcome == "Belief" & exp_num != 1, ///
@@ -4931,10 +5165,10 @@ twoway (scatter exp_num logp_int if outcome == "Belief" & exp_num != 1, ///
 	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
 	xline(`thresh_05', lcol(black) lpattern(dot)) ///
 	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)27, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(2(1)35, valuelabel labsize(vsmall) angle(0)) ///
 	title("Sex interaction") ///
-	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
-		3 "Church attendance") rows(1) size(small)) ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
 	name(belRelCh_int, replace)
 
 graph export ".\G1_Results\beliefReligAttend_sexInt_pvalues.pdf", replace
@@ -5052,8 +5286,8 @@ tab exp_num
 ** Start with pseduo-R2 values comparing null model to model including exposure
 twoway (scatter exp_num r2_main, col(black) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(vsmall) angle(0)) ///
-	title("Belief in God/divine power - Main effect") ///
+	ylabel(1(1)35, valuelabel labsize(vsmall) angle(0)) ///
+	title("Religious belief - Main effect") ///
 	name(belief_main, replace)
 	
 graph export ".\G1_Results\belief_mainEffect_r2.pdf", replace
@@ -5062,20 +5296,20 @@ graph export ".\G1_Results\belief_mainEffect_r2.pdf", replace
 twoway (scatter exp_num r2_int if exp_num != 1, ///
 		col(black) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)27, valuelabel labsize(vsmall) angle(0)) ///
-	title("Belief in God/divine power - Age interaction") ///
+	ylabel(2(1)35, valuelabel labsize(vsmall) angle(0)) ///
+	title("Religious belief - Sex interaction") ///
 	name(belief_int, replace)
 	
-graph export ".\G1_Results\belief_ageInteraction_r2.pdf", replace
+graph export ".\G1_Results\belief_sexInteraction_r2.pdf", replace
 	
 ** Combine these results on the same plot
 twoway (scatter exp_num r2_main, col(black) msize(small) msym(D)) ///
 	(scatter exp_num r2_int if exp_num != 1, ///
 		col(red) msize(small) msym(D)), ///, ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(vsmall) angle(0)) ///
-	title("Belief in God/divine power") ///
-	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
+	ylabel(1(1)35, valuelabel labsize(vsmall) angle(0)) ///
+	title("Religious belief") ///
+	legend(order(1 "Main effect" 2 "Sex interaction") size(small)) ///
 	name(belief_both, replace)
 
 graph export ".\G1_Results\belief_mainAndInt_r2.pdf", replace
@@ -5126,7 +5360,7 @@ tab exp_num
 ** Start with pseduo-R2 values comparing null model to model including exposure
 twoway (scatter exp_num r2_main, col(black) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)35, valuelabel labsize(vsmall) angle(0)) ///
 	title("Religious affiliation - Main effect") ///
 	name(relig_main, replace)
 	
@@ -5136,20 +5370,20 @@ graph export ".\G1_Results\relig_mainEffect_r2.pdf", replace
 twoway (scatter exp_num r2_int if exp_num != 1, ///
 		col(black) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)27, valuelabel labsize(vsmall) angle(0)) ///
-	title("Religious affiliation - Age interaction") ///
+	ylabel(2(1)35, valuelabel labsize(vsmall) angle(0)) ///
+	title("Religious affiliation - Sex interaction") ///
 	name(relig_int, replace)
 	
-graph export ".\G1_Results\relig_ageInteraction_r2.pdf", replace
+graph export ".\G1_Results\relig_sexInteraction_r2.pdf", replace
 	
 ** Combine these results on the same plot
 twoway (scatter exp_num r2_main, col(black) msize(small) msym(D)) ///
 	(scatter exp_num r2_int if exp_num != 1, ///
 		col(red) msize(small) msym(D)), ///, ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)35, valuelabel labsize(vsmall) angle(0)) ///
 	title("Religious affiliation") ///
-	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
+	legend(order(1 "Main effect" 2 "Sex interaction") size(small)) ///
 	name(relig_both, replace)
 
 graph export ".\G1_Results\relig_mainAndInt_r2.pdf", replace
@@ -5200,8 +5434,8 @@ tab exp_num
 ** Start with pseduo-R2 values comparing null model to model including exposure
 twoway (scatter exp_num r2_main, col(black) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(vsmall) angle(0)) ///
-	title("Church attendance - Main effect") ///
+	ylabel(1(1)35, valuelabel labsize(vsmall) angle(0)) ///
+	title("Religious attendance - Main effect") ///
 	name(attend_main, replace)
 	
 graph export ".\G1_Results\attend_mainEffect_r2.pdf", replace
@@ -5210,20 +5444,20 @@ graph export ".\G1_Results\attend_mainEffect_r2.pdf", replace
 twoway (scatter exp_num r2_int if exp_num != 1, ///
 		col(black) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)27, valuelabel labsize(vsmall) angle(0)) ///
-	title("Church attendance - Age interaction") ///
+	ylabel(2(1)35, valuelabel labsize(vsmall) angle(0)) ///
+	title("Religious attendance - Sex interaction") ///
 	name(attend_int, replace)
 	
-graph export ".\G1_Results\attend_ageInteraction_r2.pdf", replace
+graph export ".\G1_Results\attend_sexInteraction_r2.pdf", replace
 	
 ** Combine these results on the same plot
 twoway (scatter exp_num r2_main, col(black) msize(small) msym(D)) ///
 	(scatter exp_num r2_int if exp_num != 1, ///
 		col(red) msize(small) msym(D)), ///, ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(vsmall) angle(0)) ///
-	title("Church attendance") ///
-	legend(order(1 "Main effect" 2 "Age interaction") size(small)) ///
+	ylabel(1(1)35, valuelabel labsize(vsmall) angle(0)) ///
+	title("Religious attendance") ///
+	legend(order(1 "Main effect" 2 "Sex interaction") size(small)) ///
 	name(attend_both, replace)
 
 graph export ".\G1_Results\attend_mainAndInt_r2.pdf", replace
@@ -5254,10 +5488,10 @@ twoway (scatter exp_num r2_main if outcome == "Belief", ///
 	(scatter exp_num r2_main if outcome == "Church attendance", ///
 		col(blue) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(1(1)27, valuelabel labsize(vsmall) angle(0)) ///
+	ylabel(1(1)35, valuelabel labsize(vsmall) angle(0)) ///
 	title("Main effects") ///
-	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
-		3 "Church attendance") rows(1) size(small)) ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
 	name(preg_main, replace)
 
 graph export ".\G1_Results\beliefReligAttend_mainEffects_r2.pdf", replace
@@ -5270,13 +5504,13 @@ twoway (scatter exp_num r2_int if outcome == "Belief" & exp_num != 1, ///
 	(scatter exp_num r2_int if outcome == "Church attendance" & exp_num != 1, ///
 		col(blue) msize(small) msym(D)), ///
 	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
-	ylabel(2(1)27, valuelabel labsize(vsmall) angle(0)) ///
-	title("Age interaction") ///
-	legend(order(1 "Belief in God" 2 "Religious affiliation" ///
-		3 "Church attendance") rows(1) size(small)) ///
+	ylabel(2(1)35, valuelabel labsize(vsmall) angle(0)) ///
+	title("Sex interaction") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
 	name(preg_int, replace)
 
-graph export ".\G1_Results\beliefReligAttend_ageInt_r2.pdf", replace
+graph export ".\G1_Results\beliefReligAttend_sexInt_r2.pdf", replace
 
 
 ** Combine all these graphs together
@@ -5341,7 +5575,7 @@ format coef lci uci coef_int lci_int uci_int %9.0g
 format p p_int %10.0g
 
 
-** First, make a plot for the age results - As some outcomes are on different scales, will just use the results from multinomial regression for all outcomes (inc. intrinsic and total/DUREL religiosity, even though also ran linear regressions on these as well) - Having all variables on the same plot on the same scale makes things easier to visualise.
+** First, make a plot for the age results
 capture drop level_num
 gen level_num = 0
 replace level_num = 1 if outcome_level == "Not sure (ref = No)"
@@ -5351,7 +5585,7 @@ replace level_num = 6 if outcome_level == "Occasionally (ref = Not at all"
 replace level_num = 7 if outcome_level == "Min once year (ref = Not at al"
 replace level_num = 8 if outcome_level == "Min once month (ref = Not at a"
 
-label define level_lb 0 "Belief - Yes (ref = No)" 1 "Belief - Not sure (ref = No)" 3 "Affiliation - Christian (ref = None)" 4 "Affiliation - Other (ref = None)" 6 "Attendance - Min 1/year (ref = Not at all)" 7 "Attendance - Min 1/month (ref = Not at all)" 8 "Attendance - Min 1/week (ref = Not at all)", replace
+label define level_lb 0 "Belief - Yes (ref = No)" 1 "Belief - Not sure (ref = No)" 3 "Affiliation - Christian (ref = None)" 4 "Affiliation - Other (ref = None)" 6 "Attendance - Occasionally (ref = Not at all)" 7 "Attendance - Min 1/year (ref = Not at all)" 8 "Attendance - Min 1/month (ref = Not at all)", replace
 label values level_num level_lb
 tab level_num
 
@@ -5424,7 +5658,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == "male", ///
 			horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (ref = female)") ///
-		title("Male sex and RSBB", size(medium)) ///
+		title("Male and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
 		xlabel(0.6 0.7 0.8 0.9 1 1.1, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
@@ -5433,7 +5667,35 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == "male", ///
 graph export ".\G1_Results\sexResults.pdf", replace
 
 
-** Create plot for marital status (ref = never married)
+** Create plot for living with a partner (ref = No)
+
+* Min and max x-axis values
+sum lci uci if exposure == "livePartner" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "livePartner", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "livePartner", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "livePartner", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "livePartner", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "livePartner", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "livePartner", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio (ref = female)") ///
+		title("Living with a partner and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.5 0.6 0.8 1 1.2 1.4, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(partner_cat, replace)
+		
+graph export ".\G1_Results\livePartnerResults.pdf", replace
+
+
+** Create plot for mother's marital status (ref = never married)
 
 * As two exposure levels, need to split these up
 capture drop level_split
@@ -5472,7 +5734,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 			"Wid/Div/Sep (ref = Never married)", horizontal col(red)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (ref = Never married)") ///
-		title("Marital status and RSBB", size(medium)) ///
+		title("Mother's marital status and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
 		xlabel(0.5 0.7 1 2 5 10, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
@@ -5486,10 +5748,10 @@ graph export ".\G1_Results\maritalStatusResults.pdf", replace
 
 * As four exposure levels, need to split these up
 capture drop level_split
-gen level_split = level_num - 0.3 if exposure == "maternalEdu" & exp_level == "Vocational (ref = CSE/None)"
-replace level_split = level_num - 0.1 if exposure == "maternalEdu" & exp_level == "O-level (ref = CSE/None)"
-replace level_split = level_num + 0.1 if exposure == "maternalEdu" & exp_level == "A-level (ref = CSE/None)"
-replace level_split = level_num + 0.3 if exposure == "maternalEdu" & exp_level == "Degree (ref = CSE/None)"
+gen level_split = level_num - 0.3 if exposure == "education_mat" & exp_level == "Vocational (ref = CSE/None)"
+replace level_split = level_num - 0.1 if exposure == "education_mat" & exp_level == "O-level (ref = CSE/None)"
+replace level_split = level_num + 0.1 if exposure == "education_mat" & exp_level == "A-level (ref = CSE/None)"
+replace level_split = level_num + 0.3 if exposure == "education_mat" & exp_level == "Degree (ref = CSE/None)"
 label values level_split level_lb
 tab level_split
 
@@ -5558,7 +5820,7 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 graph export ".\G1_Results\matEduResults.pdf", replace
 
 
-** Create plot for maternal education (ref = CSE/None)
+** Create plot for YP education (ref = GCSE/None)
 
 * As four exposure levels, need to split these up
 capture drop level_split
@@ -5636,7 +5898,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		(rspike lci uci level_num if outcome == "Attend" & exposure == ///
 			"parent", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
-		xtitle("Relative risk ratio (ref = Not a parent") ///
+		xtitle("Relative risk ratio (ref = Not a parent)") ///
 		title("Parental status and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
 		xlabel(0.5 0.7 1 1.5 2, labsize(small)) ///
@@ -5662,7 +5924,7 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == ///
 		(rspike lci uci level_num if outcome == "Attend" & exposure == ///
 			"fatherAbsence", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
-		xtitle("Relative risk ratio (ref = No FA") ///
+		xtitle("Relative risk ratio (ref = No FA)") ///
 		title("Father absence and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
 		xlabel(0.4 0.6 0.8 1 1.2, labsize(small)) ///
@@ -5773,6 +6035,81 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 graph export ".\G1_Results\imdResults.pdf", replace
 
 
+** Create plot for income (ref = £0-£499)
+
+* As four exposure levels, need to split these up
+capture drop level_split
+gen level_split = level_num - 0.3 if exposure == "income" & exp_level == "£500-£999 (ref = £0-£499)"
+replace level_split = level_num - 0.1 if exposure == "income" & exp_level == "£1000-£1499 (ref = £0-£499)"
+replace level_split = level_num + 0.1 if exposure == "income" & exp_level == "£1500-£1999 (ref = £0-£499)"
+replace level_split = level_num + 0.3 if exposure == "income" & exp_level == "£2000 and above (ref = £0-£499)"
+label values level_split level_lb
+tab level_split
+
+* Min and max x-axis values
+sum lci uci if level_split < . & outcome_level != "NA"
+
+* Now make the graph
+twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"£500-£999 (ref = £0-£499)", col(black) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"£500-£999 (ref = £0-£499)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"£500-£999 (ref = £0-£499)", col(black) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"£500-£999 (ref = £0-£499)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"£500-£999 (ref = £0-£499)", col(black) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"£500-£999 (ref = £0-£499)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"£1000-£1499 (ref = £0-£499)", col(red) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"£1000-£1499 (ref = £0-£499)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"£1000-£1499 (ref = £0-£499)", col(red) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"£1000-£1499 (ref = £0-£499)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"£1000-£1499 (ref = £0-£499)", col(red) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"£1000-£1499 (ref = £0-£499)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"£1500-£1999 (ref = £0-£499)", col(blue) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"£1500-£1999 (ref = £0-£499)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"£1500-£1999 (ref = £0-£499)", col(blue) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"£1500-£1999 (ref = £0-£499)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"£1500-£1999 (ref = £0-£499)", col(blue) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"£1500-£1999 (ref = £0-£499)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"£2000 and above (ref = £0-£499)", col(green) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"£2000 and above (ref = £0-£499)", horizontal col(green)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"£2000 and above (ref = £0-£499)", col(green) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"£2000 and above (ref = £0-£499)", horizontal col(green)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"£2000 and above (ref = £0-£499)", col(green) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"£2000 and above (ref = £0-£499)", horizontal col(green)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio (ref = £0-£499)") ///
+		title("Take-home income and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
+		xlabel(0.2 0.3 0.5 0.7 1 1.5 2, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(order(1 "£500-£999" 7 "£1000-£1499" 13 "£1500-£1999" 19 "£2000 and above") rows(2)) ///
+		name(income_cat, replace)
+		
+graph export ".\G1_Results\incomeResults.pdf", replace
+
+
 ** Create plot for housing (ref = owned/mortgaged)
 
 * As three exposure levels, need to split these up
@@ -5835,15 +6172,77 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 graph export ".\G1_Results\housingResults.pdf", replace
 
 
+** Create plot for crowding at birth (ref = <= 0.5)
+
+* As three exposure levels, need to split these up
+capture drop level_split
+gen level_split = level_num - 0.25 if exposure == "crowding_birth" & exp_level == "> 0.5 to 0.75 (ref = <= 0.5)"
+replace level_split = level_num - 0 if exposure == "crowding_birth" & exp_level == "> 0.75 to 1 (ref = <= 0.5)"
+replace level_split = level_num + 0.25 if exposure == "crowding_birth" & exp_level == "> 1 (ref = <= 0.5)"
+label values level_split level_lb
+tab level_split
+
+* Min and max x-axis values
+sum lci uci if level_split < . & outcome_level != "NA"
+
+* Now make the graph
+twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"> 0.5 to 0.75 (ref = <= 0.5)", col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"> 0.5 to 0.75 (ref = <= 0.5)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"> 0.5 to 0.75 (ref = <= 0.5)", col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"> 0.5 to 0.75 (ref = <= 0.5)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"> 0.5 to 0.75 (ref = <= 0.5)", col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"> 0.5 to 0.75 (ref = <= 0.5)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"> 0.75 to 1 (ref = <= 0.5)", col(red) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"> 0.75 to 1 (ref = <= 0.5)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"> 0.75 to 1 (ref = <= 0.5)", col(red) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"> 0.75 to 1 (ref = <= 0.5)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"> 0.75 to 1 (ref = <= 0.5)", col(red) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"> 0.75 to 1 (ref = <= 0.5)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"> 1 (ref = <= 0.5)", col(blue) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"> 1 (ref = <= 0.5)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"> 1 (ref = <= 0.5)", col(blue) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"> 1 (ref = <= 0.5)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"> 1 (ref = <= 0.5)", col(blue) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"> 1 (ref = <= 0.5)", horizontal col(blue)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio (ref = <= 0.5)") ///
+		title("Household crowding and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
+		xlabel(0.2 0.3 0.5 0.7 1 2 4, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(order(1 "> 0.5 to 0.75" 7 "> 0.75 to 1" 13 "> 1") rows(1)) ///
+		name(crowding_cat, replace)
+		
+graph export ".\G1_Results\crowdingResults.pdf", replace
+
+
 ** Create plot for mobility (ref = 1/least deprived)
 
 * As five exposure levels, need to split these up
 capture drop level_split
-gen level_split = level_num - 0.3 if exposure == "mobility" & exp_level == "1 move (ref = 0 moves)"
-replace level_split = level_num - 0.15 if exposure == "mobility" & exp_level == "2 moves (ref = 0 moves)"
-replace level_split = level_num if exposure == "mobility" & exp_level == "3 moves (ref = 0 moves)"
-replace level_split = level_num + 0.15 if exposure == "mobility" & exp_level == "4 moves (ref = 0 moves)"
-replace level_split = level_num + 0.3 if exposure == "mobility" & exp_level == "5 + moves (ref = 0 moves)"
+gen level_split = level_num - 0.3 if exposure == "mobility_mat" & exp_level == "1 move (ref = 0 moves)"
+replace level_split = level_num - 0.15 if exposure == "mobility_mat" & exp_level == "2 moves (ref = 0 moves)"
+replace level_split = level_num if exposure == "mobility_mat" & exp_level == "3 moves (ref = 0 moves)"
+replace level_split = level_num + 0.15 if exposure == "mobility_mat" & exp_level == "4 moves (ref = 0 moves)"
+replace level_split = level_num + 0.3 if exposure == "mobility_mat" & exp_level == "5 + moves (ref = 0 moves)"
 label values level_split level_lb
 tab level_split
 
@@ -5925,26 +6324,26 @@ graph export ".\G1_Results\mobilityResults.pdf", replace
 graph close _all
 
 
-****** And now for some interaction plots
+****** And now for some interaction plots (although really no interactions were found...)
 
-** Create plot for income by age interaction
-sum lci_int uci_int if exposure == "income" & outcome_level != "NA"
+** Create plot for parental income by age interaction
+sum lci_int uci_int if exposure == "income_parents" & outcome_level != "NA"
 
 twoway (scatter level_num coef_int if outcome == "Belief" & exposure == ///
-			"income", col(black) msize(small) msym(D)) ///
+			"income_parents", col(black) msize(small) msym(D)) ///
 		(rspike lci_int uci_int level_num if outcome == "Belief" & exposure == ///
-			"income", horizontal col(black)) ///
+			"income_parents", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Relig" & exposure == ///
-			"income", col(black) msize(small) msym(D)) ///
+			"income_parents", col(black) msize(small) msym(D)) ///
 		(rspike lci_int uci_int level_num if outcome == "Relig" & exposure == ///
-			"income", horizontal col(black)) ///
+			"income_parents", horizontal col(black)) ///
 		(scatter level_num coef_int if outcome == "Attend" & exposure == ///
-			"income", col(black) msize(small) msym(D)) ///
+			"income_parents", col(black) msize(small) msym(D)) ///
 		(rspike lci_int uci_int level_num if outcome == "Attend" & exposure == ///
-			"income", horizontal col(black)), ///
+			"income_parents", horizontal col(black)), ///
 		yscale(reverse)	ytitle("") ///
 		xtitle("Relative risk ratio (per unit increase in log income)") ///
-		title("Household income*Sex Interaction and RSBB", size(medium)) ///
+		title("Parental income*Sex Interaction and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
 		xlabel(0.3 0.5 0.7 1 1.5, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
@@ -5955,7 +6354,1011 @@ graph export ".\G1_Results\incomeResults_int.pdf", replace
 graph close _all
 
 
-** For the multinomial regression results, as interpretation not intuitive, could convert to predicted probabilities using the 'margins' command? (see: https://stats.idre.ucla.edu/stata/dae/multinomiallogistic-regression/) - Have started this in the G0 mothers and G0 partners/fathers file; see there for example code.
+
+*********************************************************************************
+** For the multinomial regression results, as interpretation not intuitive. Will convert some results to predicted probabilities using the 'margins' command to provide more context/understanding of the effect sizes involved (see: https://stats.idre.ucla.edu/stata/dae/multinomiallogistic-regression/)
+
+use ".\G1_Results\G1_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+* YP education and attendance
+mlogit YPG3080_rev ageAt28 male i.education, baseoutcome(0) rrr
+margins education
+
+* YP income and RSBB
+mlogit YPG3000 ageAt28 male i.income, baseoutcome(3) rrr
+margins income
+
+mlogit YPG3040_grp ageAt28 male i.income, baseoutcome(3) rrr
+margins income
+
+mlogit YPG3080_rev ageAt28 male i.income, baseoutcome(0) rrr
+margins income
 
 
+
+
+********************************************************************************
+*** Demonstrating in some simple simulations how differences in selection of the exposure and outcome determines the direction and magnitude of selection bias
+
+* Set-up a log, so can store these results
+capture log close
+log using ".\G1_Results\G1_selection_sims_log", replace text
+
+** Will use 10 million observations in each simulation, to remove issues of random variability. Will also focus on scenario with 2 binary variables for simplicity, but same principles extent to other types of data as well (with some exceptions, such as there being no bias if both the exposure and outcome are associated with selection independently; as we're simulating missing data under a logistic model here, there is an implicit dependence between x and y, even without an explicit interaction term, hence why bias is observed here - for more information, and a simple simulated example demonstraing this, see supplementary section S2 of Millard et al. 'Exploring selection bias in COVID-19 research: Simulations and prospective analyses of two UK cohort studies' [https://www.medrxiv.org/content/10.1101/2021.12.10.21267363v1]).
+
+* Start with no causal effect of exposure on outcome
+clear
+set obs 10000000
+set seed 3911
+
+gen x = rbinomial(1, 0.5)
+tab x
+
+gen y_prob = invlogit(log(1) + log(1) * x)
+sum y_prob
+gen y = rbinomial(1, y_prob)
+tab y
+
+* Check these are independent and that odds ratio is as we simulated
+logistic y x
+
+
+*** Now create missingness mechanisms and explore extent and direction of bias
+
+** x and y both positively predict having data (weak effects)
+gen data_bothPos_weak_p = invlogit(log(0.5) + (log(2) * x) + (log(2) * y))
+gen data_bothPos_weak = rbinomial(1, data_bothPos_weak_p)
+tab data_bothPos_weak
+
+logistic y x if data_bothPos_weak == 1
+
+** x and y both positively predict having data (strong effects)
+gen data_bothPos_strong_p = invlogit(log(0.1) + (log(10) * x) + (log(10) * y))
+gen data_bothPos_strong = rbinomial(1, data_bothPos_strong_p)
+tab data_bothPos_strong
+
+logistic y x if data_bothPos_strong == 1
+
+** x positively predicts having data, while y negatively predicts is (weak effects)
+gen data_xPos_yNeg_weak_p = invlogit(log(1) + (log(2) * x) + (log(0.5) * y))
+gen data_xPos_yNeg_weak = rbinomial(1, data_xPos_yNeg_weak_p)
+tab data_xPos_yNeg_weak
+
+logistic y x if data_xPos_yNeg_weak == 1
+
+** x positively predicts having data, while y negatively predicts is (strong effects)
+gen data_xPos_yNeg_strong_p = invlogit(log(1) + (log(10) * x) + (log(0.1) * y))
+gen data_xPos_yNeg_strong = rbinomial(1, data_xPos_yNeg_strong_p)
+tab data_xPos_yNeg_strong
+
+logistic y x if data_xPos_yNeg_strong == 1
+
+** x negatively predicts having data, while y positively predicts is (weak effects)
+gen data_xNeg_yPos_weak_p = invlogit(log(1) + (log(0.5) * x) + (log(2) * y))
+gen data_xNeg_yPos_weak = rbinomial(1, data_xNeg_yPos_weak_p)
+tab data_xNeg_yPos_weak
+
+logistic y x if data_xNeg_yPos_weak == 1
+
+** x negatively predicts having data, while y positively predicts is (strong effects)
+gen data_xNeg_yPos_strong_p = invlogit(log(1) + (log(0.1) * x) + (log(10) * y))
+gen data_xNeg_yPos_strong = rbinomial(1, data_xNeg_yPos_strong_p)
+tab data_xNeg_yPos_strong
+
+logistic y x if data_xNeg_yPos_strong == 1
+
+** x and y both negatively predict having data (weak effects)
+gen data_bothNeg_weak_p = invlogit(log(2) + (log(0.5) * x) + (log(0.5) * y))
+gen data_bothNeg_weak = rbinomial(1, data_bothNeg_weak_p)
+tab data_bothNeg_weak
+
+logistic y x if data_bothNeg_weak == 1
+
+** x and y both negatively predict having data (strong effects)
+gen data_bothNeg_strong_p = invlogit(log(10) + (log(0.1) * x) + (log(0.1) * y))
+gen data_bothNeg_strong = rbinomial(1, data_bothNeg_strong_p)
+tab data_bothNeg_strong
+
+logistic y x if data_bothNeg_strong == 1
+
+
+** Quick example to show that if selection of x and y are independent then there will be no selection bias. Here, the probability of having data for x or y is 0.5 if x or y take the value 1, meaning the probability of having data when both x and y are 1 is 0.25 (0.5 * 0.5).
+gen data_xyIndep = .
+replace data_xyIndep = 1 if x == 0 & y == 0
+replace data_xyIndep = rbinomial(1, 0.5) if x == 0 & y == 1
+replace data_xyIndep = rbinomial(1, 0.5) if x == 1 & y == 0
+replace data_xyIndep = rbinomial(1, 0.25) if x == 1 & y == 1
+tab data_xyIndep
+
+logistic y x if data_xyIndep == 1
+
+
+*** Now repeat when x causes an increase in y
+clear
+set obs 10000000
+set seed 3912
+
+gen x = rbinomial(1, 0.5)
+tab x
+
+gen y_prob = invlogit(log(0.448) + log(5) * x)
+sum y_prob
+gen y = rbinomial(1, y_prob)
+tab y
+
+* Check that odds ratio is as we simulated
+logistic y x
+
+
+*** Now create missingness mechanisms and explore extent and direction of bias
+
+** x and y both positively predict having data (weak effects)
+gen data_bothPos_weak_p = invlogit(log(0.5) + (log(2) * x) + (log(2) * y))
+gen data_bothPos_weak = rbinomial(1, data_bothPos_weak_p)
+tab data_bothPos_weak
+
+logistic y x if data_bothPos_weak == 1
+
+** x and y both positively predict having data (strong effects)
+gen data_bothPos_strong_p = invlogit(log(0.1) + (log(10) * x) + (log(10) * y))
+gen data_bothPos_strong = rbinomial(1, data_bothPos_strong_p)
+tab data_bothPos_strong
+
+logistic y x if data_bothPos_strong == 1
+
+** x positively predicts having data, while y negatively predicts is (weak effects)
+gen data_xPos_yNeg_weak_p = invlogit(log(1) + (log(2) * x) + (log(0.5) * y))
+gen data_xPos_yNeg_weak = rbinomial(1, data_xPos_yNeg_weak_p)
+tab data_xPos_yNeg_weak
+
+logistic y x if data_xPos_yNeg_weak == 1
+
+** x positively predicts having data, while y negatively predicts is (strong effects)
+gen data_xPos_yNeg_strong_p = invlogit(log(1) + (log(10) * x) + (log(0.1) * y))
+gen data_xPos_yNeg_strong = rbinomial(1, data_xPos_yNeg_strong_p)
+tab data_xPos_yNeg_strong
+
+logistic y x if data_xPos_yNeg_strong == 1
+
+** x negatively predicts having data, while y positively predicts is (weak effects)
+gen data_xNeg_yPos_weak_p = invlogit(log(1) + (log(0.5) * x) + (log(2) * y))
+gen data_xNeg_yPos_weak = rbinomial(1, data_xNeg_yPos_weak_p)
+tab data_xNeg_yPos_weak
+
+logistic y x if data_xNeg_yPos_weak == 1
+
+** x negatively predicts having data, while y positively predicts is (strong effects)
+gen data_xNeg_yPos_strong_p = invlogit(log(1) + (log(0.1) * x) + (log(10) * y))
+gen data_xNeg_yPos_strong = rbinomial(1, data_xNeg_yPos_strong_p)
+tab data_xNeg_yPos_strong
+
+logistic y x if data_xNeg_yPos_strong == 1
+
+** x and y both negatively predict having data (weak effects)
+gen data_bothNeg_weak_p = invlogit(log(2) + (log(0.5) * x) + (log(0.5) * y))
+gen data_bothNeg_weak = rbinomial(1, data_bothNeg_weak_p)
+tab data_bothNeg_weak
+
+logistic y x if data_bothNeg_weak == 1
+
+** x and y both negatively predict having data (strong effects)
+gen data_bothNeg_strong_p = invlogit(log(10) + (log(0.1) * x) + (log(0.1) * y))
+gen data_bothNeg_strong = rbinomial(1, data_bothNeg_strong_p)
+tab data_bothNeg_strong
+
+logistic y x if data_bothNeg_strong == 1
+
+
+** Quick example to show that if selection of x and y are independent then there will be no selection bias. Here, the probability of having data for x or y is 0.5 if x or y take the value 1, meaning the probability of having data when both x and y are 1 is 0.25 (0.5 * 0.5).
+gen data_xyIndep = .
+replace data_xyIndep = 1 if x == 0 & y == 0
+replace data_xyIndep = rbinomial(1, 0.5) if x == 0 & y == 1
+replace data_xyIndep = rbinomial(1, 0.5) if x == 1 & y == 0
+replace data_xyIndep = rbinomial(1, 0.25) if x == 1 & y == 1
+tab data_xyIndep
+
+logistic y x if data_xyIndep == 1
+
+
+*** Now repeat when x causes a decrease in y
+clear
+set obs 10000000
+set seed 3913
+
+gen x = rbinomial(1, 0.5)
+tab x
+
+gen y_prob = invlogit(log(2.24) + log(0.2) * x)
+sum y_prob
+gen y = rbinomial(1, y_prob)
+tab y
+
+* Check that odds ratio is as we simulated
+logistic y x
+
+
+*** Now create missingness mechanisms and explore extent and direction of bias
+
+** x and y both positively predict having data (weak effects)
+gen data_bothPos_weak_p = invlogit(log(0.5) + (log(2) * x) + (log(2) * y))
+gen data_bothPos_weak = rbinomial(1, data_bothPos_weak_p)
+tab data_bothPos_weak
+
+logistic y x if data_bothPos_weak == 1
+
+** x and y both positively predict having data (strong effects)
+gen data_bothPos_strong_p = invlogit(log(0.1) + (log(10) * x) + (log(10) * y))
+gen data_bothPos_strong = rbinomial(1, data_bothPos_strong_p)
+tab data_bothPos_strong
+
+logistic y x if data_bothPos_strong == 1
+
+** x positively predicts having data, while y negatively predicts is (weak effects)
+gen data_xPos_yNeg_weak_p = invlogit(log(1) + (log(2) * x) + (log(0.5) * y))
+gen data_xPos_yNeg_weak = rbinomial(1, data_xPos_yNeg_weak_p)
+tab data_xPos_yNeg_weak
+
+logistic y x if data_xPos_yNeg_weak == 1
+
+** x positively predicts having data, while y negatively predicts is (strong effects)
+gen data_xPos_yNeg_strong_p = invlogit(log(1) + (log(10) * x) + (log(0.1) * y))
+gen data_xPos_yNeg_strong = rbinomial(1, data_xPos_yNeg_strong_p)
+tab data_xPos_yNeg_strong
+
+logistic y x if data_xPos_yNeg_strong == 1
+
+** x negatively predicts having data, while y positively predicts is (weak effects)
+gen data_xNeg_yPos_weak_p = invlogit(log(1) + (log(0.5) * x) + (log(2) * y))
+gen data_xNeg_yPos_weak = rbinomial(1, data_xNeg_yPos_weak_p)
+tab data_xNeg_yPos_weak
+
+logistic y x if data_xNeg_yPos_weak == 1
+
+** x negatively predicts having data, while y positively predicts is (strong effects)
+gen data_xNeg_yPos_strong_p = invlogit(log(1) + (log(0.1) * x) + (log(10) * y))
+gen data_xNeg_yPos_strong = rbinomial(1, data_xNeg_yPos_strong_p)
+tab data_xNeg_yPos_strong
+
+logistic y x if data_xNeg_yPos_strong == 1
+
+** x and y both negatively predict having data (weak effects)
+gen data_bothNeg_weak_p = invlogit(log(2) + (log(0.5) * x) + (log(0.5) * y))
+gen data_bothNeg_weak = rbinomial(1, data_bothNeg_weak_p)
+tab data_bothNeg_weak
+
+logistic y x if data_bothNeg_weak == 1
+
+** x and y both negatively predict having data (strong effects)
+gen data_bothNeg_strong_p = invlogit(log(10) + (log(0.1) * x) + (log(0.1) * y))
+gen data_bothNeg_strong = rbinomial(1, data_bothNeg_strong_p)
+tab data_bothNeg_strong
+
+logistic y x if data_bothNeg_strong == 1
+
+
+** Quick example to show that if selection of x and y are independent then there will be no selection bias. Here, the probability of having data for x or y is 0.5 if x or y take the value 1, meaning the probability of having data when both x and y are 1 is 0.25 (0.5 * 0.5).
+gen data_xyIndep = .
+replace data_xyIndep = 1 if x == 0 & y == 0
+replace data_xyIndep = rbinomial(1, 0.5) if x == 0 & y == 1
+replace data_xyIndep = rbinomial(1, 0.5) if x == 1 & y == 0
+replace data_xyIndep = rbinomial(1, 0.25) if x == 1 & y == 1
+tab data_xyIndep
+
+logistic y x if data_xyIndep == 1
+
+
+log close
+
+
+
+
+********************************************************************************
+*** Next, will show an example of using multiple imputation to try and explore/address potential selection bias
+
+** Read in the 'post-analysis' dataset, and merge with the mother's and father's data to get maternal and paternal RSBB variables
+
+* First, open raw dataset, and just keep parental RSBB variables, and drop if QLET == B
+use "Desc_RSBB_B3911.dta", clear
+
+* Keep just relevant admin and RSBB vars
+keep aln qlet d810 d813 d816 pb150 pb153 pb155
+
+* Drop if second-born twin
+tab qlet, m
+drop if qlet == "B"
+
+* Check no duplicates
+duplicates report
+
+* Drop QLET variable
+drop qlet
+
+* Check the RSBB variables and tidy
+tab1 d810 d813 d816 pb150 pb153 pb155, m
+
+replace d810 = . if d810 < 0
+tab d810, m
+tab d810
+
+replace d813 = . if d813 < 0
+tab d813, m
+recode d813 (0 = 1) (1/6 = 2) (7/13 = 3), gen(d813_grp)
+label define relig_lb 1 "None" 2 "Christian" 3 "Other"
+numlabel relig_lb, add
+label values d813_grp relig_lb
+tab d813_grp, m
+tab d813_grp
+
+replace d816 = . if d816 < 0
+tab d816, m
+tab d816
+
+replace pb150 = . if pb150 < 0
+tab pb150, m
+tab pb150
+
+replace pb153 = . if pb153 < 0
+tab pb153, m
+recode pb153 (0 = 1) (1/6 = 2) (7/13 = 3), gen(pb153_grp)
+label values pb153_grp relig_lb
+tab pb153_grp, m
+tab pb153_grp
+
+replace pb155 = . if pb155 < 0
+tab pb155, m
+tab pb155
+
+* Drop some old vars and add num labels
+drop d813 pb153
+
+numlabel, add
+
+* Drop any WoCs
+tab1 d810 d813_grp d816 pb150 pb153_grp pb155, m
+
+drop if d810 == .a | pb150 == .c
+
+* Save this file
+save ".\G1_Results\G0_RSBB_forMerging.dta", replace
+
+
+** Now load the G1 post-analysis dataset and merge together
+use ".\G1_Results\G1_PredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+merge m:1 aln using ".\G1_Results\G0_RSBB_forMerging.dta", keepusing(d810 d813_grp d816 pb150 pb153_grp pb155)
+
+* Keep just those in the G1 file
+tab _merge
+
+drop if _merge == 2
+drop _merge
+
+tab1 d810 d813_grp d816 pb150 pb153_grp pb155, m
+
+
+** For this imputation example, we are going to impute a handful of sociodemographic exposures and see how these imputed results differ from the complete case results. The exposures we're going to focus on are:
+*  - Sex (no missing data in exposure, but definitely causes selection [with males being less likely to continue participating in ALSPAC])
+*  - Ethnicity (little missing data in exposure, and likely to cause selection [with ethnicities other than White less likely to continue participating])
+*  - YP education (lots of missing data [as only measured at age 27]), and likely to cause selection [with lower education less likely to continue participating])
+*  - YP income (lots of missing data [as only measured at age 26]), and likely to cause selection [with lower income less likely to continue participating])
+
+** As the YP RSBB outcomes also have high levels of missingness (as only measured at age 28), will have to impute these as well. Will use maternal and paternal RSBB from pregnancy as auxiliary variables, as both have less missing data, and likely predict child RSBB.
+
+** For YP education and income, will use a range of parental SEP and demographic variables as auxiliarly variables (maternal and paternal education, maternal and paternal occupational social class, maternal IMD, household income, maternal age at birth, mother's marital status, parity, mother's urban/rural location, home ownership status and parental access to a car), as have less missing data and predict child education and income.
+
+** This multiple imputation approach rests on various assumptions, the majority of which are untestable and may not be met. For instance, using parental RSBB and SEP as auxiliary variables assumes that these strongly predict child RSBB and SEP; while some association is evident, whether this is sufficient to satisfy the MAR assumption is unclear. This approach also assumes that the imputation model is correctly specified, and that there are no additional variables which also relate to missing data in the exposure and/or outcome which have not been included here.
+
+
+*** Keep just variables of interest, check amounts of missing data, then set up the imputation model
+keep aln qlet YPG3000 YPG3040_grp YPG3080_rev ageAt28 ///
+male nonWhiteEthnic education income ///
+mother_ageAtBirth maritalStatus_mat rural_mat parity_mat education_mat education_pat highSocClass_mat highSocClass_pat income_parents IMD_mat housing_mat accessToCar_parents ///
+d810 d813_grp d816 pb150 pb153_grp pb155
+
+order aln qlet YPG3000 YPG3040_grp YPG3080_rev ageAt28 ///
+male nonWhiteEthnic education income ///
+mother_ageAtBirth maritalStatus_mat rural_mat parity_mat education_mat education_pat highSocClass_mat highSocClass_pat income_parents IMD_mat housing_mat accessToCar_parents ///
+d810 d813_grp d816 pb150 pb153_grp pb155
+
+* Check missing data (only sex has no missing data)
+misstable summarize YPG3000-pb155, all
+
+* Set up the imputation model
+mi set flong
+mi register regular male
+mi register imputed YPG3000 YPG3040_grp YPG3080_rev ageAt28 ///
+nonWhiteEthnic education income ///
+mother_ageAtBirth maritalStatus_mat rural_mat parity_mat education_mat education_pat highSocClass_mat highSocClass_pat income_parents IMD_mat housing_mat accessToCar_parents ///
+d810 d813_grp d816 pb150 pb153_grp pb155
+
+* Set-up a dry-run, just to make sure imputation works and models specified correctly
+mi impute chained ///
+	(regress) mother_ageAtBirth income_parents accessToCar_parents ///
+	(pmm, knn(5)) ageAt28 ///
+	(logit) nonWhiteEthnic rural_mat highSocClass_mat highSocClass_pat ///
+	(mlogit) YPG3000 YPG3040_grp maritalStatus_mat housing_mat d810 d813_grp pb150 pb153_grp ///
+	(ologit) YPG3080_rev education income parity_mat education_mat education_pat IMD_mat d816 pb155 ///
+	= male, ///
+	add(50) burnin(10) rseed(12345) dryrun
+	
+* Looks okay, so now run the actual imputations. Will perform 50 imputations with a burn-in period of 10 (and saving the tracplot to check that convergence reached). Use 'dots' option to show progress, and 'augment' to avoid perfect prediction during imputations. As lots of variables in imputation model, and relatively large dataset, this takes a good few hours.
+mi impute chained ///
+	(regress) mother_ageAtBirth income_parents accessToCar_parents ///
+	(pmm, knn(5)) ageAt28 ///
+	(logit) nonWhiteEthnic rural_mat highSocClass_mat highSocClass_pat ///
+	(mlogit) YPG3000 YPG3040_grp maritalStatus_mat housing_mat d810 d813_grp pb150 pb153_grp ///
+	(ologit) YPG3080_rev education income parity_mat education_mat education_pat IMD_mat d816 pb155 ///
+	= male, ///
+	add(50) burnin(10) rseed(12345) dots augment ///
+	savetrace(".\G1_Results\imp_trace.dta", replace)
+	
+	
+** Save this imputed dataset, so not have to run whole imputation again to access results
+save ".\G1_Results\imp_G1_RSBB.dta", replace
+
+
+** Check convergence and that imputation chains are well-mixed
+* Read in the trace dataset
+use ".\G1_Results\imp_trace.dta", clear
+
+sum 
+
+* Save the mean value to add as a line in the plot - Do this for all outcomes and exposures
+sum nonWhiteEthnic_mean
+local mean_nonWhiteEthnic = r(mean)
+display `mean_nonWhiteEthnic'
+
+sum education_mean
+local mean_education = r(mean)
+display `mean_education'
+
+sum income_mean
+local mean_income = r(mean)
+display `mean_income'
+
+sum YPG3000_mean
+local mean_belief = r(mean)
+display `mean_belief'
+
+sum YPG3040_grp_mean
+local mean_denom = r(mean)
+display `mean_denom'
+
+sum YPG3080_rev_mean
+local mean_attend = r(mean)
+display `mean_attend'
+
+
+* Convert the data from long to wide format (is necessary to create the plots)
+reshape wide *mean *sd, i(iter) j(m)
+
+* Set the iteration variable as the 'time' variable
+tsset iter
+
+* Make the plots - These all look relatively well-mixed and converged
+tsline nonWhiteEthnic_mean*, yline(`mean_nonWhiteEthnic') legend(off) name(ethnic, replace)
+tsline education_mean*, yline(`mean_education') legend(off) name(edu, replace)
+tsline income_mean*, yline(`mean_income') legend(off) name(income, replace)
+tsline YPG3000_mean*, yline(`mean_belief') legend(off) name(belief, replace)
+tsline YPG3040_grp_mean*, yline(`mean_denom') legend(off) name(relig, replace)
+tsline YPG3080_rev_mean*, yline(`mean_attend') legend(off) name(attend, replace)
+
+graph close _all
+
+
+**** Now run the models on the imputed data and combine using Rubin's Rules
+use ".\G1_Results\imp_G1_RSBB.dta", clear
+
+
+* Set-up a log, so can store these results
+capture log close
+log using ".\G1_Results\G1_imp_analysis_log", replace text
+
+
+** Quick check of imputed vs observed results (all look reasonable and no obvious outliers/causes for concern)
+tab nonWhiteEthnic if _mi_m == 0
+tab nonWhiteEthnic if _mi_m == 1
+
+tab education if _mi_m == 0
+tab education if _mi_m == 1
+
+tab income if _mi_m == 0
+tab income if _mi_m == 1
+
+tab YPG3000 if _mi_m == 0
+tab YPG3000 if _mi_m == 1
+
+tab YPG3040_grp if _mi_m == 0
+tab YPG3040_grp if _mi_m == 1
+
+tab YPG3080_rev if _mi_m == 0
+tab YPG3080_rev if _mi_m == 1
+
+
+**** Now run the actual models comparing complete-cases analysis to imputed analysis
+
+*** Sex and RSBB
+
+** Religious belief
+
+* CCA
+mlogit YPG3000 ageAt28 male if _mi_m == 0, baseoutcome(3) rrr
+matrix res = r(table)
+matrix list res
+
+* MI (can't display results in exponentiated format from mi estimate, so have to exponentiate manually)
+mi estimate: mlogit YPG3000 ageAt28 male, baseoutcome(3)
+matrix res = r(table)
+matrix list res
+
+di "RRR = " %9.3f exp(res["b", "1__Y: male"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Y: male"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Y: male"])
+di "p-value = " %9.4f res["pvalue", "1__Y: male"]
+
+di "RRR = " %9.3f exp(res["b", "2__Not_sure: male"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Not_sure: male"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Not_sure: male"])
+di "p-value = " %9.4f res["pvalue", "2__Not_sure: male"]
+
+
+** Religious affiliation
+
+* CCA
+mlogit YPG3040_grp ageAt28 male if _mi_m == 0, baseoutcome(3) rrr
+matrix res = r(table)
+matrix list res
+
+* MI
+mi estimate: mlogit YPG3040_grp ageAt28 male, baseoutcome(3)
+matrix res = r(table)
+matrix list res
+
+di "RRR = " %9.3f exp(res["b", "1__Christian: male"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Christian: male"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Christian: male"])
+di "p-value = " %9.4f res["pvalue", "1__Christian: male"]
+
+di "RRR = " %9.3f exp(res["b", "2__Other: male"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Other: male"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Other: male"])
+di "p-value = " %9.4f res["pvalue", "2__Other: male"]
+
+
+** Religious attendance
+
+* CCA
+mlogit YPG3080_rev ageAt28 male if _mi_m == 0, baseoutcome(0) rrr
+matrix res = r(table)
+matrix list res
+
+* MI
+mi estimate: mlogit YPG3080_rev ageAt28 male, baseoutcome(0)
+matrix res = r(table)
+matrix list res
+
+di "RRR = " %9.3f exp(res["b", "1__Occasionally: male"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Occasionally: male"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Occasionally: male"])
+di "p-value = " %9.4f res["pvalue", "1__Occasionally: male"]
+
+di "RRR = " %9.3f exp(res["b", "2__Min_once_a_year: male"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Min_once_a_year: male"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Min_once_a_year: male"])
+di "p-value = " %9.4f res["pvalue", "2__Min_once_a_year: male"]
+
+di "RRR = " %9.3f exp(res["b", "3__Min_once_a_month: male"])
+di "Lower CI = " %9.3f exp(res["ll", "3__Min_once_a_month: male"])
+di "Upper CI =" %9.3f exp(res["ul", "3__Min_once_a_month: male"])
+di "p-value = " %9.4f res["pvalue", "3__Min_once_a_month: male"]
+
+
+*** Ethnicity and RSBB
+
+** Religious belief
+
+* CCA
+mlogit YPG3000 ageAt28 male nonWhiteEthnic if _mi_m == 0, baseoutcome(3) rrr
+matrix res = r(table)
+matrix list res
+
+* MI
+mi estimate: mlogit YPG3000 ageAt28 male nonWhiteEthnic, baseoutcome(3)
+matrix res = r(table)
+matrix list res
+
+di "RRR = " %9.3f exp(res["b", "1__Y: nonWhiteEthnic"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Y: nonWhiteEthnic"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Y: nonWhiteEthnic"])
+di "p-value = " %9.4f res["pvalue", "1__Y: nonWhiteEthnic"]
+
+di "RRR = " %9.3f exp(res["b", "2__Not_sure: nonWhiteEthnic"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Not_sure: nonWhiteEthnic"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Not_sure: nonWhiteEthnic"])
+di "p-value = " %9.4f res["pvalue", "2__Not_sure: nonWhiteEthnic"]
+
+
+** Religious affiliation
+
+* CCA
+mlogit YPG3040_grp ageAt28 male nonWhiteEthnic if _mi_m == 0, baseoutcome(3) rrr
+matrix res = r(table)
+matrix list res
+
+* MI
+mi estimate: mlogit YPG3040_grp ageAt28 male nonWhiteEthnic, baseoutcome(3)
+matrix res = r(table)
+matrix list res
+
+di "RRR = " %9.3f exp(res["b", "1__Christian: nonWhiteEthnic"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Christian: nonWhiteEthnic"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Christian: nonWhiteEthnic"])
+di "p-value = " %9.4f res["pvalue", "1__Christian: nonWhiteEthnic"]
+
+di "RRR = " %9.3f exp(res["b", "2__Other: nonWhiteEthnic"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Other: nonWhiteEthnic"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Other: nonWhiteEthnic"])
+di "p-value = " %9.4f res["pvalue", "2__Other: nonWhiteEthnic"]
+
+
+** Religious attendance
+
+* CCA
+mlogit YPG3080_rev ageAt28 male nonWhiteEthnic if _mi_m == 0, baseoutcome(0) rrr
+matrix res = r(table)
+matrix list res
+
+* MI
+mi estimate: mlogit YPG3080_rev ageAt28 male nonWhiteEthnic, baseoutcome(0)
+matrix res = r(table)
+matrix list res
+
+di "RRR = " %9.3f exp(res["b", "1__Occasionally: nonWhiteEthnic"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Occasionally: nonWhiteEthnic"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Occasionally: nonWhiteEthnic"])
+di "p-value = " %9.4f res["pvalue", "1__Occasionally: nonWhiteEthnic"]
+
+di "RRR = " %9.3f exp(res["b", "2__Min_once_a_year: nonWhiteEthnic"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Min_once_a_year: nonWhiteEthnic"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Min_once_a_year: nonWhiteEthnic"])
+di "p-value = " %9.4f res["pvalue", "2__Min_once_a_year: nonWhiteEthnic"]
+
+di "RRR = " %9.3f exp(res["b", "3__Min_once_a_month: nonWhiteEthnic"])
+di "Lower CI = " %9.3f exp(res["ll", "3__Min_once_a_month: nonWhiteEthnic"])
+di "Upper CI =" %9.3f exp(res["ul", "3__Min_once_a_month: nonWhiteEthnic"])
+di "p-value = " %9.4f res["pvalue", "3__Min_once_a_month: nonWhiteEthnic"]
+
+
+*** YP education and RSBB
+
+** Religious belief
+
+* CCA
+mlogit YPG3000 ageAt28 male i.education if _mi_m == 0, baseoutcome(3) rrr
+matrix res = r(table)
+matrix list res
+
+* MI
+mi estimate: mlogit YPG3000 ageAt28 male i.education, baseoutcome(3)
+matrix res = r(table)
+matrix list res
+
+di "RRR = " %9.3f exp(res["b", "1__Y: 2.education"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Y: 2.education"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Y: 2.education"])
+di "p-value = " %9.4f res["pvalue", "1__Y: 2.education"]
+
+di "RRR = " %9.3f exp(res["b", "2__Not_sure: 2.education"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Not_sure: 2.education"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Not_sure: 2.education"])
+di "p-value = " %9.4f res["pvalue", "2__Not_sure: 2.education"]
+
+di "RRR = " %9.3f exp(res["b", "1__Y: 3.education"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Y: 3.education"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Y: 3.education"])
+di "p-value = " %9.4f res["pvalue", "1__Y: 3.education"]
+
+di "RRR = " %9.3f exp(res["b", "2__Not_sure: 3.education"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Not_sure: 3.education"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Not_sure: 3.education"])
+di "p-value = " %9.4f res["pvalue", "2__Not_sure: 3.education"]
+
+di "RRR = " %9.3f exp(res["b", "1__Y: 4.education"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Y: 4.education"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Y: 4.education"])
+di "p-value = " %9.4f res["pvalue", "1__Y: 4.education"]
+
+di "RRR = " %9.3f exp(res["b", "2__Not_sure: 4.education"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Not_sure: 4.education"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Not_sure: 4.education"])
+di "p-value = " %9.4f res["pvalue", "2__Not_sure: 4.education"]
+
+
+** Religious affiliation
+
+* CCA
+mlogit YPG3040_grp ageAt28 male i.education if _mi_m == 0, baseoutcome(3) rrr
+matrix res = r(table)
+matrix list res
+
+* MI
+mi estimate: mlogit YPG3040_grp ageAt28 male i.education, baseoutcome(3)
+matrix res = r(table)
+matrix list res
+
+di "RRR = " %9.3f exp(res["b", "1__Christian: 2.education"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Christian: 2.education"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Christian: 2.education"])
+di "p-value = " %9.4f res["pvalue", "1__Christian: 2.education"]
+
+di "RRR = " %9.3f exp(res["b", "2__Other: 2.education"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Other: 2.education"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Other: 2.education"])
+di "p-value = " %9.4f res["pvalue", "2__Other: 2.education"]
+
+di "RRR = " %9.3f exp(res["b", "1__Christian: 3.education"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Christian: 3.education"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Christian: 3.education"])
+di "p-value = " %9.4f res["pvalue", "1__Christian: 3.education"]
+
+di "RRR = " %9.3f exp(res["b", "2__Other: 3.education"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Other: 3.education"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Other: 3.education"])
+di "p-value = " %9.4f res["pvalue", "2__Other: 3.education"]
+
+di "RRR = " %9.3f exp(res["b", "1__Christian: 4.education"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Christian: 4.education"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Christian: 4.education"])
+di "p-value = " %9.4f res["pvalue", "1__Christian: 4.education"]
+
+di "RRR = " %9.3f exp(res["b", "2__Other: 4.education"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Other: 4.education"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Other: 4.education"])
+di "p-value = " %9.4f res["pvalue", "2__Other: 4.education"]
+
+
+** Religious attendance
+
+* CCA
+mlogit YPG3080_rev ageAt28 male i.education if _mi_m == 0, baseoutcome(0) rrr
+matrix res = r(table)
+matrix list res
+
+* MI
+mi estimate: mlogit YPG3080_rev ageAt28 male i.education, baseoutcome(0)
+matrix res = r(table)
+matrix list res
+
+di "RRR = " %9.3f exp(res["b", "1__Occasionally: 2.education"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Occasionally: 2.education"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Occasionally: 2.education"])
+di "p-value = " %9.4f res["pvalue", "1__Occasionally: 2.education"]
+
+di "RRR = " %9.3f exp(res["b", "2__Min_once_a_year: 2.education"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Min_once_a_year: 2.education"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Min_once_a_year: 2.education"])
+di "p-value = " %9.4f res["pvalue", "2__Min_once_a_year: 2.education"]
+
+di "RRR = " %9.3f exp(res["b", "3__Min_once_a_month: 2.education"])
+di "Lower CI = " %9.3f exp(res["ll", "3__Min_once_a_month: 2.education"])
+di "Upper CI =" %9.3f exp(res["ul", "3__Min_once_a_month: 2.education"])
+di "p-value = " %9.4f res["pvalue", "3__Min_once_a_month: 2.education"]
+
+di "RRR = " %9.3f exp(res["b", "1__Occasionally: 3.education"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Occasionally: 3.education"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Occasionally: 3.education"])
+di "p-value = " %9.4f res["pvalue", "1__Occasionally: 3.education"]
+
+di "RRR = " %9.3f exp(res["b", "2__Min_once_a_year: 3.education"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Min_once_a_year: 3.education"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Min_once_a_year: 3.education"])
+di "p-value = " %9.4f res["pvalue", "2__Min_once_a_year: 3.education"]
+
+di "RRR = " %9.3f exp(res["b", "3__Min_once_a_month: 3.education"])
+di "Lower CI = " %9.3f exp(res["ll", "3__Min_once_a_month: 3.education"])
+di "Upper CI =" %9.3f exp(res["ul", "3__Min_once_a_month: 3.education"])
+di "p-value = " %9.4f res["pvalue", "3__Min_once_a_month: 3.education"]
+
+di "RRR = " %9.3f exp(res["b", "1__Occasionally: 4.education"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Occasionally: 4.education"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Occasionally: 4.education"])
+di "p-value = " %9.4f res["pvalue", "1__Occasionally: 4.education"]
+
+di "RRR = " %9.3f exp(res["b", "2__Min_once_a_year: 4.education"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Min_once_a_year: 4.education"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Min_once_a_year: 4.education"])
+di "p-value = " %9.4f res["pvalue", "2__Min_once_a_year: 4.education"]
+
+di "RRR = " %9.3f exp(res["b", "3__Min_once_a_month: 4.education"])
+di "Lower CI = " %9.3f exp(res["ll", "3__Min_once_a_month: 4.education"])
+di "Upper CI =" %9.3f exp(res["ul", "3__Min_once_a_month: 4.education"])
+di "p-value = " %9.4f res["pvalue", "3__Min_once_a_month: 4.education"]
+
+
+
+*** YP income and RSBB
+
+** Religious belief
+
+* CCA
+mlogit YPG3000 ageAt28 male i.income if _mi_m == 0, baseoutcome(3) rrr
+matrix res = r(table)
+matrix list res
+
+* MI
+mi estimate: mlogit YPG3000 ageAt28 male i.income, baseoutcome(3)
+matrix res = r(table)
+matrix list res
+
+di "RRR = " %9.3f exp(res["b", "1__Y: 2.income"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Y: 2.income"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Y: 2.income"])
+di "p-value = " %9.4f res["pvalue", "1__Y: 2.income"]
+
+di "RRR = " %9.3f exp(res["b", "2__Not_sure: 2.income"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Not_sure: 2.income"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Not_sure: 2.income"])
+di "p-value = " %9.4f res["pvalue", "2__Not_sure: 2.income"]
+
+di "RRR = " %9.3f exp(res["b", "1__Y: 3.income"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Y: 3.income"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Y: 3.income"])
+di "p-value = " %9.4f res["pvalue", "1__Y: 3.income"]
+
+di "RRR = " %9.3f exp(res["b", "2__Not_sure: 3.income"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Not_sure: 3.income"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Not_sure: 3.income"])
+di "p-value = " %9.4f res["pvalue", "2__Not_sure: 3.income"]
+
+di "RRR = " %9.3f exp(res["b", "1__Y: 4.income"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Y: 4.income"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Y: 4.income"])
+di "p-value = " %9.4f res["pvalue", "1__Y: 4.income"]
+
+di "RRR = " %9.3f exp(res["b", "2__Not_sure: 4.income"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Not_sure: 4.income"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Not_sure: 4.income"])
+di "p-value = " %9.4f res["pvalue", "2__Not_sure: 4.income"]
+
+di "RRR = " %9.3f exp(res["b", "1__Y: 5.income"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Y: 5.income"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Y: 5.income"])
+di "p-value = " %9.4f res["pvalue", "1__Y: 5.income"]
+
+di "RRR = " %9.3f exp(res["b", "2__Not_sure: 5.income"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Not_sure: 5.income"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Not_sure: 5.income"])
+di "p-value = " %9.4f res["pvalue", "2__Not_sure: 5.income"]
+
+
+** Religious affiliation
+
+* CCA
+mlogit YPG3040_grp ageAt28 male i.income if _mi_m == 0, baseoutcome(3) rrr
+matrix res = r(table)
+matrix list res
+
+* MI
+mi estimate: mlogit YPG3040_grp ageAt28 male i.income, baseoutcome(3)
+matrix res = r(table)
+matrix list res
+
+di "RRR = " %9.3f exp(res["b", "1__Christian: 2.income"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Christian: 2.income"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Christian: 2.income"])
+di "p-value = " %9.4f res["pvalue", "1__Christian: 2.income"]
+
+di "RRR = " %9.3f exp(res["b", "2__Other: 2.income"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Other: 2.income"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Other: 2.income"])
+di "p-value = " %9.4f res["pvalue", "2__Other: 2.income"]
+
+di "RRR = " %9.3f exp(res["b", "1__Christian: 3.income"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Christian: 3.income"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Christian: 3.income"])
+di "p-value = " %9.4f res["pvalue", "1__Christian: 3.income"]
+
+di "RRR = " %9.3f exp(res["b", "2__Other: 3.income"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Other: 3.income"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Other: 3.income"])
+di "p-value = " %9.4f res["pvalue", "2__Other: 3.income"]
+
+di "RRR = " %9.3f exp(res["b", "1__Christian: 4.income"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Christian: 4.income"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Christian: 4.income"])
+di "p-value = " %9.4f res["pvalue", "1__Christian: 4.income"]
+
+di "RRR = " %9.3f exp(res["b", "2__Other: 4.income"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Other: 4.income"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Other: 4.income"])
+di "p-value = " %9.4f res["pvalue", "2__Other: 4.income"]
+
+di "RRR = " %9.3f exp(res["b", "1__Christian: 5.income"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Christian: 5.income"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Christian: 5.income"])
+di "p-value = " %9.4f res["pvalue", "1__Christian: 5.income"]
+
+di "RRR = " %9.3f exp(res["b", "2__Other: 5.income"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Other: 5.income"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Other: 5.income"])
+di "p-value = " %9.4f res["pvalue", "2__Other: 5.income"]
+
+
+** Religious attendance
+
+* CCA
+mlogit YPG3080_rev ageAt28 male i.income if _mi_m == 0, baseoutcome(0) rrr
+matrix res = r(table)
+matrix list res
+
+* MI
+mi estimate: mlogit YPG3080_rev ageAt28 male i.income, baseoutcome(0)
+matrix res = r(table)
+matrix list res
+
+di "RRR = " %9.3f exp(res["b", "1__Occasionally: 2.income"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Occasionally: 2.income"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Occasionally: 2.income"])
+di "p-value = " %9.4f res["pvalue", "1__Occasionally: 2.income"]
+
+di "RRR = " %9.3f exp(res["b", "2__Min_once_a_year: 2.income"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Min_once_a_year: 2.income"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Min_once_a_year: 2.income"])
+di "p-value = " %9.4f res["pvalue", "2__Min_once_a_year: 2.income"]
+
+di "RRR = " %9.3f exp(res["b", "3__Min_once_a_month: 2.income"])
+di "Lower CI = " %9.3f exp(res["ll", "3__Min_once_a_month: 2.income"])
+di "Upper CI =" %9.3f exp(res["ul", "3__Min_once_a_month: 2.income"])
+di "p-value = " %9.4f res["pvalue", "3__Min_once_a_month: 2.income"]
+
+di "RRR = " %9.3f exp(res["b", "1__Occasionally: 3.income"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Occasionally: 3.income"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Occasionally: 3.income"])
+di "p-value = " %9.4f res["pvalue", "1__Occasionally: 3.income"]
+
+di "RRR = " %9.3f exp(res["b", "2__Min_once_a_year: 3.income"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Min_once_a_year: 3.income"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Min_once_a_year: 3.income"])
+di "p-value = " %9.4f res["pvalue", "2__Min_once_a_year: 3.income"]
+
+di "RRR = " %9.3f exp(res["b", "3__Min_once_a_month: 3.income"])
+di "Lower CI = " %9.3f exp(res["ll", "3__Min_once_a_month: 3.income"])
+di "Upper CI =" %9.3f exp(res["ul", "3__Min_once_a_month: 3.income"])
+di "p-value = " %9.4f res["pvalue", "3__Min_once_a_month: 3.income"]
+
+di "RRR = " %9.3f exp(res["b", "1__Occasionally: 4.income"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Occasionally: 4.income"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Occasionally: 4.income"])
+di "p-value = " %9.4f res["pvalue", "1__Occasionally: 4.income"]
+
+di "RRR = " %9.3f exp(res["b", "2__Min_once_a_year: 4.income"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Min_once_a_year: 4.income"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Min_once_a_year: 4.income"])
+di "p-value = " %9.4f res["pvalue", "2__Min_once_a_year: 4.income"]
+
+di "RRR = " %9.3f exp(res["b", "3__Min_once_a_month: 4.income"])
+di "Lower CI = " %9.3f exp(res["ll", "3__Min_once_a_month: 4.income"])
+di "Upper CI =" %9.3f exp(res["ul", "3__Min_once_a_month: 4.income"])
+di "p-value = " %9.4f res["pvalue", "3__Min_once_a_month: 4.income"]
+
+di "RRR = " %9.3f exp(res["b", "1__Occasionally: 5.income"])
+di "Lower CI = " %9.3f exp(res["ll", "1__Occasionally: 5.income"])
+di "Upper CI =" %9.3f exp(res["ul", "1__Occasionally: 5.income"])
+di "p-value = " %9.4f res["pvalue", "1__Occasionally: 5.income"]
+
+di "RRR = " %9.3f exp(res["b", "2__Min_once_a_year: 5.income"])
+di "Lower CI = " %9.3f exp(res["ll", "2__Min_once_a_year: 5.income"])
+di "Upper CI =" %9.3f exp(res["ul", "2__Min_once_a_year: 5.income"])
+di "p-value = " %9.4f res["pvalue", "2__Min_once_a_year: 5.income"]
+
+di "RRR = " %9.3f exp(res["b", "3__Min_once_a_month: 5.income"])
+di "Lower CI = " %9.3f exp(res["ll", "3__Min_once_a_month: 5.income"])
+di "Upper CI =" %9.3f exp(res["ul", "3__Min_once_a_month: 5.income"])
+di "p-value = " %9.4f res["pvalue", "3__Min_once_a_month: 5.income"]
+
+
+* Close the log file and clear data
+log close
+
+clear
 
