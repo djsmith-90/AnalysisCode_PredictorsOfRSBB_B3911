@@ -305,6 +305,13 @@ heatplot cor_all, color(hcl, diverging intensity(1)) ///
 * Save heatmap
 graph export ".\G1_Results\corr_heatplot_all.pdf", replace
 
+* And save in .EPS format
+heatplot cor_all, color(hcl, diverging intensity(1)) ///
+	lower nodiagonal cuts(-1.05(0.1)1.05) xlabel(, angle(45) labsize(vsmall)) ///
+	ylabel(, labsize(vsmall)) legend(subtitle("")) ysize(10) xsize(14)
+	
+graph export ".\G1_Results\corr_heatplot_all.eps", replace
+
 * Save matrix as Excel file
 putexcel set ".\G1_Results\corrMatrix_all.xlsx", replace
 putexcel A1=matrix(cor_all), names
@@ -5179,6 +5186,10 @@ graph combine belRelCh_main belRelCh_int, ysize(3) xsize(6)
 
 graph export ".\G1_Results\allData_pvalues.pdf", replace
 
+* And convert to EPS format for Wellcome Open Research formatting (also have to enlarge size, else resolution is terrible)
+graph combine belRelCh_main belRelCh_int, ysize(10) xsize(20)
+graph export ".\G1_Results\allData_pvalues.eps", replace
+
 graph close _all
 
 
@@ -5492,7 +5503,7 @@ twoway (scatter exp_num r2_main if outcome == "Belief", ///
 	title("Main effects") ///
 	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
 		3 "Religious attendance") rows(1) size(small)) ///
-	name(preg_main, replace)
+	name(r2_main, replace)
 
 graph export ".\G1_Results\beliefReligAttend_mainEffects_r2.pdf", replace
 
@@ -5508,15 +5519,19 @@ twoway (scatter exp_num r2_int if outcome == "Belief" & exp_num != 1, ///
 	title("Sex interaction") ///
 	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
 		3 "Religious attendance") rows(1) size(small)) ///
-	name(preg_int, replace)
+	name(r2_int, replace)
 
 graph export ".\G1_Results\beliefReligAttend_sexInt_r2.pdf", replace
 
 
 ** Combine all these graphs together
-graph combine preg_main preg_int, ysize(3) xsize(6)
+graph combine r2_main r2_int, ysize(3) xsize(6)
 
 graph export ".\G1_Results\allData_r2.pdf", replace
+
+* And convert to EPS format
+graph combine r2_main r2_int, ysize(10) xsize(20)
+graph export ".\G1_Results\allData_r2.eps", replace
 
 graph close _all
 
@@ -5880,6 +5895,54 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		name(edu_cat, replace)
 		
 graph export ".\G1_Results\eduResults.pdf", replace
+
+* And convert to EPS format
+twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"Vocational (ref = GCSE/None)", col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"Vocational (ref = GCSE/None)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"Vocational (ref = GCSE/None)", col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"Vocational (ref = GCSE/None)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"Vocational (ref = GCSE/None)", col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"Vocational (ref = GCSE/None)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"AS/A level (ref = GCSE/None)", col(red) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"AS/A level (ref = GCSE/None)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"AS/A level (ref = GCSE/None)", col(red) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"AS/A level (ref = GCSE/None)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"AS/A level (ref = GCSE/None)", col(red) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"AS/A level (ref = GCSE/None)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"Degree (ref = GCSE/None)", col(blue) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"Degree (ref = GCSE/None)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"Degree (ref = GCSE/None)", col(blue) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"Degree (ref = GCSE/None)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"Degree (ref = GCSE/None)", col(blue) msize(small) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"Degree (ref = GCSE/None)", horizontal col(blue)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio (ref = GCSE/None)") ///
+		title("Education and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
+		xlabel(0.7 1 1.5 2 3 5, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(order(1 "Vocational" 7 "AS/A levels" 13 "Degree") rows(1)) ///
+		name(edu_cat, replace) ysize(10) xsize(14)
+		
+graph export ".\G1_Results\eduResults.eps", replace
 	
 
 ** Create plot for being a parent (ref = not a parent)
@@ -6108,6 +6171,66 @@ twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
 		name(income_cat, replace)
 		
 graph export ".\G1_Results\incomeResults.pdf", replace
+
+* And convert to EPS format
+twoway (scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"£500-£999 (ref = £0-£499)", col(black) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"£500-£999 (ref = £0-£499)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"£500-£999 (ref = £0-£499)", col(black) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"£500-£999 (ref = £0-£499)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"£500-£999 (ref = £0-£499)", col(black) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"£500-£999 (ref = £0-£499)", horizontal col(black)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"£1000-£1499 (ref = £0-£499)", col(red) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"£1000-£1499 (ref = £0-£499)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"£1000-£1499 (ref = £0-£499)", col(red) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"£1000-£1499 (ref = £0-£499)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"£1000-£1499 (ref = £0-£499)", col(red) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"£1000-£1499 (ref = £0-£499)", horizontal col(red)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"£1500-£1999 (ref = £0-£499)", col(blue) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"£1500-£1999 (ref = £0-£499)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"£1500-£1999 (ref = £0-£499)", col(blue) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"£1500-£1999 (ref = £0-£499)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"£1500-£1999 (ref = £0-£499)", col(blue) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"£1500-£1999 (ref = £0-£499)", horizontal col(blue)) ///
+		(scatter level_split coef if outcome == "Belief" & exp_level == ///
+			"£2000 and above (ref = £0-£499)", col(green) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Belief" & exp_level == ///
+			"£2000 and above (ref = £0-£499)", horizontal col(green)) ///
+		(scatter level_split coef if outcome == "Relig" & exp_level == ///
+			"£2000 and above (ref = £0-£499)", col(green) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Relig" & exp_level == ///
+			"£2000 and above (ref = £0-£499)", horizontal col(green)) ///
+		(scatter level_split coef if outcome == "Attend" & exp_level == ///
+			"£2000 and above (ref = £0-£499)", col(green) msize(vsmall) msym(D)) ///
+		(rspike lci uci level_split if outcome == "Attend" & exp_level == ///
+			"£2000 and above (ref = £0-£499)", horizontal col(green)), ///
+		yscale(reverse)	ytitle("") ///
+		xtitle("Relative risk ratio (ref = £0-£499)") ///
+		title("Take-home income and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash) lwidth(thin)) xscale(log) ///
+		xlabel(0.2 0.3 0.5 0.7 1 1.5 2, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(order(1 "£500-£999" 7 "£1000-£1499" 13 "£1500-£1999" 19 "£2000 and above") rows(2)) ///
+		name(income_cat, replace) ysize(10) xsize(14)
+		
+graph export ".\G1_Results\incomeResults.eps", replace
 
 
 ** Create plot for housing (ref = owned/mortgaged)
