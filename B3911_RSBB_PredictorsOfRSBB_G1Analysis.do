@@ -177,9 +177,9 @@ rename age_FA age_fatherAbsence
 
 
 * Associations between demographic factors (excluding marital status; a525_grp) - Then make heat map of correlations (heatplot code adapted from: https://www.stata.com/meeting/germany19/slides/germany19_Jann.pdf)
-pwcorr ageAt28 mother_ageAtBirth male nonWhiteEthnic livePartner mobility_mat rural rural_mat parent parity_mat
+spearman ageAt28 mother_ageAtBirth male nonWhiteEthnic livePartner mobility_mat rural rural_mat parent parity_mat, pw
 
-matrix cor_demo = r(C)
+matrix cor_demo = r(Rho)
 matrix list cor_demo
 
 heatplot cor_demo, values(format(%9.3f)) color(hcl, diverging intensity(1)) ///
@@ -216,9 +216,9 @@ restore
 
 
 ** Now repeat for socioeconomic/material insecurity variables (to exclude housing status [housing and housing_mat], as are unordered categorical variables)
-pwcorr education-townsendDep_mat financeDiffs-age_fatherAbsence
+spearman education-townsendDep_mat financeDiffs-age_fatherAbsence, pw
 
-matrix cor_socio = r(C)
+matrix cor_socio = r(Rho)
 
 * As lots of entries, the correlation coefficients are hard to read, so will drop these values and include the legend
 heatplot cor_socio, color(hcl, diverging intensity(1)) ///
@@ -294,9 +294,9 @@ restore
 
 	
 *** Finally, repeat this on all of the exposures together (excluding unordered cateogorical variables housing status and marital status)
-pwcorr ageAt28 mother_ageAtBirth male nonWhiteEthnic livePartner mobility_mat rural rural_mat parent parity_mat education-townsendDep_mat financeDiffs-age_fatherAbsence
+spearman ageAt28 mother_ageAtBirth male nonWhiteEthnic livePartner mobility_mat rural rural_mat parent parity_mat education-townsendDep_mat financeDiffs-age_fatherAbsence, pw
 
-matrix cor_all = r(C)
+matrix cor_all = r(Rho)
 
 heatplot cor_all, color(hcl, diverging intensity(1)) ///
 	lower nodiagonal cuts(-1.05(0.1)1.05) xlabel(, angle(45) labsize(vsmall)) ///
