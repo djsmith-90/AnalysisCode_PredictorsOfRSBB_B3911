@@ -144,9 +144,9 @@ rename d842 LoC_external
 rename h151b selfEsteem
 
 * Associations between cognitive/psychological variables - Then make heat map of correlations (heatplot code adapted from: https://www.stata.com/meeting/germany19/slides/germany19_Jann.pdf)
-corr logicMemory-selfEsteem
+spearman logicMemory-selfEsteem, pw
 
-matrix cor_cog = r(C)
+matrix cor_cog = r(Rho)
 
 heatplot cor_cog, color(hcl, diverging intensity(1)) ///
 	lower nodiagonal cuts(-1.05(0.1)1.05) xlabel(, angle(45)) legend(subtitle(""))
@@ -676,9 +676,9 @@ rename pa782 LoC_external
 rename esteem_prorated selfEsteem
 
 * Associations between cognitive/psychological variables - Then make heat map of correlations (heatplot code adapted from: https://www.stata.com/meeting/germany19/slides/germany19_Jann.pdf)
-corr IPSM_interpAware-selfEsteem
+spearman IPSM_interpAware-selfEsteem, pw
 
-matrix cor_cog = r(C)
+matrix cor_cog = r(Rho)
 
 heatplot cor_cog, color(hcl, diverging intensity(1)) ///
 	lower nodiagonal cuts(-1.05(0.1)1.05) xlabel(, angle(45)) legend(subtitle(""))
@@ -1112,8 +1112,16 @@ keep aln-YPG3080_OccYr kz021 YPG8000 f8ws110 f8ws111 f8ws112 fh6280 FKWI1030 FKW
 
 ** Using the 'distinct' command (see above), for each variable inspect the number of unque values; if < 10 then display table, while if >= 10 then displays means/SDs/IQRs
 
+* Recode the attendance var first, so that categories are 'at least once a month', 'at least once a year', 'occasionally' and 'not at all'
+tab1 YPG3080*, m
+recode YPG3080 (1 2 = 1) (3 = 2) (4 = 3) (5 = 4), gen(YPG3080_alt)
+label define attend2_lb 1 "Min once a month" 2 "Min once a year" 3 "Occasionally" 4 "Not at all"
+numlabel attend2_lb, add
+label values YPG3080_alt attend2_lb
+tab YPG3080_alt
+
 * Outcomes
-foreach var of varlist YPG3000-YPG3080_OccYr {
+foreach var of varlist YPG3000-YPG3080_OccYr YPG3080_alt {
 	quietly distinct `var'
 	local unique = r(ndistinct)
 	
@@ -1162,7 +1170,7 @@ tab male
 
 ** Amount of missing data in outcomes and exposures
 * Outcomes
-misstable sum YPG3000-YPG3080_OccYr, all
+misstable sum YPG3000-YPG3080_OccYr YPG3080_alt, all
 
 * Exposures
 misstable sum male YPG8000 f8ws110 f8ws111 f8ws112 fh6280 FKWI1030 FKWI1050 fg7360-fg7364 f8lc125 loc_age16 FJCQ1001 f8dv440a triangles_total kr554a skuse16 autism25 kq348a tc4025e prosocial25 CCXD860a f8se125 f8se126, all
@@ -1180,12 +1188,12 @@ foreach var of varlist male YPG8000 f8ws110 f8ws111 f8ws112 fh6280 FKWI1030 FKWI
 	if `unique' < 10 {
 		tab YPG3000 `var', col
 		tab YPG3040_grp `var', col
-		tab YPG3080 `var', col
+		tab YPG3080_alt `var', col
 	}
 	else {
 		tab YPG3000, sum(`var')
 		tab YPG3040_grp, sum(`var')
-		tab YPG3080, sum(`var')
+		tab YPG3080_alt, sum(`var')
 	}
 }
 
@@ -1233,9 +1241,9 @@ rename prosocial25 SDQ_prosocial_age25
 
 
 * Associations between cognitive/psychological variables - Then make heat map of correlations (heatplot code adapted from: https://www.stata.com/meeting/germany19/slides/germany19_Jann.pdf)
-corr verbalIQ_age8-globalEsteem_age8
+spearman verbalIQ_age8-globalEsteem_age8, pw
 
-matrix cor_cog = r(C)
+matrix cor_cog = r(Rho)
 
 heatplot cor_cog, color(hcl, diverging intensity(1)) ///
 	lower nodiagonal cuts(-1.05(0.1)1.05) xlabel(, angle(45) labsize(vsmall)) ///
@@ -1658,12 +1666,4323 @@ log close
 
 ***********************************************************************************
 ***********************************************************************************
-*** Next, to start making plots of these results
+***** Next, to start making plots of these results
 
-** p-value plots
+**** G0 mothers
 
-** Pseudo-R2 value plots
+*** p-value plots
 
-** Coefficient plots
+** First outcome - Religious belief
+use ".\Cognitive_Results\G0Mother_belief_results_lr.dta", clear
 
-** Predicted probability plots
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+* Add 'belief' as a variable, then save this file (as will merge with other files later on)
+gen outcome = "Belief"
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G0Mother_belief_pvalues.dta", replace
+
+
+** Next outcome - Religious affiliation
+use ".\Cognitive_Results\G0Mother_relig_results_lr.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+* Add 'religious affiliation' as a variable, then save this file
+gen outcome = "Religious affil."
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G0Mother_relig_pvalues.dta", replace
+
+
+** Next outcome - Religious attendance
+use ".\Cognitive_Results\G0Mother_attend_results_lr.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+* Add 'religious attendance' as a variable, then save this file
+gen outcome = "Church attendance"
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G0Mother_attend_pvalues.dta", replace
+
+
+** Combine all these datasets together
+use ".\Cognitive_Results\G0Mother_belief_pvalues.dta", clear
+append using ".\Cognitive_Results\G0Mother_relig_pvalues.dta"
+append using ".\Cognitive_Results\G0Mother_attend_pvalues.dta"
+
+
+* Now look at combined results
+
+* Belief/religion/church vars main effects
+local bon_thresh = -log10(0.05/15)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_main if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num logp_main if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)15, valuelabel labsize(small) angle(0)) ///
+	title("Main effects") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
+	name(belRelCh_main, replace)
+
+graph export ".\Cognitive_Results\G0Mother_mainEffects_pvalues.pdf", replace
+
+* Belief/religion/church vars interaction effects
+local bon_thresh = -log10(0.05/15)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_int if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)15, valuelabel labsize(small) angle(0)) ///
+	title("Age interaction") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
+	name(belRelCh_int, replace)
+
+graph export ".\Cognitive_Results\G0Mother_ageInt_pvalues.pdf", replace
+
+
+** Combine all these graphs together
+graph combine belRelCh_main belRelCh_int, ysize(3) xsize(6)
+
+graph export ".\Cognitive_Results\G0Mother_allData_pvalues.pdf", replace
+
+graph close _all
+
+
+** Save these p-values as CSV files
+list outcome exposure lr_p_main lr_p_int in 1/10
+
+keep outcome exp_num lr_p_main lr_p_int
+order outcome exp_num lr_p_main lr_p_int
+
+* Convert to wide format (need to edit outcomes strings so have no spaces)
+replace outcome = "Attend" if outcome == "Church attendance"
+replace outcome = "Religion" if outcome == "Religious affil."
+tab outcome
+
+reshape wide lr_p_main lr_p_int, i(exp_num) j (outcome) string
+
+order exp_num lr_p_mainBelief lr_p_intBelief lr_p_mainReligion lr_p_intReligion lr_p_mainAttend lr_p_intAttend
+
+format %9.4f lr_p_mainBelief-lr_p_intAttend
+
+outsheet exp_num-lr_p_intAttend using ".\Cognitive_Results\G0Mother_pvalue_results.csv", comma replace
+
+
+** And how many exposures were associated with the outcome at both Bonferroni and standard alpha levels?
+
+* Belief in god - main effect
+count if lr_p_mainBelief < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainBelief < 0.05
+display (r(N) / _N) * 100
+
+* Belief in god - interaction
+count if lr_p_intBelief < 0.05/(_N)
+display (r(N) / (_N)) * 100
+
+count if lr_p_intBelief < 0.05
+display (r(N) / (_N)) * 100
+
+* Religious affiliation - main effect
+count if lr_p_mainReligion < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainReligion < 0.05
+display (r(N) / _N) * 100
+
+* Religious affiliation - interaction
+count if lr_p_intReligion < 0.05/(_N)
+display (r(N) / (_N)) * 100
+
+count if lr_p_intReligion < 0.05
+display (r(N) / (_N)) * 100
+
+* Church attendance - main effect
+count if lr_p_mainAttend < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainAttend < 0.05
+display (r(N) / _N) * 100
+
+* Church attendance - interaction
+count if lr_p_intAttend < 0.05/(_N)
+display (r(N) / (_N)) * 100
+
+count if lr_p_intAttend < 0.05
+display (r(N) / (_N)) * 100
+
+
+*** Pseudo-R2 plots
+
+** First outcome - Religious belief
+use ".\Cognitive_Results\G0Mother_belief_results_r2.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Add 'belief' as a variable, then save this file (as will merge with other files later on)
+gen outcome = "Belief"
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G0Mother_belief_r2.dta", replace
+
+
+** Next outcome - Religious affiliation
+use ".\Cognitive_Results\G0Mother_relig_results_r2.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Add 'religious affiliation' as a variable, then save this file
+gen outcome = "Religious affil."
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G0Mother_relig_r2.dta", replace
+
+
+** Next outcome - Religious attendance
+use ".\Cognitive_Results\G0Mother_attend_results_r2.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Add 'religious attendance' as a variable, then save this file
+gen outcome = "Church attendance"
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G0Mother_attend_r2.dta", replace
+
+
+** Combine all these datasets together
+use ".\Cognitive_Results\G0Mother_belief_r2.dta", clear
+append using ".\Cognitive_Results\G0Mother_relig_r2.dta"
+append using ".\Cognitive_Results\G0Mother_attend_r2.dta"
+
+
+* Now look at combined results
+
+* Belief/religion/church vars main effects
+twoway (scatter exp_num r2_main if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num r2_main if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num r2_main if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)15, valuelabel labsize(small) angle(0)) ///
+	title("Main effects") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
+	name(r2_main, replace)
+
+graph export ".\Cognitive_Results\G0Mother_mainEffects_r2.pdf", replace
+
+* Belief/religion/church vars interaction effects
+twoway (scatter exp_num r2_int if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num r2_int if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num r2_int if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)15, valuelabel labsize(small) angle(0)) ///
+	title("Age interaction") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
+	name(r2_int, replace)
+
+graph export ".\Cognitive_Results\G0Mother_ageInt_r2.pdf", replace
+
+
+** Combine all these graphs together
+graph combine r2_main r2_int, ysize(3) xsize(6)
+
+graph export ".\Cognitive_Results\G0Mother_allData_r2.pdf", replace
+
+graph close _all
+
+
+** Save these pseudo R2 values as CSV files
+list outcome exposure r2_main r2_int in 1/10
+
+keep outcome exp_num r2_main r2_int
+order outcome exp_num r2_main r2_int
+
+* Convert to wide format (need to edit outcomes strings so have no spaces)
+replace outcome = "Attend" if outcome == "Church attendance"
+replace outcome = "Religion" if outcome == "Religious affil."
+tab outcome
+
+reshape wide r2_main r2_int, i(exp_num) j (outcome) string
+
+order exp_num r2_mainBelief r2_intBelief r2_mainReligion r2_intReligion r2_mainAttend r2_intAttend
+
+format %9.4f r2_mainBelief-r2_intAttend
+
+outsheet exp_num-r2_intAttend using ".\Cognitive_Results\G0Mother_r2_results.csv", comma replace
+
+
+
+*** Coefficient plots
+
+** Will read the datasets in then combine together into one single dataset
+use ".\Cognitive_Results\G0Mother_belief_results.dta", clear
+gen outcome = "Belief"
+
+append using ".\Cognitive_Results\G0Mother_relig_results.dta"
+replace outcome = "Relig" if outcome == ""
+tab outcome, m
+
+append using ".\Cognitive_Results\G0Mother_attend_results.dta"
+replace outcome = "Attend" if outcome == ""
+tab outcome, m
+
+
+** Save these results as CSV files to add to the SI
+
+* Save each result in turn
+format coef lci uci coef_int lci_int uci_int %9.3f
+format p p_int %9.4f
+
+outsheet exposure-p_int using ".\Cognitive_Results\G0Mother_belief_coefs.csv" if outcome == "Belief", comma replace
+
+outsheet exposure-p_int using ".\Cognitive_Results\G0Mother_relig_coefs.csv" if outcome == "Relig", comma replace
+
+outsheet exposure-p_int using ".\Cognitive_Results\G0Mother_attend_coefs.csv" if outcome == "Attend", comma replace
+
+
+* Convert format back to default format (so axis on plots display correctly)
+format coef lci uci coef_int lci_int uci_int %9.0g
+format p p_int %10.0g
+
+
+** Generate a 'levels' variable which combines all RSBB outcomes together
+capture drop level_num
+gen level_num = 0
+replace level_num = 1 if outcome_level == "Not sure (ref = No)"
+replace level_num = 3 if outcome_level == "Christian (ref = None)"
+replace level_num = 4 if outcome_level == "Other (ref = None)"
+replace level_num = 6 if outcome_level == "Min once year (ref = Not at al"
+replace level_num = 7 if outcome_level == "Min once month (ref = Not at a"
+replace level_num = 8 if outcome_level == "Min once week (ref = Not at al"
+
+label define level_lb 0 "Belief - Yes (ref = No)" 1 "Belief - Not sure (ref = No)" 3 "Affiliation - Christian (ref = None)" 4 "Affiliation - Other (ref = None)" 6 "Attendance - Min 1/year (ref = Not at all)" 7 "Attendance - Min 1/month (ref = Not at all)" 8 "Attendance - Min 1/week (ref = Not at all)", replace
+label values level_num level_lb
+tab level_num
+
+
+** Plot for cognitive ability factor
+
+* Min and max x-axis values
+sum lci uci if exposure == "intel_factor" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "intel_factor", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "intel_factor", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "intel_factor", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "intel_factor", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "intel_factor", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "intel_factor", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Cognitive Ability and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.7 0.8 0.9 1 1.1 1.2 1.3, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(cog, replace)
+		
+graph export ".\Cognitive_Results\G0Mother_CogAbilityResults.pdf", replace
+
+
+** Plot for IPSM total
+
+* Min and max x-axis values
+sum lci uci if exposure == "IPSM_total" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "IPSM_total", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "IPSM_total", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "IPSM_total", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "IPSM_total", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "IPSM_total", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "IPSM_total", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("IPSM total and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(1 1.005 1.01 1.015 1.02, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(ipsm, replace)
+		
+graph export ".\Cognitive_Results\G0Mother_IPSMTotalResults.pdf", replace
+
+
+** Plot for LoC
+
+* Min and max x-axis values
+sum lci uci if exposure == "LoC_external" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "LoC_external", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "LoC_external", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "LoC_external", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("External LoC and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.7 0.8 0.9 1, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(loc, replace)
+		
+graph export ".\Cognitive_Results\G0Mother_LoCResults.pdf", replace
+
+
+** Plot for self-esteem
+
+* Min and max x-axis values
+sum lci uci if exposure == "selfEsteem" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "selfEsteem", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "selfEsteem", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "selfEsteem", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "selfEsteem", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "selfEsteem", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "selfEsteem", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Self-Esteem and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.99 1 1.01 1.02 1.03, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(esteem, replace)
+		
+graph export ".\Cognitive_Results\G0Mother_selfEsteemResults.pdf", replace
+
+
+*** Also make a few interaction plots
+
+** Plot for spot word by age interaction
+
+* Min and max x-axis values
+sum lci_int uci_int if exposure == "spotWord" & outcome_level != "NA"
+
+twoway (scatter level_num coef_int if outcome == "Belief" & exposure == "spotWord", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Belief" & exposure == "spotWord", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Relig" & exposure == "spotWord", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Relig" & exposure == "spotWord", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Attend" & exposure == "spotWord", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Attend" & exposure == "spotWord", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Spot-word task by age interaction", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.99 0.995 1 1.005, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(word_int, replace)
+		
+graph export ".\Cognitive_Results\G0Mother_wordByAgeInt.pdf", replace
+
+
+** Plot for cognitive ability factor by age interaction
+
+* Min and max x-axis values
+sum lci_int uci_int if exposure == "intel_factor" & outcome_level != "NA"
+
+twoway (scatter level_num coef_int if outcome == "Belief" & exposure == "intel_factor", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Belief" & exposure == "intel_factor", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Relig" & exposure == "intel_factor", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Relig" & exposure == "intel_factor", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Attend" & exposure == "intel_factor", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Attend" & exposure == "intel_factor", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Cognitive ability by age interaction", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.98 1 1.02 1.04, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(cog_int, replace)
+		
+graph export ".\Cognitive_Results\G0Mother_cogAbilityByAgeInt.pdf", replace
+
+
+** Plot for locus of control factor by age interaction
+
+* Min and max x-axis values
+sum lci_int uci_int if exposure == "LoC_external" & outcome_level != "NA"
+
+twoway (scatter level_num coef_int if outcome == "Belief" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Belief" & exposure == "LoC_external", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Relig" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Relig" & exposure == "LoC_external", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Attend" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Attend" & exposure == "LoC_external", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("External LoC by age interaction", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.99 1 1.01 1.02, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(loc_int, replace)
+		
+graph export ".\Cognitive_Results\G0Mother_LoCByAgeInt.pdf", replace
+
+
+*** Predicted probability plots (as multinomial relative risk ratio results not necessarily intuitive to interpret)
+
+** Make one for cognitive ability
+use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit d810 ageAtBirth intel_factor, rrr baseoutcome(3)
+margins, at(intel_factor = (-5(1)5))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen intel_factor = fill(-5 -4)
+gen prob_yes = .
+gen lci_yes = .
+gen uci_yes = .
+gen prob_notSure = .
+gen lci_notSure = .
+gen uci_notSure = .
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+
+forvalues i = 1(1)`n' {
+	replace prob_yes = res[1,`i'] if _n == `i'
+	replace lci_yes = res[5,`i'] if _n == `i'
+	replace uci_yes = res[6,`i'] if _n == `i'
+	replace prob_notSure = res[1,`n' + `i'] if _n == `i'
+	replace lci_notSure = res[5,`n' + `i'] if _n == `i'
+	replace uci_notSure = res[6,`n' + `i'] if _n == `i'
+	replace prob_no = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_no = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_no = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_yes intel_factor, col(black)) ///
+	(rarea lci_yes uci_yes intel_factor, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_notSure intel_factor, col(red)) ///
+	(rarea lci_notSure uci_notSure intel_factor, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_no intel_factor, col(blue)) ///
+	(rarea lci_no uci_no intel_factor, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(-5 5)) xlabel(-5(1)5, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Cognitive Ability Factor") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious belief", size(large)) ///
+	legend(order(1 "Yes" 3 "Not sure" 5 "No") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(cog_bel, replace)
+	
+	
+** Repeat for other RSBB outcomes and combine plots together
+
+* Religious affiliation
+use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit d813_grp ageAtBirth intel_factor, rrr baseoutcome(3)
+margins, at(intel_factor = (-5(1)5))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen intel_factor = fill(-5 -4)
+gen prob_xian = .
+gen lci_xian = .
+gen uci_xian = .
+gen prob_other = .
+gen lci_other = .
+gen uci_other = .
+gen prob_none = .
+gen lci_none = .
+gen uci_none = .
+
+forvalues i = 1(1)`n' {
+	replace prob_xian = res[1,`i'] if _n == `i'
+	replace lci_xian = res[5,`i'] if _n == `i'
+	replace uci_xian = res[6,`i'] if _n == `i'
+	replace prob_other = res[1,`n' + `i'] if _n == `i'
+	replace lci_other = res[5,`n' + `i'] if _n == `i'
+	replace uci_other = res[6,`n' + `i'] if _n == `i'
+	replace prob_none = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_none = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_none = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_xian intel_factor, col(black)) ///
+	(rarea lci_xian uci_xian intel_factor, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_other intel_factor, col(red)) ///
+	(rarea lci_other uci_other intel_factor, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_none intel_factor, col(blue)) ///
+	(rarea lci_none uci_none intel_factor, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(-5 5)) xlabel(-5(1)5, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Cognitive Ability Factor") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious affiliation", size(large)) ///
+	legend(order(1 "Christian" 3 "Other" 5 "None") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(cog_relig, replace)
+	
+	
+* Attend church
+use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit d816_rev ageAtBirth intel_factor, rrr baseoutcome(0)
+margins, at(intel_factor = (-5(1)5))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen intel_factor = fill(-5 -4)
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+gen prob_yr = .
+gen lci_yr = .
+gen uci_yr = .
+gen prob_mth = .
+gen lci_mth = .
+gen uci_mth = .
+gen prob_wk = .
+gen lci_wk = .
+gen uci_wk = .
+
+forvalues i = 1(1)`n' {
+	replace prob_no = res[1,`i'] if _n == `i'
+	replace lci_no = res[5,`i'] if _n == `i'
+	replace uci_no = res[6,`i'] if _n == `i'
+	replace prob_yr = res[1,`n' + `i'] if _n == `i'
+	replace lci_yr = res[5,`n' + `i'] if _n == `i'
+	replace uci_yr = res[6,`n' + `i'] if _n == `i'
+	replace prob_mth = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_mth = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_mth = res[6,`n' + `n' + `i'] if _n == `i'
+	replace prob_wk = res[1,`n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_wk = res[5,`n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_wk = res[6,`n' + `n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_no intel_factor, col(black)) ///
+	(rarea lci_no uci_no intel_factor, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_yr intel_factor, col(red)) ///
+	(rarea lci_yr uci_yr intel_factor, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_mth intel_factor, col(blue)) ///
+	(rarea lci_mth uci_mth intel_factor, lcol(black) lwidth(vthin) fcol(blue%20)) ///
+	(line prob_wk intel_factor, col(green)) ///
+	(rarea lci_wk uci_wk intel_factor, lcol(black) lwidth(vthin) fcol(green%20)), ///
+	xscale(range(-5 5)) xlabel(-5(1)5, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Cognitive Ability Factor") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious attendance", size(large)) ///
+	legend(order(1 "Not at all" 3 "1/yr" 5 "1/mth" 7 "1/wk") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(cog_attend, replace)
+	
+	
+* Combine these plots together
+graph combine cog_bel cog_relig cog_attend, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G0Mother_CogAbilityPredProbs_combined.pdf", replace
+
+graph close _all
+
+
+** Also plot interaction between age and cognitive ability - Start with religious belief
+use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum intel_factor
+
+local cog_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
+local cog_mean = round(r(mean), 0.01)
+local cog_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
+
+mlogit d810 c.ageAtBirth##c.intel_factor, rrr baseoutcome(3)
+margins, at(intel_factor = (`cog_minus2SD' `cog_mean' `cog_plus2SD') ageAtBirth = (15(1)44))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageAtBirth = fill(15 15 15 16 16 16)
+egen intel_factor = fill(`cog_minus2SD' `cog_mean' `cog_plus2SD' `cog_minus2SD' `cog_mean' `cog_plus2SD')
+replace intel_factor = round(intel_factor, 0.01)
+gen d810 = 1
+predict p1, outcome(1)
+sum p1
+
+replace d810 = 2
+predict p2, outcome(2)
+sum p1 p2
+
+replace d810 = 3
+predict p3, outcome(3)
+sum p1 p2 p3
+
+twoway (line p1 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(black)) ///
+	(line p1 ageAtBirth if intel_factor == float(`cog_mean'), col(black) lpattern(longdash)) ///
+	(line p1 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(black) lpattern(shortdash)) ///
+	(line p2 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(red)) ///
+	(line p2 ageAtBirth if intel_factor == float(`cog_mean'), col(red) lpattern(longdash)) ///
+	(line p2 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(red) lpattern(shortdash)) ///
+	(line p3 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(blue)) ///
+	(line p3 ageAtBirth if intel_factor == float(`cog_mean'), col(blue) lpattern(longdash)) ///
+	(line p3 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(blue) lpattern(shortdash)), ///
+	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age at birth") ytitle("Predicted probability") ///
+	legend(order(1 "Cog minus 2 SD - yes" 2 "Mean cog - yes" ///
+	3 "Cog plus 2 SD - yes" 4 "Cog minus 2 SD - not sure" 5 "Mean cog - not sure" ///
+	6 "Cog plus 2 SD - not sure" 7 "Cog minus 2 SD - no" 8 "Mean cog - no" ///
+	9 "Cog plus 2 SD - no") cols(3) size(vsmall)) ///
+	name(cog_belief_int, replace)
+
+	
+* Religious affiliation
+use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum intel_factor
+
+local cog_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
+local cog_mean = round(r(mean), 0.01)
+local cog_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
+
+mlogit d813_grp c.ageAtBirth##c.intel_factor, rrr baseoutcome(3)
+margins, at(intel_factor = (`cog_minus2SD' `cog_mean' `cog_plus2SD') ageAtBirth = (15(1)44))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageAtBirth = fill(15 15 15 16 16 16)
+egen intel_factor = fill(`cog_minus2SD' `cog_mean' `cog_plus2SD' `cog_minus2SD' `cog_mean' `cog_plus2SD')
+replace intel_factor = round(intel_factor, 0.01)
+gen d813_grp = 1
+predict p1, outcome(1)
+sum p1
+
+replace d813_grp = 2
+predict p2, outcome(2)
+sum p1 p2
+
+replace d813_grp = 3
+predict p3, outcome(3)
+sum p1 p2 p3
+
+twoway (line p1 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(black)) ///
+	(line p1 ageAtBirth if intel_factor == float(`cog_mean'), col(black) lpattern(longdash)) ///
+	(line p1 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(black) lpattern(shortdash)) ///
+	(line p2 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(red)) ///
+	(line p2 ageAtBirth if intel_factor == float(`cog_mean'), col(red) lpattern(longdash)) ///
+	(line p2 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(red) lpattern(shortdash)) ///
+	(line p3 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(blue)) ///
+	(line p3 ageAtBirth if intel_factor == float(`cog_mean'), col(blue) lpattern(longdash)) ///
+	(line p3 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(blue) lpattern(shortdash)), ///
+	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age at birth") ytitle("Predicted probability") ///
+	legend(order(1 "Cog minus 2 SD - Christian" 2 "Mean cog - Christian" ///
+	3 "Cog plus 2 SD - Christian" 4 "Cog minus 2 SD - Other" 5 "Mean cog - Other" ///
+	6 "Cog plus 2 SD - Other" 7 "Cog minus 2 SD - None" 8 "Mean cog - None" ///
+	9 "Cog plus 2 SD - None") cols(3) size(vsmall)) ///
+	name(cog_relig_int, replace)
+	
+
+* Religious attendance
+use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum intel_factor
+
+local cog_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
+local cog_mean = round(r(mean), 0.01)
+local cog_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
+
+mlogit d816_rev c.ageAtBirth##c.intel_factor, rrr baseoutcome(0)
+margins, at(intel_factor = (`cog_minus2SD' `cog_mean' `cog_plus2SD') ageAtBirth = (15(1)44))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen ageAtBirth = fill(15 15 15 16 16 16)
+egen intel_factor = fill(`cog_minus2SD' `cog_mean' `cog_plus2SD' `cog_minus2SD' `cog_mean' `cog_plus2SD')
+replace intel_factor = round(intel_factor, 0.01)
+gen d816_rev = 0
+predict p1, outcome(0)
+sum p1
+
+replace d816_rev = 1
+predict p2, outcome(1)
+sum p1 p2
+
+replace d816_rev = 2
+predict p3, outcome(2)
+sum p1 p2 p3
+
+replace d816_rev = 3
+predict p4, outcome(3)
+sum p1 p2 p3 p4
+
+twoway (line p1 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(black)) ///
+	(line p1 ageAtBirth if intel_factor == float(`cog_mean'), col(black) lpattern(longdash)) ///
+	(line p1 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(black) lpattern(shortdash)) ///
+	(line p2 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(red)) ///
+	(line p2 ageAtBirth if intel_factor == float(`cog_mean'), col(red) lpattern(longdash)) ///
+	(line p2 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(red) lpattern(shortdash)) ///
+	(line p3 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(blue)) ///
+	(line p3 ageAtBirth if intel_factor == float(`cog_mean'), col(blue) lpattern(longdash)) ///
+	(line p3 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(blue) lpattern(shortdash)) ///
+	(line p4 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(green)) ///
+	(line p4 ageAtBirth if intel_factor == float(`cog_mean'), col(green) lpattern(longdash)) ///
+	(line p4 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(green) lpattern(shortdash)), ///
+	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age at birth") ytitle("Predicted probability") ///
+	legend(order(1 "Cog minus 2 SD - Never" 2 "Mean cog - Never" ///
+	3 "Cog plus 2 SD - Never" 4 "Cog minus 2 SD - 1/Yr" 5 "Mean cog - 1/Yr" ///
+	6 "Cog plus 2 SD - 1/Yr" 7 "Cog minus 2 SD - 1/Mth" 8 "Mean cog - 1/Mth" ///
+	9 "Cog plus 2 SD - 1/Mth" 10 "Cog minus 2 SD - 1/Wk" 11 "Mean cog - 1/Wk" ///
+	12 "Cog plus 2 SD - 1/Wk") cols(3) size(vsmall)) ///
+	name(cog_attend_int, replace)
+	
+	
+* Combine these plots together
+graph combine cog_belief_int cog_relig_int cog_attend_int, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G0Mother_CogAbilityPredProbs_ageInt_combined.pdf", replace
+
+graph close _all
+
+
+** Predicted probability plots for locus of control
+use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit d810 ageAtBirth LoC_external, rrr baseoutcome(3)
+margins, at(LoC_external = (0(1)12))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen LoC_external = fill(0 1)
+gen prob_yes = .
+gen lci_yes = .
+gen uci_yes = .
+gen prob_notSure = .
+gen lci_notSure = .
+gen uci_notSure = .
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+
+forvalues i = 1(1)`n' {
+	replace prob_yes = res[1,`i'] if _n == `i'
+	replace lci_yes = res[5,`i'] if _n == `i'
+	replace uci_yes = res[6,`i'] if _n == `i'
+	replace prob_notSure = res[1,`n' + `i'] if _n == `i'
+	replace lci_notSure = res[5,`n' + `i'] if _n == `i'
+	replace uci_notSure = res[6,`n' + `i'] if _n == `i'
+	replace prob_no = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_no = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_no = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_yes LoC_external, col(black)) ///
+	(rarea lci_yes uci_yes LoC_external, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_notSure LoC_external, col(red)) ///
+	(rarea lci_notSure uci_notSure LoC_external, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_no LoC_external, col(blue)) ///
+	(rarea lci_no uci_no LoC_external, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("External Locus of Control") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious belief", size(large)) ///
+	legend(order(1 "Yes" 3 "Not sure" 5 "No") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(loc_bel, replace)
+	
+	
+** Repeat for other RSBB outcomes and combine plots together
+
+* Religious affiliation
+use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit d813_grp ageAtBirth LoC_external, rrr baseoutcome(3)
+margins, at(LoC_external = (0(1)12))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen LoC_external = fill(0 1)
+gen prob_xian = .
+gen lci_xian = .
+gen uci_xian = .
+gen prob_other = .
+gen lci_other = .
+gen uci_other = .
+gen prob_none = .
+gen lci_none = .
+gen uci_none = .
+
+forvalues i = 1(1)`n' {
+	replace prob_xian = res[1,`i'] if _n == `i'
+	replace lci_xian = res[5,`i'] if _n == `i'
+	replace uci_xian = res[6,`i'] if _n == `i'
+	replace prob_other = res[1,`n' + `i'] if _n == `i'
+	replace lci_other = res[5,`n' + `i'] if _n == `i'
+	replace uci_other = res[6,`n' + `i'] if _n == `i'
+	replace prob_none = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_none = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_none = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_xian LoC_external, col(black)) ///
+	(rarea lci_xian uci_xian LoC_external, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_other LoC_external, col(red)) ///
+	(rarea lci_other uci_other LoC_external, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_none LoC_external, col(blue)) ///
+	(rarea lci_none uci_none LoC_external, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("External Locus of Control") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious affiliation", size(large)) ///
+	legend(order(1 "Christian" 3 "Other" 5 "None") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(loc_relig, replace)
+	
+	
+* Attend church
+use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit d816_rev ageAtBirth LoC_external, rrr baseoutcome(0)
+margins, at(LoC_external = (0(1)12))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen LoC_external = fill(0 1)
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+gen prob_yr = .
+gen lci_yr = .
+gen uci_yr = .
+gen prob_mth = .
+gen lci_mth = .
+gen uci_mth = .
+gen prob_wk = .
+gen lci_wk = .
+gen uci_wk = .
+
+forvalues i = 1(1)`n' {
+	replace prob_no = res[1,`i'] if _n == `i'
+	replace lci_no = res[5,`i'] if _n == `i'
+	replace uci_no = res[6,`i'] if _n == `i'
+	replace prob_yr = res[1,`n' + `i'] if _n == `i'
+	replace lci_yr = res[5,`n' + `i'] if _n == `i'
+	replace uci_yr = res[6,`n' + `i'] if _n == `i'
+	replace prob_mth = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_mth = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_mth = res[6,`n' + `n' + `i'] if _n == `i'
+	replace prob_wk = res[1,`n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_wk = res[5,`n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_wk = res[6,`n' + `n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_no LoC_external, col(black)) ///
+	(rarea lci_no uci_no LoC_external, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_yr LoC_external, col(red)) ///
+	(rarea lci_yr uci_yr LoC_external, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_mth LoC_external, col(blue)) ///
+	(rarea lci_mth uci_mth LoC_external, lcol(black) lwidth(vthin) fcol(blue%20)) ///
+	(line prob_wk LoC_external, col(green)) ///
+	(rarea lci_wk uci_wk LoC_external, lcol(black) lwidth(vthin) fcol(green%20)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("External Locus of Control") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious attendance", size(large)) ///
+	legend(order(1 "Not at all" 3 "1/yr" 5 "1/mth" 7 "1/wk") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(loc_attend, replace)
+	
+	
+* Combine these plots together
+graph combine loc_bel loc_relig loc_attend, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G0Mother_LoCPredProbs_combined.pdf", replace
+
+graph close _all
+
+
+** Also plot interaction between age and LoC - Start with religious belief
+use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum LoC_external
+
+local loc_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
+local loc_mean = round(r(mean), 0.01)
+local loc_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
+
+mlogit d810 c.ageAtBirth##c.LoC_external, rrr baseoutcome(3)
+margins, at(LoC_external = (`loc_minus2SD' `loc_mean' `loc_plus2SD') ageAtBirth = (15(1)44))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageAtBirth = fill(15 15 15 16 16 16)
+egen LoC_external = fill(`loc_minus2SD' `loc_mean' `loc_plus2SD' `loc_minus2SD' `loc_mean' `loc_plus2SD')
+replace LoC_external = round(LoC_external, 0.01)
+gen d810 = 1
+predict p1, outcome(1)
+sum p1
+
+replace d810 = 2
+predict p2, outcome(2)
+sum p1 p2
+
+replace d810 = 3
+predict p3, outcome(3)
+sum p1 p2 p3
+
+twoway (line p1 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(black)) ///
+	(line p1 ageAtBirth if LoC_external == float(`loc_mean'), col(black)  lpattern(longdash)) ///
+	(line p1 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(black) lpattern(shortdash)) ///
+	(line p2 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(red)) ///
+	(line p2 ageAtBirth if LoC_external == float(`loc_mean'), col(red) lpattern(longdash)) ///
+	(line p2 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(red) lpattern(shortdash)) ///
+	(line p3 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(blue)) ///
+	(line p3 ageAtBirth if LoC_external == float(`loc_mean'), col(blue) lpattern(longdash)) ///
+	(line p3 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(blue) lpattern(shortdash)), ///
+	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age at birth") ytitle("Predicted probability") ///
+	legend(order(1 "LoC minus 2 SD - yes" 2 "Mean LoC - yes" ///
+	3 "LoC plus 2 SD - yes" 4 "LoC minus 2 SD - not sure" 5 "Mean LoC - not sure" ///
+	6 "LoC plus 2 SD - not sure" 7 "LoC minus 2 SD - no" 8 "Mean LoC - no" ///
+	9 "LoC plus 2 SD - no") cols(3) size(vsmall)) ///
+	name(loc_belief_int, replace)
+
+	
+* Religious affiliation
+use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum LoC_external
+
+local loc_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
+local loc_mean = round(r(mean), 0.01)
+local loc_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
+
+mlogit d813_grp c.ageAtBirth##c.LoC_external, rrr baseoutcome(3)
+margins, at(LoC_external = (`loc_minus2SD' `loc_mean' `loc_plus2SD') ageAtBirth = (15(1)44))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageAtBirth = fill(15 15 15 16 16 16)
+egen LoC_external = fill(`loc_minus2SD' `loc_mean' `loc_plus2SD' `loc_minus2SD' `loc_mean' `loc_plus2SD')
+replace LoC_external = round(LoC_external, 0.01)
+gen d813_grp = 1
+predict p1, outcome(1)
+sum p1
+
+replace d813_grp = 2
+predict p2, outcome(2)
+sum p1 p2
+
+replace d813_grp = 3
+predict p3, outcome(3)
+sum p1 p2 p3
+
+twoway (line p1 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(black)) ///
+	(line p1 ageAtBirth if LoC_external == float(`loc_mean'), col(black) lpattern(longdash)) ///
+	(line p1 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(black) lpattern(shortdash)) ///
+	(line p2 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(red) ) ///
+	(line p2 ageAtBirth if LoC_external == float(`loc_mean'), col(red) lpattern(longdash)) ///
+	(line p2 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(red) lpattern(shortdash)) ///
+	(line p3 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(blue)) ///
+	(line p3 ageAtBirth if LoC_external == float(`loc_mean'), col(blue) lpattern(longdash)) ///
+	(line p3 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(blue) lpattern(shortdash)), ///
+	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age at birth") ytitle("Predicted probability") ///
+	legend(order(1 "LoC minus 2 SD - Christian" 2 "Mean LoC - Christian" ///
+	3 "LoC plus 2 SD - Christian" 4 "LoC minus 2 SD - Other" 5 "Mean LoC - Other" ///
+	6 "LoC plus 2 SD - Other" 7 "LoC minus 2 SD - None" 8 "Mean LoC - None" ///
+	9 "LoC plus 2 SD - None") cols(3) size(vsmall)) ///
+	name(loc_relig_int, replace)
+	
+
+* Religious attendance
+use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum LoC_external
+
+local loc_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
+local loc_mean = round(r(mean), 0.01)
+local loc_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
+
+mlogit d816_rev c.ageAtBirth##c.LoC_external, rrr baseoutcome(0)
+margins, at(LoC_external = (`loc_minus2SD' `loc_mean' `loc_plus2SD') ageAtBirth = (15(1)44))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen ageAtBirth = fill(15 15 15 16 16 16)
+egen LoC_external = fill(`loc_minus2SD' `loc_mean' `loc_plus2SD' `loc_minus2SD' `loc_mean' `loc_plus2SD')
+replace LoC_external = round(LoC_external, 0.01)
+gen d816_rev = 0
+predict p1, outcome(0)
+sum p1
+
+replace d816_rev = 1
+predict p2, outcome(1)
+sum p1 p2
+
+replace d816_rev = 2
+predict p3, outcome(2)
+sum p1 p2 p3
+
+replace d816_rev = 3
+predict p4, outcome(3)
+sum p1 p2 p3 p4
+
+twoway (line p1 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(black)) ///
+	(line p1 ageAtBirth if LoC_external == float(`loc_mean'), col(black) lpattern(longdash)) ///
+	(line p1 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(black) lpattern(shortdash)) ///
+	(line p2 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(red)) ///
+	(line p2 ageAtBirth if LoC_external == float(`loc_mean'), col(red) lpattern(longdash)) ///
+	(line p2 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(red) lpattern(shortdash)) ///
+	(line p3 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(blue)) ///
+	(line p3 ageAtBirth if LoC_external == float(`loc_mean'), col(blue) lpattern(longdash)) ///
+	(line p3 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(blue) lpattern(shortdash)) ///
+	(line p4 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(green)) ///
+	(line p4 ageAtBirth if LoC_external == float(`loc_mean'), col(green) lpattern(longdash)) ///
+	(line p4 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(green) lpattern(shortdash)), ///
+	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age at birth") ytitle("Predicted probability") ///
+	legend(order(1 "LoC minus 2 SD - Never" 2 "Mean LoC - Never" ///
+	3 "LoC plus 2 SD - Never" 4 "LoC minus 2 SD - 1/Yr" 5 "Mean LoC - 1/Yr" ///
+	6 "LoC plus 2 SD - 1/Yr" 7 "LoC minus 2 SD - 1/Mth" 8 "Mean LoC - 1/Mth" ///
+	9 "LoC plus 2 SD - 1/Mth" 10 "LoC minus 2 SD - 1/Wk" 11 "Mean LoC - 1/Wk" ///
+	12 "LoC plus 2 SD - 1/Wk") cols(3) size(vsmall)) ///
+	name(loc_attend_int, replace)
+	
+	
+* Combine these plots together
+graph combine loc_belief_int loc_relig_int loc_attend_int, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G0Mother_LoCPredProbs_ageInt_combined.pdf", replace
+
+graph close _all
+
+
+	
+**** G0 partner results
+
+*** p-value plots
+
+** First outcome - Religious belief
+use ".\Cognitive_Results\G0Partner_belief_results_lr.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+* Add 'belief' as a variable, then save this file (as will merge with other files later on)
+gen outcome = "Belief"
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G0Partner_belief_pvalues.dta", replace
+
+
+** Next outcome - Religious affiliation
+use ".\Cognitive_Results\G0Partner_relig_results_lr.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+* Add 'religious affiliation' as a variable, then save this file
+gen outcome = "Religious affil."
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G0Partner_relig_pvalues.dta", replace
+
+
+** Next outcome - Religious attendance
+use ".\Cognitive_Results\G0Partner_attend_results_lr.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+* Add 'religious attendance' as a variable, then save this file
+gen outcome = "Church attendance"
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G0Partner_attend_pvalues.dta", replace
+
+
+** Combine all these datasets together
+use ".\Cognitive_Results\G0Partner_belief_pvalues.dta", clear
+append using ".\Cognitive_Results\G0Partner_relig_pvalues.dta"
+append using ".\Cognitive_Results\G0Partner_attend_pvalues.dta"
+
+
+* Now look at combined results
+
+* Belief/religion/church vars main effects
+local bon_thresh = -log10(0.05/8)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_main if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num logp_main if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)8, valuelabel labsize(small) angle(0)) ///
+	title("Main effects") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
+	name(belRelCh_main, replace)
+
+graph export ".\Cognitive_Results\G0Partner_mainEffects_pvalues.pdf", replace
+
+* Belief/religion/church vars interaction effects
+local bon_thresh = -log10(0.05/8)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_int if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)8, valuelabel labsize(small) angle(0)) ///
+	title("Age interaction") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
+	name(belRelCh_int, replace)
+
+graph export ".\Cognitive_Results\G0Partner_ageInt_pvalues.pdf", replace
+
+
+** Combine all these graphs together
+graph combine belRelCh_main belRelCh_int, ysize(3) xsize(6)
+
+graph export ".\Cognitive_Results\G0Partner_allData_pvalues.pdf", replace
+
+graph close _all
+
+
+** Save these p-values as CSV files
+list outcome exposure lr_p_main lr_p_int in 1/10
+
+keep outcome exp_num lr_p_main lr_p_int
+order outcome exp_num lr_p_main lr_p_int
+
+* Convert to wide format (need to edit outcomes strings so have no spaces)
+replace outcome = "Attend" if outcome == "Church attendance"
+replace outcome = "Religion" if outcome == "Religious affil."
+tab outcome
+
+reshape wide lr_p_main lr_p_int, i(exp_num) j (outcome) string
+
+order exp_num lr_p_mainBelief lr_p_intBelief lr_p_mainReligion lr_p_intReligion lr_p_mainAttend lr_p_intAttend
+
+format %9.4f lr_p_mainBelief-lr_p_intAttend
+
+outsheet exp_num-lr_p_intAttend using ".\Cognitive_Results\G0Partner_pvalue_results.csv", comma replace
+
+
+** And how many exposures were associated with the outcome at both Bonferroni and standard alpha levels?
+
+* Belief in god - main effect
+count if lr_p_mainBelief < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainBelief < 0.05
+display (r(N) / _N) * 100
+
+* Belief in god - interaction
+count if lr_p_intBelief < 0.05/(_N)
+display (r(N) / (_N)) * 100
+
+count if lr_p_intBelief < 0.05
+display (r(N) / (_N)) * 100
+
+* Religious affiliation - main effect
+count if lr_p_mainReligion < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainReligion < 0.05
+display (r(N) / _N) * 100
+
+* Religious affiliation - interaction
+count if lr_p_intReligion < 0.05/(_N)
+display (r(N) / (_N)) * 100
+
+count if lr_p_intReligion < 0.05
+display (r(N) / (_N)) * 100
+
+* Church attendance - main effect
+count if lr_p_mainAttend < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainAttend < 0.05
+display (r(N) / _N) * 100
+
+* Church attendance - interaction
+count if lr_p_intAttend < 0.05/(_N)
+display (r(N) / (_N)) * 100
+
+count if lr_p_intAttend < 0.05
+display (r(N) / (_N)) * 100
+
+
+*** Pseudo-R2 plots
+
+** First outcome - Religious belief
+use ".\Cognitive_Results\G0Partner_belief_results_r2.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Add 'belief' as a variable, then save this file (as will merge with other files later on)
+gen outcome = "Belief"
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G0Partner_belief_r2.dta", replace
+
+
+** Next outcome - Religious affiliation
+use ".\Cognitive_Results\G0Partner_relig_results_r2.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Add 'religious affiliation' as a variable, then save this file
+gen outcome = "Religious affil."
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G0Partner_relig_r2.dta", replace
+
+
+** Next outcome - Religious attendance
+use ".\Cognitive_Results\G0Partner_attend_results_r2.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Add 'religious attendance' as a variable, then save this file
+gen outcome = "Church attendance"
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G0Partner_attend_r2.dta", replace
+
+
+** Combine all these datasets together
+use ".\Cognitive_Results\G0Partner_belief_r2.dta", clear
+append using ".\Cognitive_Results\G0Partner_relig_r2.dta"
+append using ".\Cognitive_Results\G0Partner_attend_r2.dta"
+
+
+* Now look at combined results
+
+* Belief/religion/church vars main effects
+twoway (scatter exp_num r2_main if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num r2_main if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num r2_main if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)8, valuelabel labsize(small) angle(0)) ///
+	title("Main effects") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
+	name(r2_main, replace)
+
+graph export ".\Cognitive_Results\G0Partner_mainEffects_r2.pdf", replace
+
+* Belief/religion/church vars interaction effects
+twoway (scatter exp_num r2_int if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num r2_int if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num r2_int if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)8, valuelabel labsize(small) angle(0)) ///
+	title("Age interaction") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
+	name(r2_int, replace)
+
+graph export ".\Cognitive_Results\G0Partner_ageInt_r2.pdf", replace
+
+
+** Combine all these graphs together
+graph combine r2_main r2_int, ysize(3) xsize(6)
+
+graph export ".\Cognitive_Results\G0Partner_allData_r2.pdf", replace
+
+graph close _all
+
+
+** Save these pseudo R2 values as CSV files
+list outcome exposure r2_main r2_int in 1/10
+
+keep outcome exp_num r2_main r2_int
+order outcome exp_num r2_main r2_int
+
+* Convert to wide format (need to edit outcomes strings so have no spaces)
+replace outcome = "Attend" if outcome == "Church attendance"
+replace outcome = "Religion" if outcome == "Religious affil."
+tab outcome
+
+reshape wide r2_main r2_int, i(exp_num) j (outcome) string
+
+order exp_num r2_mainBelief r2_intBelief r2_mainReligion r2_intReligion r2_mainAttend r2_intAttend
+
+format %9.4f r2_mainBelief-r2_intAttend
+
+outsheet exp_num-r2_intAttend using ".\Cognitive_Results\G0Partner_r2_results.csv", comma replace
+
+
+*** Coefficient plots
+
+** Will read the datasets in then combine together into one single dataset
+use ".\Cognitive_Results\G0Partner_belief_results.dta", clear
+gen outcome = "Belief"
+
+append using ".\Cognitive_Results\G0Partner_relig_results.dta"
+replace outcome = "Relig" if outcome == ""
+tab outcome, m
+
+append using ".\Cognitive_Results\G0Partner_attend_results.dta"
+replace outcome = "Attend" if outcome == ""
+tab outcome, m
+
+
+** Save these results as CSV files to add to the SI
+
+* Save each result in turn
+format coef lci uci coef_int lci_int uci_int %9.3f
+format p p_int %9.4f
+
+outsheet exposure-p_int using ".\Cognitive_Results\G0Partner_belief_coefs.csv" if outcome == "Belief", comma replace
+
+outsheet exposure-p_int using ".\Cognitive_Results\G0Partner_relig_coefs.csv" if outcome == "Relig", comma replace
+
+outsheet exposure-p_int using ".\Cognitive_Results\G0Partner_attend_coefs.csv" if outcome == "Attend", comma replace
+
+
+* Convert format back to default format (so axis on plots display correctly)
+format coef lci uci coef_int lci_int uci_int %9.0g
+format p p_int %10.0g
+
+
+** Generate a 'levels' variable which combines all RSBB outcomes together
+capture drop level_num
+gen level_num = 0
+replace level_num = 1 if outcome_level == "Not sure (ref = No)"
+replace level_num = 3 if outcome_level == "Christian (ref = None)"
+replace level_num = 4 if outcome_level == "Other (ref = None)"
+replace level_num = 6 if outcome_level == "Min once year (ref = Not at al"
+replace level_num = 7 if outcome_level == "Min once month (ref = Not at a"
+replace level_num = 8 if outcome_level == "Min once week (ref = Not at al"
+
+label define level_lb 0 "Belief - Yes (ref = No)" 1 "Belief - Not sure (ref = No)" 3 "Affiliation - Christian (ref = None)" 4 "Affiliation - Other (ref = None)" 6 "Attendance - Min 1/year (ref = Not at all)" 7 "Attendance - Min 1/month (ref = Not at all)" 8 "Attendance - Min 1/week (ref = Not at all)", replace
+label values level_num level_lb
+tab level_num
+
+
+** Plot for IPSM total
+
+* Min and max x-axis values
+sum lci uci if exposure == "IPSM_total" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "IPSM_total", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "IPSM_total", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "IPSM_total", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "IPSM_total", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "IPSM_total", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "IPSM_total", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("IPSM total and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(1 1.005 1.01 1.015 1.02 1.025, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(ipsm, replace)
+		
+graph export ".\Cognitive_Results\G0Partner_IPSMTotalResults.pdf", replace
+
+
+** Plot for LoC
+
+* Min and max x-axis values
+sum lci uci if exposure == "LoC_external" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "LoC_external", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "LoC_external", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "LoC_external", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("External LoC and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.7 0.8 0.9 1, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(loc, replace)
+		
+graph export ".\Cognitive_Results\G0Partner_LoCResults.pdf", replace
+
+
+*** Also make a few interaction plots
+
+** Plot for locus of control factor by age interaction
+
+* Min and max x-axis values
+sum lci_int uci_int if exposure == "LoC_external" & outcome_level != "NA"
+
+twoway (scatter level_num coef_int if outcome == "Belief" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Belief" & exposure == "LoC_external", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Relig" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Relig" & exposure == "LoC_external", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Attend" & exposure == "LoC_external", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Attend" & exposure == "LoC_external", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("External LoC by age interaction", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.99 1 1.01 1.02, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(loc_int, replace)
+		
+graph export ".\Cognitive_Results\G0Partner_LoCByAgeInt.pdf", replace
+
+graph close _all
+
+
+*** Predicted probability plots (as multinomial relative risk ratio results not necessarily intuitive to interpret)
+
+** Predicted probability plots for locus of control
+use ".\Cognitive_Results\G0Partner_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit pb150 ageInPreg LoC_external, rrr baseoutcome(3)
+margins, at(LoC_external = (0(1)12))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen LoC_external = fill(0 1)
+gen prob_yes = .
+gen lci_yes = .
+gen uci_yes = .
+gen prob_notSure = .
+gen lci_notSure = .
+gen uci_notSure = .
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+
+forvalues i = 1(1)`n' {
+	replace prob_yes = res[1,`i'] if _n == `i'
+	replace lci_yes = res[5,`i'] if _n == `i'
+	replace uci_yes = res[6,`i'] if _n == `i'
+	replace prob_notSure = res[1,`n' + `i'] if _n == `i'
+	replace lci_notSure = res[5,`n' + `i'] if _n == `i'
+	replace uci_notSure = res[6,`n' + `i'] if _n == `i'
+	replace prob_no = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_no = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_no = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_yes LoC_external, col(black)) ///
+	(rarea lci_yes uci_yes LoC_external, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_notSure LoC_external, col(red)) ///
+	(rarea lci_notSure uci_notSure LoC_external, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_no LoC_external, col(blue)) ///
+	(rarea lci_no uci_no LoC_external, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("External Locus of Control") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious belief", size(large)) ///
+	legend(order(1 "Yes" 3 "Not sure" 5 "No") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(loc_bel, replace)
+	
+	
+** Repeat for other RSBB outcomes and combine plots together
+
+* Religious affiliation
+use ".\Cognitive_Results\G0Partner_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit pb153_grp ageInPreg LoC_external, rrr baseoutcome(3)
+margins, at(LoC_external = (0(1)12))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen LoC_external = fill(0 1)
+gen prob_xian = .
+gen lci_xian = .
+gen uci_xian = .
+gen prob_other = .
+gen lci_other = .
+gen uci_other = .
+gen prob_none = .
+gen lci_none = .
+gen uci_none = .
+
+forvalues i = 1(1)`n' {
+	replace prob_xian = res[1,`i'] if _n == `i'
+	replace lci_xian = res[5,`i'] if _n == `i'
+	replace uci_xian = res[6,`i'] if _n == `i'
+	replace prob_other = res[1,`n' + `i'] if _n == `i'
+	replace lci_other = res[5,`n' + `i'] if _n == `i'
+	replace uci_other = res[6,`n' + `i'] if _n == `i'
+	replace prob_none = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_none = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_none = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_xian LoC_external, col(black)) ///
+	(rarea lci_xian uci_xian LoC_external, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_other LoC_external, col(red)) ///
+	(rarea lci_other uci_other LoC_external, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_none LoC_external, col(blue)) ///
+	(rarea lci_none uci_none LoC_external, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("External Locus of Control") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious affiliation", size(large)) ///
+	legend(order(1 "Christian" 3 "Other" 5 "None") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(loc_relig, replace)
+	
+	
+* Attend church
+use ".\Cognitive_Results\G0Partner_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit pb155_rev ageInPreg LoC_external, rrr baseoutcome(0)
+margins, at(LoC_external = (0(1)12))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen LoC_external = fill(0 1)
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+gen prob_yr = .
+gen lci_yr = .
+gen uci_yr = .
+gen prob_mth = .
+gen lci_mth = .
+gen uci_mth = .
+gen prob_wk = .
+gen lci_wk = .
+gen uci_wk = .
+
+forvalues i = 1(1)`n' {
+	replace prob_no = res[1,`i'] if _n == `i'
+	replace lci_no = res[5,`i'] if _n == `i'
+	replace uci_no = res[6,`i'] if _n == `i'
+	replace prob_yr = res[1,`n' + `i'] if _n == `i'
+	replace lci_yr = res[5,`n' + `i'] if _n == `i'
+	replace uci_yr = res[6,`n' + `i'] if _n == `i'
+	replace prob_mth = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_mth = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_mth = res[6,`n' + `n' + `i'] if _n == `i'
+	replace prob_wk = res[1,`n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_wk = res[5,`n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_wk = res[6,`n' + `n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_no LoC_external, col(black)) ///
+	(rarea lci_no uci_no LoC_external, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_yr LoC_external, col(red)) ///
+	(rarea lci_yr uci_yr LoC_external, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_mth LoC_external, col(blue)) ///
+	(rarea lci_mth uci_mth LoC_external, lcol(black) lwidth(vthin) fcol(blue%20)) ///
+	(line prob_wk LoC_external, col(green)) ///
+	(rarea lci_wk uci_wk LoC_external, lcol(black) lwidth(vthin) fcol(green%20)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("External Locus of Control") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious attendance", size(large)) ///
+	legend(order(1 "Not at all" 3 "1/yr" 5 "1/mth" 7 "1/wk") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(loc_attend, replace)
+	
+	
+* Combine these plots together
+graph combine loc_bel loc_relig loc_attend, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G0Partner_LoCPredProbs_combined.pdf", replace
+
+graph close _all
+
+
+** Also plot interaction between age and LoC - Start with religious belief
+use ".\Cognitive_Results\G0Partner_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum LoC_external
+
+local loc_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
+local loc_mean = round(r(mean), 0.01)
+local loc_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
+
+mlogit pb150 c.ageInPreg##c.LoC_external, rrr baseoutcome(3)
+margins, at(LoC_external = (`loc_minus2SD' `loc_mean' `loc_plus2SD') ageInPreg = (15(1)44))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageInPreg = fill(15 15 15 16 16 16)
+egen LoC_external = fill(`loc_minus2SD' `loc_mean' `loc_plus2SD' `loc_minus2SD' `loc_mean' `loc_plus2SD')
+replace LoC_external = round(LoC_external, 0.01)
+gen d810 = 1
+predict p1, outcome(1)
+sum p1
+
+replace d810 = 2
+predict p2, outcome(2)
+sum p1 p2
+
+replace d810 = 3
+predict p3, outcome(3)
+sum p1 p2 p3
+
+twoway (line p1 ageInPreg if LoC_external == float(`loc_minus2SD'), col(black)) ///
+	(line p1 ageInPreg if LoC_external == float(`loc_mean'), col(black) lpattern(longdash)) ///
+	(line p1 ageInPreg if LoC_external == float(`loc_plus2SD'), col(black) lpattern(shortdash)) ///
+	(line p2 ageInPreg if LoC_external == float(`loc_minus2SD'), col(red) ) ///
+	(line p2 ageInPreg if LoC_external == float(`loc_mean'), col(red) lpattern(longdash)) ///
+	(line p2 ageInPreg if LoC_external == float(`loc_plus2SD'), col(red) lpattern(shortdash)) ///
+	(line p3 ageInPreg if LoC_external == float(`loc_minus2SD'), col(blue)) ///
+	(line p3 ageInPreg if LoC_external == float(`loc_mean'), col(blue) lpattern(longdash)) ///
+	(line p3 ageInPreg if LoC_external == float(`loc_plus2SD'), col(blue) lpattern(shortdash)), ///
+	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	legend(order(1 "LoC minus 2 SD - yes" 2 "Mean LoC - yes" ///
+	3 "LoC plus 2 SD - yes" 4 "LoC minus 2 SD - not sure" 5 "Mean LoC - not sure" ///
+	6 "LoC plus 2 SD - not sure" 7 "LoC minus 2 SD - no" 8 "Mean LoC - no" ///
+	9 "LoC plus 2 SD - no") cols(3) size(vsmall)) ///
+	name(loc_belief_int, replace)
+
+	
+* Religious affiliation
+use ".\Cognitive_Results\G0Partner_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum LoC_external
+
+local loc_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
+local loc_mean = round(r(mean), 0.01)
+local loc_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
+
+mlogit pb153_grp c.ageInPreg##c.LoC_external, rrr baseoutcome(3)
+margins, at(LoC_external = (`loc_minus2SD' `loc_mean' `loc_plus2SD') ageInPreg = (15(1)44))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageInPreg = fill(15 15 15 16 16 16)
+egen LoC_external = fill(`loc_minus2SD' `loc_mean' `loc_plus2SD' `loc_minus2SD' `loc_mean' `loc_plus2SD')
+replace LoC_external = round(LoC_external, 0.01)
+gen pb153_grp = 1
+predict p1, outcome(1)
+sum p1
+
+replace pb153_grp = 2
+predict p2, outcome(2)
+sum p1 p2
+
+replace pb153_grp = 3
+predict p3, outcome(3)
+sum p1 p2 p3
+
+twoway (line p1 ageInPreg if LoC_external == float(`loc_minus2SD'), col(black)) ///
+	(line p1 ageInPreg if LoC_external == float(`loc_mean'), col(black) lpattern(longdash)) ///
+	(line p1 ageInPreg if LoC_external == float(`loc_plus2SD'), col(black)  lpattern(shortdash)) ///
+	(line p2 ageInPreg if LoC_external == float(`loc_minus2SD'), col(red)) ///
+	(line p2 ageInPreg if LoC_external == float(`loc_mean'), col(red) lpattern(longdash)) ///
+	(line p2 ageInPreg if LoC_external == float(`loc_plus2SD'), col(red) lpattern(shortdash)) ///
+	(line p3 ageInPreg if LoC_external == float(`loc_minus2SD'), col(blue)) ///
+	(line p3 ageInPreg if LoC_external == float(`loc_mean'), col(blue) lpattern(longdash)) ///
+	(line p3 ageInPreg if LoC_external == float(`loc_plus2SD'), col(blue) lpattern(shortdash)), ///
+	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	legend(order(1 "LoC minus 2 SD - Christian" 2 "Mean LoC - Christian" ///
+	3 "LoC plus 2 SD - Christian" 4 "LoC minus 2 SD - Other" 5 "Mean LoC - Other" ///
+	6 "LoC plus 2 SD - Other" 7 "LoC minus 2 SD - None" 8 "Mean LoC - None" ///
+	9 "LoC plus 2 SD - None") cols(3) size(vsmall)) ///
+	name(loc_relig_int, replace)
+	
+
+* Religious attendance
+use ".\Cognitive_Results\G0Partner_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum LoC_external
+
+local loc_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
+local loc_mean = round(r(mean), 0.01)
+local loc_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
+
+mlogit pb155_rev c.ageInPreg##c.LoC_external, rrr baseoutcome(0)
+margins, at(LoC_external = (`loc_minus2SD' `loc_mean' `loc_plus2SD') ageInPreg = (15(1)44))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen ageInPreg = fill(15 15 15 16 16 16)
+egen LoC_external = fill(`loc_minus2SD' `loc_mean' `loc_plus2SD' `loc_minus2SD' `loc_mean' `loc_plus2SD')
+replace LoC_external = round(LoC_external, 0.01)
+gen pb155_rev = 0
+predict p1, outcome(0)
+sum p1
+
+replace pb155_rev = 1
+predict p2, outcome(1)
+sum p1 p2
+
+replace pb155_rev = 2
+predict p3, outcome(2)
+sum p1 p2 p3
+
+replace pb155_rev = 3
+predict p4, outcome(3)
+sum p1 p2 p3 p4
+
+twoway (line p1 ageInPreg if LoC_external == float(`loc_minus2SD'), col(black)) ///
+	(line p1 ageInPreg if LoC_external == float(`loc_mean'), col(black) lpattern(longdash)) ///
+	(line p1 ageInPreg if LoC_external == float(`loc_plus2SD'), col(black) lpattern(shortdash)) ///
+	(line p2 ageInPreg if LoC_external == float(`loc_minus2SD'), col(red)) ///
+	(line p2 ageInPreg if LoC_external == float(`loc_mean'), col(red) lpattern(longdash)) ///
+	(line p2 ageInPreg if LoC_external == float(`loc_plus2SD'), col(red) lpattern(shortdash)) ///
+	(line p3 ageInPreg if LoC_external == float(`loc_minus2SD'), col(blue)) ///
+	(line p3 ageInPreg if LoC_external == float(`loc_mean'), col(blue) lpattern(longdash)) ///
+	(line p3 ageInPreg if LoC_external == float(`loc_plus2SD'), col(blue) lpattern(shortdash)) ///
+	(line p4 ageInPreg if LoC_external == float(`loc_minus2SD'), col(green)) ///
+	(line p4 ageInPreg if LoC_external == float(`loc_mean'), col(green) lpattern(longdash)) ///
+	(line p4 ageInPreg if LoC_external == float(`loc_plus2SD'), col(green) lpattern(shortdash)), ///
+	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
+	legend(order(1 "LoC minus 2 SD - Never" 2 "Mean LoC - Never" ///
+	3 "LoC plus 2 SD - Never" 4 "LoC minus 2 SD - 1/Yr" 5 "Mean LoC - 1/Yr" ///
+	6 "LoC plus 2 SD - 1/Yr" 7 "LoC minus 2 SD - 1/Mth" 8 "Mean LoC - 1/Mth" ///
+	9 "LoC plus 2 SD - 1/Mth" 10 "LoC minus 2 SD - 1/Wk" 11 "Mean LoC - 1/Wk" ///
+	12 "LoC plus 2 SD - 1/Wk") cols(3) size(vsmall)) ///
+	name(loc_attend_int, replace)
+	
+	
+* Combine these plots together
+graph combine loc_belief_int loc_relig_int loc_attend_int, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G0Partner_LoCPredProbs_ageInt_combined.pdf", replace
+
+graph close _all
+
+
+
+**** G1 offspring
+
+*** p-value plots
+
+** First outcome - Religious belief
+use ".\Cognitive_Results\G1_belief_results_lr.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+* Add 'belief' as a variable, then save this file (as will merge with other files later on)
+gen outcome = "Belief"
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G1_belief_pvalues.dta", replace
+
+
+** Next outcome - Religious affiliation
+use ".\Cognitive_Results\G1_relig_results_lr.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+* Add 'religious affiliation' as a variable, then save this file
+gen outcome = "Religious affil."
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G1_relig_pvalues.dta", replace
+
+
+** Next outcome - Religious attendance
+use ".\Cognitive_Results\G1_attend_results_lr.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Convert p-values to -log10 p-values
+gen logp_main = -log10(lr_p_main)
+sum logp_main
+
+gen logp_int = -log10(lr_p_int)
+sum logp_int
+
+* Add 'religious attendance' as a variable, then save this file
+gen outcome = "Church attendance"
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G1_attend_pvalues.dta", replace
+
+
+** Combine all these datasets together
+use ".\Cognitive_Results\G1_belief_pvalues.dta", clear
+append using ".\Cognitive_Results\G1_relig_pvalues.dta"
+append using ".\Cognitive_Results\G1_attend_pvalues.dta"
+
+
+* Now look at combined results
+
+* Belief/religion/church vars main effects
+local bon_thresh = -log10(0.05/25)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_main if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_main if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num logp_main if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)25, valuelabel labsize(small) angle(0)) ///
+	title("Main effects") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
+	name(belRelCh_main, replace)
+
+graph export ".\Cognitive_Results\G1_mainEffects_pvalues.pdf", replace
+
+* Belief/religion/church vars interaction effects
+local bon_thresh = -log10(0.05/25)
+local thresh_05 = -log10(0.05)
+
+twoway (scatter exp_num logp_int if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num logp_int if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xline(`bon_thresh', lcol(black) lpattern(dash)) ///
+	xline(`thresh_05', lcol(black) lpattern(dot)) ///
+	xtitle("-log10 of p-value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)25, valuelabel labsize(small) angle(0)) ///
+	title("Sex interaction") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
+	name(belRelCh_int, replace)
+
+graph export ".\Cognitive_Results\G1_sexInt_pvalues.pdf", replace
+
+
+** Combine all these graphs together
+graph combine belRelCh_main belRelCh_int, ysize(3) xsize(6)
+
+graph export ".\Cognitive_Results\G1_allData_pvalues.pdf", replace
+
+graph close _all
+
+
+** Save these p-values as CSV files
+list outcome exposure lr_p_main lr_p_int in 1/10
+
+keep outcome exp_num lr_p_main lr_p_int
+order outcome exp_num lr_p_main lr_p_int
+
+* Convert to wide format (need to edit outcomes strings so have no spaces)
+replace outcome = "Attend" if outcome == "Church attendance"
+replace outcome = "Religion" if outcome == "Religious affil."
+tab outcome
+
+reshape wide lr_p_main lr_p_int, i(exp_num) j (outcome) string
+
+order exp_num lr_p_mainBelief lr_p_intBelief lr_p_mainReligion lr_p_intReligion lr_p_mainAttend lr_p_intAttend
+
+format %9.4f lr_p_mainBelief-lr_p_intAttend
+
+outsheet exp_num-lr_p_intAttend using ".\Cognitive_Results\G1_pvalue_results.csv", comma replace
+
+
+** And how many exposures were associated with the outcome at both Bonferroni and standard alpha levels?
+
+* Belief in god - main effect
+count if lr_p_mainBelief < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainBelief < 0.05
+display (r(N) / _N) * 100
+
+* Belief in god - interaction
+count if lr_p_intBelief < 0.05/(_N)
+display (r(N) / (_N)) * 100
+
+count if lr_p_intBelief < 0.05
+display (r(N) / (_N)) * 100
+
+* Religious affiliation - main effect
+count if lr_p_mainReligion < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainReligion < 0.05
+display (r(N) / _N) * 100
+
+* Religious affiliation - interaction
+count if lr_p_intReligion < 0.05/(_N)
+display (r(N) / (_N)) * 100
+
+count if lr_p_intReligion < 0.05
+display (r(N) / (_N)) * 100
+
+* Church attendance - main effect
+count if lr_p_mainAttend < 0.05/_N
+display (r(N) / _N) * 100
+
+count if lr_p_mainAttend < 0.05
+display (r(N) / _N) * 100
+
+* Church attendance - interaction
+count if lr_p_intAttend < 0.05/(_N)
+display (r(N) / (_N)) * 100
+
+count if lr_p_intAttend < 0.05
+display (r(N) / (_N)) * 100
+
+
+*** Pseudo-R2 plots
+
+** First outcome - Religious belief
+use ".\Cognitive_Results\G1_belief_results_r2.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Add 'belief' as a variable, then save this file (as will merge with other files later on)
+gen outcome = "Belief"
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G1_belief_r2.dta", replace
+
+
+** Next outcome - Religious affiliation
+use ".\Cognitive_Results\G1_relig_results_r2.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Add 'religious affiliation' as a variable, then save this file
+gen outcome = "Religious affil."
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G1_relig_r2.dta", replace
+
+
+** Next outcome - Religious attendance
+use ".\Cognitive_Results\G1_attend_results_r2.dta", clear
+
+* Convert string exposure var to numeric
+count
+local n = r(N)
+
+capture drop exp_num
+gen exp_num = 0
+label define exp_lb 0 "NA", replace
+label values exp_num exp_lb
+tab exp_num
+
+forvalues i = 1(1)`n' {
+	
+	* Save the variable name
+	local var = exposure in `i'
+	display "Variable " `i' " is " "`var'"
+	display ""
+	
+	* Code variable as numeric and add value label
+	replace exp_num = `i' if exposure == "`var'"
+	label define exp_lb `i' "`var'", modify
+}
+
+tab exp_num
+
+* Add 'religious attendance' as a variable, then save this file
+gen outcome = "Church attendance"
+recast str30 outcome
+order outcome
+
+save ".\Cognitive_Results\G1_attend_r2.dta", replace
+
+
+** Combine all these datasets together
+use ".\Cognitive_Results\G1_belief_r2.dta", clear
+append using ".\Cognitive_Results\G1_relig_r2.dta"
+append using ".\Cognitive_Results\G1_attend_r2.dta"
+
+
+* Now look at combined results
+
+* Belief/religion/church vars main effects
+twoway (scatter exp_num r2_main if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num r2_main if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num r2_main if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)25, valuelabel labsize(small) angle(0)) ///
+	title("Main effects") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
+	name(r2_main, replace)
+
+graph export ".\Cognitive_Results\G1_mainEffects_r2.pdf", replace
+
+* Belief/religion/church vars interaction effects
+twoway (scatter exp_num r2_int if outcome == "Belief", ///
+		col(black) msize(small) msym(D)) ///
+	(scatter exp_num r2_int if outcome == "Religious affil.", ///
+		col(red) msize(small) msym(D)) ///
+	(scatter exp_num r2_int if outcome == "Church attendance", ///
+		col(blue) msize(small) msym(D)), ///
+	xtitle("Pseudo-R2 value") ytitle("") ysc(reverse) ///
+	ylabel(1(1)25, valuelabel labsize(small) angle(0)) ///
+	title("Sex interaction") ///
+	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
+		3 "Religious attendance") rows(1) size(small)) ///
+	name(r2_int, replace)
+
+graph export ".\Cognitive_Results\G1_sexInt_r2.pdf", replace
+
+
+** Combine all these graphs together
+graph combine r2_main r2_int, ysize(3) xsize(6)
+
+graph export ".\Cognitive_Results\G1_allData_r2.pdf", replace
+
+graph close _all
+
+
+** Save these pseudo R2 values as CSV files
+list outcome exposure r2_main r2_int in 1/10
+
+keep outcome exp_num r2_main r2_int
+order outcome exp_num r2_main r2_int
+
+* Convert to wide format (need to edit outcomes strings so have no spaces)
+replace outcome = "Attend" if outcome == "Church attendance"
+replace outcome = "Religion" if outcome == "Religious affil."
+tab outcome
+
+reshape wide r2_main r2_int, i(exp_num) j (outcome) string
+
+order exp_num r2_mainBelief r2_intBelief r2_mainReligion r2_intReligion r2_mainAttend r2_intAttend
+
+format %9.4f r2_mainBelief-r2_intAttend
+
+outsheet exp_num-r2_intAttend using ".\Cognitive_Results\G1_r2_results.csv", comma replace
+
+
+*** Coefficient plots
+
+** Will read the datasets in then combine together into one single dataset
+use ".\Cognitive_Results\G1_belief_results.dta", clear
+gen outcome = "Belief"
+
+append using ".\Cognitive_Results\G1_relig_results.dta"
+replace outcome = "Relig" if outcome == ""
+tab outcome, m
+
+append using ".\Cognitive_Results\G1_attend_results.dta"
+replace outcome = "Attend" if outcome == ""
+tab outcome, m
+
+
+** Save these results as CSV files to add to the SI
+
+* Save each result in turn
+format coef lci uci coef_int lci_int uci_int %9.3f
+format p p_int %9.4f
+
+outsheet exposure-p_int using ".\Cognitive_Results\G1_belief_coefs.csv" if outcome == "Belief", comma replace
+
+outsheet exposure-p_int using ".\Cognitive_Results\G1_relig_coefs.csv" if outcome == "Relig", comma replace
+
+outsheet exposure-p_int using ".\Cognitive_Results\G1_attend_coefs.csv" if outcome == "Attend", comma replace
+
+
+* Convert format back to default format (so axis on plots display correctly)
+format coef lci uci coef_int lci_int uci_int %9.0g
+format p p_int %10.0g
+
+
+** Generate a 'levels' variable which combines all RSBB outcomes together
+capture drop level_num
+gen level_num = 0
+replace level_num = 1 if outcome_level == "Not sure (ref = No)"
+replace level_num = 3 if outcome_level == "Christian (ref = None)"
+replace level_num = 4 if outcome_level == "Other (ref = None)"
+replace level_num = 6 if outcome_level == "Occasionally (ref = Not at all"
+replace level_num = 7 if outcome_level == "Min once year (ref = Not at al"
+replace level_num = 8 if outcome_level == "Min once month (ref = Not at a"
+
+label define level_lb 0 "Belief - Yes (ref = No)" 1 "Belief - Not sure (ref = No)" 3 "Affiliation - Christian (ref = None)" 4 "Affiliation - Other (ref = None)" 6 "Attendance - Occasionally (ref = Not at all)" 7 "Attendance - Min 1/year (ref = Not at all)" 8 "Attendance - Min 1/month (ref = Not at all)", replace
+label values level_num level_lb
+tab level_num
+
+
+** Plot for total IQ at age 8
+
+* Min and max x-axis values
+sum lci uci if exposure == "totalIQ_age8" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "totalIQ_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "totalIQ_age8", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "totalIQ_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "totalIQ_age8", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "totalIQ_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "totalIQ_age8", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Total IQ age 8 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.98 0.99 1 1.01 1.02, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(iq8, replace)
+		
+graph export ".\Cognitive_Results\G1_totalIQAge8Results.pdf", replace
+
+
+** Plot for total IQ at age 15
+
+* Min and max x-axis values
+sum lci uci if exposure == "totalIQ_age15" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "totalIQ_age15", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "totalIQ_age15", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "totalIQ_age15", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "totalIQ_age15", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "totalIQ_age15", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "totalIQ_age15", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Total IQ age 15 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.98 0.99 1 1.01 1.02 1.03, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(iq15, replace)
+		
+graph export ".\Cognitive_Results\G1_totalIQAge15Results.pdf", replace
+
+
+** Plot for vocabulary test at age 24
+
+* Min and max x-axis values
+sum lci uci if exposure == "vocab_age24" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "vocab_age24", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "vocab_age24", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "vocab_age24", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "vocab_age24", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "vocab_age24", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "vocab_age24", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Vocab Test Age 24 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.9 0.95 1 1.05 1.1 1.15, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(vocab24, replace)
+		
+graph export ".\Cognitive_Results\G1_vocab24Results.pdf", replace
+
+
+** Plot for personality trait extraversion at age 13
+
+* Min and max x-axis values
+sum lci uci if exposure == "extraversion_age13" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "extraversion_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "extraversion_age13", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "extraversion_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "extraversion_age13", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "extraversion_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "extraversion_age13", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Extraversion Age 13 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.94 0.96 0.98 1 1.02, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(extra13, replace)
+		
+graph export ".\Cognitive_Results\G1_extra13Results.pdf", replace
+
+
+** Plot for personality trait conscientiousness at age 13
+
+* Min and max x-axis values
+sum lci uci if exposure == "conscientiousness_age13" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "conscientiousness_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "conscientiousness_age13", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "conscientiousness_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "conscientiousness_age13", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "conscientiousness_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "conscientiousness_age13", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Conscientiousness Age 13 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.94 0.96 0.98 1 1.02 1.04 1.06, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(consc13, replace)
+		
+graph export ".\Cognitive_Results\G1_consc13Results.pdf", replace
+
+
+** Plot for personality trait openess to experience at age 13
+
+* Min and max x-axis values
+sum lci uci if exposure == "Openess_age13" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "Openess_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "Openess_age13", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "Openess_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "Openess_age13", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "Openess_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "Openess_age13", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Openness Age 13 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.94 0.96 0.98 1 1.02 1.04 1.06, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(open13, replace)
+		
+graph export ".\Cognitive_Results\G1_open13Results.pdf", replace
+
+
+** Plot for LoC at age 8
+
+* Min and max x-axis values
+sum lci uci if exposure == "loc_age8" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "loc_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "loc_age8", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "loc_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "loc_age8", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "loc_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "loc_age8", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("External LoC Age 8 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.8 0.85 0.9 0.95 1 1.05 1.1, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(loc8, replace)
+		
+graph export ".\Cognitive_Results\G1_LoCage8Results.pdf", replace
+
+
+** Plot for LoC at age 16
+
+* Min and max x-axis values
+sum lci uci if exposure == "loc_age16" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "loc_age16", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "loc_age16", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "loc_age16", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "loc_age16", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "loc_age16", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "loc_age16", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("External LoC Age 16 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.8 0.85 0.9 0.95 1 1.05 1.1, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(loc16, replace)
+		
+graph export ".\Cognitive_Results\G1_LoCage16Results.pdf", replace
+
+
+** Plot for emotion recogition 'triangles' task at age 13
+
+* Min and max x-axis values
+sum lci uci if exposure == "emoRec_triangles_age13" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "emoRec_triangles_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "emoRec_triangles_age13", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "emoRec_triangles_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "emoRec_triangles_age13", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "emoRec_triangles_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "emoRec_triangles_age13", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Emotion Recognition Age 13 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.98 1 1.02 1.04, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(triangles13, replace)
+		
+graph export ".\Cognitive_Results\G1_triangles13Results.pdf", replace
+
+
+** Plot for Skuse social cognition at age 16
+
+* Min and max x-axis values
+sum lci uci if exposure == "skuseSocCog_age16" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "skuseSocCog_age16", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "skuseSocCog_age16", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "skuseSocCog_age16", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "skuseSocCog_age16", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "skuseSocCog_age16", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "skuseSocCog_age16", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Social Cognition Age 16 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.96 0.98 1 1.02 1.04 1.06 1.08, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(skuse16, replace)
+		
+graph export ".\Cognitive_Results\G1_skuse16Results.pdf", replace
+
+
+** Plot for SDQ prosocial sub-scale at age 13
+
+* Min and max x-axis values
+sum lci uci if exposure == "SDQ_prosocial_age13" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "SDQ_prosocial_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "SDQ_prosocial_age13", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "SDQ_prosocial_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "SDQ_prosocial_age13", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "SDQ_prosocial_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "SDQ_prosocial_age13", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("SDQ - Prosocial Age 13 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.8 0.9 1.1 1.2 1.3, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(prosocial13, replace)
+		
+graph export ".\Cognitive_Results\G1_prosocial13Results.pdf", replace
+
+
+** Plot for Bachman self-esteem
+
+* Min and max x-axis values
+sum lci uci if exposure == "esteem_bachman_age17" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "esteem_bachman_age17", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "esteem_bachman_age17", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "esteem_bachman_age17", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "esteem_bachman_age17", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "esteem_bachman_age17", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "esteem_bachman_age17", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Bachman Self-Esteem Age 17 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.96 0.98 1 1.02 1.04, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(esteem17, replace)
+		
+graph export ".\Cognitive_Results\G1_selfEsteem17Results.pdf", replace
+
+
+*** Also make a few interaction plots
+
+** Plot for total IQ at age 15 and sex interaction
+
+* Min and max x-axis values
+sum lci_int uci_int if exposure == "totalIQ_age15" & outcome_level != "NA"
+
+twoway (scatter level_num coef_int if outcome == "Belief" & exposure == "totalIQ_age15", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Belief" & exposure == "totalIQ_age15", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Relig" & exposure == "totalIQ_age15", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Relig" & exposure == "totalIQ_age15", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Attend" & exposure == "totalIQ_age15", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Attend" & exposure == "totalIQ_age15", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Total IQ Age 15 by Sex interaction", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.94 0.96 0.98 1 1.02, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(iq15_int, replace)
+		
+graph export ".\Cognitive_Results\G1_iq15BySexInt.pdf", replace
+
+
+** Plot for vocab task at age 24 and sex interaction
+
+* Min and max x-axis values
+sum lci_int uci_int if exposure == "vocab_age24" & outcome_level != "NA"
+
+twoway (scatter level_num coef_int if outcome == "Belief" & exposure == "vocab_age24", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Belief" & exposure == "vocab_age24", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Relig" & exposure == "vocab_age24", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Relig" & exposure == "vocab_age24", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Attend" & exposure == "vocab_age24", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Attend" & exposure == "vocab_age24", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Vocab Task Age 24 by Sex interaction", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.8 0.9 1 1.1, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(vocab24_int, replace)
+		
+graph export ".\Cognitive_Results\G1_vocab24BySexInt.pdf", replace
+
+
+** Plot for personality agreeableness at age 13 and sex interaction
+
+* Min and max x-axis values
+sum lci_int uci_int if exposure == "agreeableness_age13" & outcome_level != "NA"
+
+twoway (scatter level_num coef_int if outcome == "Belief" & exposure == "agreeableness_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Belief" & exposure == "agreeableness_age13", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Relig" & exposure == "agreeableness_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Relig" & exposure == "agreeableness_age13", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Attend" & exposure == "agreeableness_age13", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Attend" & exposure == "agreeableness_age13", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Agreeableness Age 13 by Sex interaction", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.85 0.9 0.95 1, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(vocab24_int, replace)
+		
+graph export ".\Cognitive_Results\G1_agree24BySexInt.pdf", replace
+
+graph close _all
+
+
+*** Predicted probability plots (as multinomial relative risk ratio results not necessarily intuitive to interpret)
+
+** Make one for IQ at age 8
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit YPG3000 ageAt28 male totalIQ_age8, rrr baseoutcome(3)
+margins, at(totalIQ_age8 = (70(1)130))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen totalIQ_age8 = fill(70 71)
+gen prob_yes = .
+gen lci_yes = .
+gen uci_yes = .
+gen prob_notSure = .
+gen lci_notSure = .
+gen uci_notSure = .
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+
+forvalues i = 1(1)`n' {
+	replace prob_yes = res[1,`i'] if _n == `i'
+	replace lci_yes = res[5,`i'] if _n == `i'
+	replace uci_yes = res[6,`i'] if _n == `i'
+	replace prob_notSure = res[1,`n' + `i'] if _n == `i'
+	replace lci_notSure = res[5,`n' + `i'] if _n == `i'
+	replace uci_notSure = res[6,`n' + `i'] if _n == `i'
+	replace prob_no = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_no = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_no = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_yes totalIQ_age8, col(black)) ///
+	(rarea lci_yes uci_yes totalIQ_age8, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_notSure totalIQ_age8, col(red)) ///
+	(rarea lci_notSure uci_notSure totalIQ_age8, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_no totalIQ_age8, col(blue)) ///
+	(rarea lci_no uci_no totalIQ_age8, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(70 130)) xlabel(70(10)130, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Total IQ age 8") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious belief", size(large)) ///
+	legend(order(1 "Yes" 3 "Not sure" 5 "No") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(iq8_bel, replace)
+	
+	
+** Repeat for other RSBB outcomes and combine plots together
+
+* Religious affiliation
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit YPG3040_grp ageAt28 male totalIQ_age8, rrr baseoutcome(3)
+margins, at(totalIQ_age8 = (70(1)130))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen totalIQ_age8 = fill(70 71)
+gen prob_xian = .
+gen lci_xian = .
+gen uci_xian = .
+gen prob_other = .
+gen lci_other = .
+gen uci_other = .
+gen prob_none = .
+gen lci_none = .
+gen uci_none = .
+
+forvalues i = 1(1)`n' {
+	replace prob_xian = res[1,`i'] if _n == `i'
+	replace lci_xian = res[5,`i'] if _n == `i'
+	replace uci_xian = res[6,`i'] if _n == `i'
+	replace prob_other = res[1,`n' + `i'] if _n == `i'
+	replace lci_other = res[5,`n' + `i'] if _n == `i'
+	replace uci_other = res[6,`n' + `i'] if _n == `i'
+	replace prob_none = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_none = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_none = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_xian totalIQ_age8, col(black)) ///
+	(rarea lci_xian uci_xian totalIQ_age8, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_other totalIQ_age8, col(red)) ///
+	(rarea lci_other uci_other totalIQ_age8, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_none totalIQ_age8, col(blue)) ///
+	(rarea lci_none uci_none totalIQ_age8, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(70 130)) xlabel(70(10)130, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Total IQ age 8") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious affiliation", size(large)) ///
+	legend(order(1 "Christian" 3 "Other" 5 "None") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(iq8_relig, replace)
+	
+	
+* Attend church
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit YPG3080_rev ageAt28 male totalIQ_age8, rrr baseoutcome(0)
+margins, at(totalIQ_age8 = (70(1)130))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen totalIQ_age8 = fill(70 71)
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+gen prob_yr = .
+gen lci_yr = .
+gen uci_yr = .
+gen prob_mth = .
+gen lci_mth = .
+gen uci_mth = .
+gen prob_wk = .
+gen lci_wk = .
+gen uci_wk = .
+
+forvalues i = 1(1)`n' {
+	replace prob_no = res[1,`i'] if _n == `i'
+	replace lci_no = res[5,`i'] if _n == `i'
+	replace uci_no = res[6,`i'] if _n == `i'
+	replace prob_yr = res[1,`n' + `i'] if _n == `i'
+	replace lci_yr = res[5,`n' + `i'] if _n == `i'
+	replace uci_yr = res[6,`n' + `i'] if _n == `i'
+	replace prob_mth = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_mth = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_mth = res[6,`n' + `n' + `i'] if _n == `i'
+	replace prob_wk = res[1,`n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_wk = res[5,`n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_wk = res[6,`n' + `n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_no totalIQ_age8, col(black)) ///
+	(rarea lci_no uci_no totalIQ_age8, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_yr totalIQ_age8, col(red)) ///
+	(rarea lci_yr uci_yr totalIQ_age8, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_mth totalIQ_age8, col(blue)) ///
+	(rarea lci_mth uci_mth totalIQ_age8, lcol(black) lwidth(vthin) fcol(blue%20)) ///
+	(line prob_wk totalIQ_age8, col(green)) ///
+	(rarea lci_wk uci_wk totalIQ_age8, lcol(black) lwidth(vthin) fcol(green%20)), ///
+	xscale(range(70 130)) xlabel(70(10)130, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Total IQ age 8") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious attendance", size(large)) ///
+	legend(order(1 "Not at all" 3 "Occasionally" 5 "1/yr" 7 "1/mth") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(iq8_attend, replace)
+	
+	
+* Combine these plots together
+graph combine iq8_bel iq8_relig iq8_attend, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G1_IQ8PredProbs_combined.pdf", replace
+
+graph close _all
+
+
+*** Repeat for IQ at age 15
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit YPG3000 ageAt28 male totalIQ_age15, rrr baseoutcome(3)
+margins, at(totalIQ_age15 = (70(1)130))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen totalIQ_age15 = fill(70 71)
+gen prob_yes = .
+gen lci_yes = .
+gen uci_yes = .
+gen prob_notSure = .
+gen lci_notSure = .
+gen uci_notSure = .
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+
+forvalues i = 1(1)`n' {
+	replace prob_yes = res[1,`i'] if _n == `i'
+	replace lci_yes = res[5,`i'] if _n == `i'
+	replace uci_yes = res[6,`i'] if _n == `i'
+	replace prob_notSure = res[1,`n' + `i'] if _n == `i'
+	replace lci_notSure = res[5,`n' + `i'] if _n == `i'
+	replace uci_notSure = res[6,`n' + `i'] if _n == `i'
+	replace prob_no = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_no = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_no = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_yes totalIQ_age15, col(black)) ///
+	(rarea lci_yes uci_yes totalIQ_age15, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_notSure totalIQ_age15, col(red)) ///
+	(rarea lci_notSure uci_notSure totalIQ_age15, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_no totalIQ_age15, col(blue)) ///
+	(rarea lci_no uci_no totalIQ_age15, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(70 130)) xlabel(70(10)130, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Total IQ age 15") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious belief", size(large)) ///
+	legend(order(1 "Yes" 3 "Not sure" 5 "No") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(iq15_bel, replace)
+	
+	
+** Repeat for other RSBB outcomes and combine plots together
+
+* Religious affiliation
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit YPG3040_grp ageAt28 male totalIQ_age15, rrr baseoutcome(3)
+margins, at(totalIQ_age15 = (70(1)130))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen totalIQ_age15 = fill(70 71)
+gen prob_xian = .
+gen lci_xian = .
+gen uci_xian = .
+gen prob_other = .
+gen lci_other = .
+gen uci_other = .
+gen prob_none = .
+gen lci_none = .
+gen uci_none = .
+
+forvalues i = 1(1)`n' {
+	replace prob_xian = res[1,`i'] if _n == `i'
+	replace lci_xian = res[5,`i'] if _n == `i'
+	replace uci_xian = res[6,`i'] if _n == `i'
+	replace prob_other = res[1,`n' + `i'] if _n == `i'
+	replace lci_other = res[5,`n' + `i'] if _n == `i'
+	replace uci_other = res[6,`n' + `i'] if _n == `i'
+	replace prob_none = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_none = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_none = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_xian totalIQ_age15, col(black)) ///
+	(rarea lci_xian uci_xian totalIQ_age15, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_other totalIQ_age15, col(red)) ///
+	(rarea lci_other uci_other totalIQ_age15, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_none totalIQ_age15, col(blue)) ///
+	(rarea lci_none uci_none totalIQ_age15, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(70 130)) xlabel(70(10)130, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Total IQ age 15") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious affiliation", size(large)) ///
+	legend(order(1 "Christian" 3 "Other" 5 "None") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(iq15_relig, replace)
+	
+	
+* Attend church
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit YPG3080_rev ageAt28 male totalIQ_age15, rrr baseoutcome(0)
+margins, at(totalIQ_age15 = (70(1)130))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen totalIQ_age15 = fill(70 71)
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+gen prob_yr = .
+gen lci_yr = .
+gen uci_yr = .
+gen prob_mth = .
+gen lci_mth = .
+gen uci_mth = .
+gen prob_wk = .
+gen lci_wk = .
+gen uci_wk = .
+
+forvalues i = 1(1)`n' {
+	replace prob_no = res[1,`i'] if _n == `i'
+	replace lci_no = res[5,`i'] if _n == `i'
+	replace uci_no = res[6,`i'] if _n == `i'
+	replace prob_yr = res[1,`n' + `i'] if _n == `i'
+	replace lci_yr = res[5,`n' + `i'] if _n == `i'
+	replace uci_yr = res[6,`n' + `i'] if _n == `i'
+	replace prob_mth = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_mth = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_mth = res[6,`n' + `n' + `i'] if _n == `i'
+	replace prob_wk = res[1,`n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_wk = res[5,`n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_wk = res[6,`n' + `n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_no totalIQ_age15, col(black)) ///
+	(rarea lci_no uci_no totalIQ_age15, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_yr totalIQ_age15, col(red)) ///
+	(rarea lci_yr uci_yr totalIQ_age15, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_mth totalIQ_age15, col(blue)) ///
+	(rarea lci_mth uci_mth totalIQ_age15, lcol(black) lwidth(vthin) fcol(blue%20)) ///
+	(line prob_wk totalIQ_age15, col(green)) ///
+	(rarea lci_wk uci_wk totalIQ_age15, lcol(black) lwidth(vthin) fcol(green%20)), ///
+	xscale(range(70 130)) xlabel(70(10)130, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Total IQ age 15") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious attendance", size(large)) ///
+	legend(order(1 "Not at all" 3 "Occasionally" 5 "1/yr" 7 "1/mth") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(iq15_attend, replace)
+	
+	
+* Combine these plots together
+graph combine iq15_bel iq15_relig iq15_attend, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G1_IQ15PredProbs_combined.pdf", replace
+
+graph close _all
+
+
+** Also plot interaction between sex and total IQ at age 15 - Start with religious belief
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum totalIQ_age15
+sum ageAt28
+local age = r(mean)
+
+mlogit YPG3000 ageAt28 i.male##c.totalIQ_age15, rrr baseoutcome(3)
+margins, at(totalIQ_age15 = (70(1)130) male = (0 1))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageAt28 = fill(`age' `age')
+egen male = fill(0 1 0 1)
+egen totalIQ_age15 = fill(70 70 71 71)
+gen YPG3000 = 1
+predict p1, outcome(1)
+sum p1
+
+replace YPG3000 = 2
+predict p2, outcome(2)
+sum p1 p2
+
+replace YPG3000 = 3
+predict p3, outcome(3)
+sum p1 p2 p3
+
+twoway (line p1 totalIQ_age15 if male == 0, col(black)) ///
+	(line p1 totalIQ_age15 if male == 1, col(black) lpattern(dash)) ///
+	(line p2 totalIQ_age15 if male == 0, col(red)) ///
+	(line p2 totalIQ_age15 if male == 1, col(red) lpattern(dash)) ///
+	(line p3 totalIQ_age15 if male == 0, col(blue)) ///
+	(line p3 totalIQ_age15 if male == 1, col(blue) lpattern(dash)), ///
+	xscale(range(70 130)) xlabel(70(10)130, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("IQ at Age 15") ytitle("Predicted probability") ///
+	legend(order(1 "Female - Yes" 2 "Male - Yes" 3 "Female - Not sure" ///
+	4 "Male - Not sure" 5 "Female - No" 6 "Male - No") cols(2) size(small)) ///
+	name(iq15_belief_int, replace)
+
+	
+* Religious affiliation
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum totalIQ_age15
+sum ageAt28
+local age = r(mean)
+
+mlogit YPG3040_grp ageAt28 i.male##c.totalIQ_age15, rrr baseoutcome(3)
+margins, at(totalIQ_age15 = (70(1)130) male = (0 1))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageAt28 = fill(`age' `age')
+egen male = fill(0 1 0 1)
+egen totalIQ_age15 = fill(70 70 71 71)
+gen YPG3040_grp = 1
+predict p1, outcome(1)
+sum p1
+
+replace YPG3040_grp = 2
+predict p2, outcome(2)
+sum p1 p2
+
+replace YPG3040_grp = 3
+predict p3, outcome(3)
+sum p1 p2 p3
+
+twoway (line p1 totalIQ_age15 if male == 0, col(black)) ///
+	(line p1 totalIQ_age15 if male == 1, col(black) lpattern(dash)) ///
+	(line p2 totalIQ_age15 if male == 0, col(red)) ///
+	(line p2 totalIQ_age15 if male == 1, col(red) lpattern(dash)) ///
+	(line p3 totalIQ_age15 if male == 0, col(blue)) ///
+	(line p3 totalIQ_age15 if male == 1, col(blue) lpattern(dash)), ///
+	xscale(range(70 130)) xlabel(70(10)130, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("IQ at Age 15") ytitle("Predicted probability") ///
+	legend(order(1 "Female - Christian" 2 "Male - Christian" 3 "Female - Other" ///
+	4 "Male - Other" 5 "Female - None" 6 "Male - None") cols(2) size(small)) ///
+	name(iq15_relig_int, replace)
+	
+
+* Religious attendance
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum totalIQ_age15
+sum ageAt28
+local age = r(mean)
+
+mlogit YPG3080_rev ageAt28 i.male##c.totalIQ_age15, rrr baseoutcome(0)
+margins, at(totalIQ_age15 = (70(1)130) male = (0 1))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen ageAt28 = fill(`age' `age')
+egen male = fill(0 1 0 1)
+egen totalIQ_age15 = fill(70 70 71 71)
+gen YPG3080_rev = 0
+predict p1, outcome(0)
+sum p1
+
+replace YPG3080_rev = 1
+predict p2, outcome(1)
+sum p1 p2
+
+replace YPG3080_rev = 2
+predict p3, outcome(2)
+sum p1 p2 p3
+
+replace YPG3080_rev = 3
+predict p4, outcome(3)
+sum p1 p2 p3 p4
+
+twoway (line p1 totalIQ_age15 if male == 0, col(black)) ///
+	(line p1 totalIQ_age15 if male == 1, col(black) lpattern(dash)) ///
+	(line p2 totalIQ_age15 if male == 0, col(red)) ///
+	(line p2 totalIQ_age15 if male == 1, col(red) lpattern(dash)) ///
+	(line p3 totalIQ_age15 if male == 0, col(blue)) ///
+	(line p3 totalIQ_age15 if male == 1, col(blue) lpattern(dash)) ///
+	(line p4 totalIQ_age15 if male == 0, col(green)) ///
+	(line p4 totalIQ_age15 if male == 1, col(green) lpattern(dash)), ///
+	xscale(range(70 130)) xlabel(70(10)130, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("IQ at Age 15") ytitle("Predicted probability") ///
+	legend(order(1 "Female - Never" 2 "Male - Never" 3 "Female - Occasionally" ///
+	4 "Male - Occasionally" 5 "Female - 1/Yr" 6 "Male - 1/Yr" ///
+	7 "Female - 1/Mth" 8 "Male - 1/Mth") cols(2) size(small)) ///
+	name(iq15_attend_int, replace)
+	
+	
+* Combine these plots together
+graph combine iq15_belief_int iq15_relig_int iq15_attend_int, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G1_IQ15PredProbs_sexInt_combined.pdf", replace
+
+graph close _all
+
+
+*** Repeat for vocabulary task at age 24
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum vocab_age24 
+
+mlogit YPG3000 ageAt28 male vocab_age24, rrr baseoutcome(3)
+margins, at(vocab_age24 = (0(1)12))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen vocab_age24 = fill(0 1)
+gen prob_yes = .
+gen lci_yes = .
+gen uci_yes = .
+gen prob_notSure = .
+gen lci_notSure = .
+gen uci_notSure = .
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+
+forvalues i = 1(1)`n' {
+	replace prob_yes = res[1,`i'] if _n == `i'
+	replace lci_yes = res[5,`i'] if _n == `i'
+	replace uci_yes = res[6,`i'] if _n == `i'
+	replace prob_notSure = res[1,`n' + `i'] if _n == `i'
+	replace lci_notSure = res[5,`n' + `i'] if _n == `i'
+	replace uci_notSure = res[6,`n' + `i'] if _n == `i'
+	replace prob_no = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_no = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_no = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_yes vocab_age24, col(black)) ///
+	(rarea lci_yes uci_yes vocab_age24, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_notSure vocab_age24, col(red)) ///
+	(rarea lci_notSure uci_notSure vocab_age24, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_no vocab_age24, col(blue)) ///
+	(rarea lci_no uci_no vocab_age24, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Vocab Task Age 24") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious belief", size(large)) ///
+	legend(order(1 "Yes" 3 "Not sure" 5 "No") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(vocab24_bel, replace)
+	
+	
+** Repeat for other RSBB outcomes and combine plots together
+
+* Religious affiliation
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit YPG3040_grp ageAt28 male vocab_age24, rrr baseoutcome(3)
+margins, at(vocab_age24 = (0(1)12))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen vocab_age24 = fill(0 1)
+gen prob_xian = .
+gen lci_xian = .
+gen uci_xian = .
+gen prob_other = .
+gen lci_other = .
+gen uci_other = .
+gen prob_none = .
+gen lci_none = .
+gen uci_none = .
+
+forvalues i = 1(1)`n' {
+	replace prob_xian = res[1,`i'] if _n == `i'
+	replace lci_xian = res[5,`i'] if _n == `i'
+	replace uci_xian = res[6,`i'] if _n == `i'
+	replace prob_other = res[1,`n' + `i'] if _n == `i'
+	replace lci_other = res[5,`n' + `i'] if _n == `i'
+	replace uci_other = res[6,`n' + `i'] if _n == `i'
+	replace prob_none = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_none = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_none = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_xian vocab_age24, col(black)) ///
+	(rarea lci_xian uci_xian vocab_age24, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_other vocab_age24, col(red)) ///
+	(rarea lci_other uci_other vocab_age24, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_none vocab_age24, col(blue)) ///
+	(rarea lci_none uci_none vocab_age24, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Vocab Task Age 24") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious affiliation", size(large)) ///
+	legend(order(1 "Christian" 3 "Other" 5 "None") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(vocab24_relig, replace)
+	
+	
+* Attend church
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit YPG3080_rev ageAt28 male vocab_age24, rrr baseoutcome(0)
+margins, at(vocab_age24 = (0(1)12))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen vocab_age24 = fill(0 1)
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+gen prob_yr = .
+gen lci_yr = .
+gen uci_yr = .
+gen prob_mth = .
+gen lci_mth = .
+gen uci_mth = .
+gen prob_wk = .
+gen lci_wk = .
+gen uci_wk = .
+
+forvalues i = 1(1)`n' {
+	replace prob_no = res[1,`i'] if _n == `i'
+	replace lci_no = res[5,`i'] if _n == `i'
+	replace uci_no = res[6,`i'] if _n == `i'
+	replace prob_yr = res[1,`n' + `i'] if _n == `i'
+	replace lci_yr = res[5,`n' + `i'] if _n == `i'
+	replace uci_yr = res[6,`n' + `i'] if _n == `i'
+	replace prob_mth = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_mth = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_mth = res[6,`n' + `n' + `i'] if _n == `i'
+	replace prob_wk = res[1,`n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_wk = res[5,`n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_wk = res[6,`n' + `n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_no vocab_age24, col(black)) ///
+	(rarea lci_no uci_no vocab_age24, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_yr vocab_age24, col(red)) ///
+	(rarea lci_yr uci_yr vocab_age24, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_mth vocab_age24, col(blue)) ///
+	(rarea lci_mth uci_mth vocab_age24, lcol(black) lwidth(vthin) fcol(blue%20)) ///
+	(line prob_wk vocab_age24, col(green)) ///
+	(rarea lci_wk uci_wk vocab_age24, lcol(black) lwidth(vthin) fcol(green%20)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Vocab Task Age 24") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious attendance", size(large)) ///
+	legend(order(1 "Not at all" 3 "Occasionally" 5 "1/yr" 7 "1/mth") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(vocab24_attend, replace)
+	
+	
+* Combine these plots together
+graph combine vocab24_bel vocab24_relig vocab24_attend, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G1_vocab24PredProbs_combined.pdf", replace
+
+graph close _all
+
+
+** Also plot interaction between sex and vocab score at age 24 - Start with religious belief
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum vocab_age24
+sum ageAt28
+local age = r(mean)
+
+mlogit YPG3000 ageAt28 i.male##c.vocab_age24, rrr baseoutcome(3)
+margins, at(vocab_age24 = (0(1)12) male = (0 1))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageAt28 = fill(`age' `age')
+egen male = fill(0 1 0 1)
+egen vocab_age24 = fill(0 0 1 1)
+gen YPG3000 = 1
+predict p1, outcome(1)
+sum p1
+
+replace YPG3000 = 2
+predict p2, outcome(2)
+sum p1 p2
+
+replace YPG3000 = 3
+predict p3, outcome(3)
+sum p1 p2 p3
+
+twoway (line p1 vocab_age24 if male == 0, col(black)) ///
+	(line p1 vocab_age24 if male == 1, col(black) lpattern(dash)) ///
+	(line p2 vocab_age24 if male == 0, col(red)) ///
+	(line p2 vocab_age24 if male == 1, col(red) lpattern(dash)) ///
+	(line p3 vocab_age24 if male == 0, col(blue)) ///
+	(line p3 vocab_age24 if male == 1, col(blue) lpattern(dash)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Vocab Task Age 24") ytitle("Predicted probability") ///
+	legend(order(1 "Female - Yes" 2 "Male - Yes" 3 "Female - Not sure" ///
+	4 "Male - Not sure" 5 "Female - No" 6 "Male - No") cols(2) size(small)) ///
+	name(vocab24_belief_int, replace)
+
+	
+* Religious affiliation
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum vocab_age24
+sum ageAt28
+local age = r(mean)
+
+mlogit YPG3040_grp ageAt28 i.male##c.vocab_age24, rrr baseoutcome(3)
+margins, at(vocab_age24 = (0(1)12) male = (0 1))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageAt28 = fill(`age' `age')
+egen male = fill(0 1 0 1)
+egen vocab_age24 = fill(0 0 1 1)
+gen YPG3040_grp = 1
+predict p1, outcome(1)
+sum p1
+
+replace YPG3040_grp = 2
+predict p2, outcome(2)
+sum p1 p2
+
+replace YPG3040_grp = 3
+predict p3, outcome(3)
+sum p1 p2 p3
+
+twoway (line p1 vocab_age24 if male == 0, col(black)) ///
+	(line p1 vocab_age24 if male == 1, col(black) lpattern(dash)) ///
+	(line p2 vocab_age24 if male == 0, col(red)) ///
+	(line p2 vocab_age24 if male == 1, col(red) lpattern(dash)) ///
+	(line p3 vocab_age24 if male == 0, col(blue)) ///
+	(line p3 vocab_age24 if male == 1, col(blue) lpattern(dash)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Vocab Task Age 24") ytitle("Predicted probability") ///
+	legend(order(1 "Female - Christian" 2 "Male - Christian" 3 "Female - Other" ///
+	4 "Male - Other" 5 "Female - None" 6 "Male - None") cols(2) size(small)) ///
+	name(vocab24_relig_int, replace)
+	
+
+* Religious attendance
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum vocab_age24
+sum ageAt28
+local age = r(mean)
+
+mlogit YPG3080_rev ageAt28 i.male##c.vocab_age24, rrr baseoutcome(0)
+margins, at(vocab_age24 = (0(1)12) male = (0 1))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen ageAt28 = fill(`age' `age')
+egen male = fill(0 1 0 1)
+egen vocab_age24 = fill(0 0 1 1)
+gen YPG3080_rev = 0
+predict p1, outcome(0)
+sum p1
+
+replace YPG3080_rev = 1
+predict p2, outcome(1)
+sum p1 p2
+
+replace YPG3080_rev = 2
+predict p3, outcome(2)
+sum p1 p2 p3
+
+replace YPG3080_rev = 3
+predict p4, outcome(3)
+sum p1 p2 p3 p4
+
+twoway (line p1 vocab_age24 if male == 0, col(black)) ///
+	(line p1 vocab_age24 if male == 1, col(black) lpattern(dash)) ///
+	(line p2 vocab_age24 if male == 0, col(red)) ///
+	(line p2 vocab_age24 if male == 1, col(red) lpattern(dash)) ///
+	(line p3 vocab_age24 if male == 0, col(blue)) ///
+	(line p3 vocab_age24 if male == 1, col(blue) lpattern(dash)) ///
+	(line p4 vocab_age24 if male == 0, col(green)) ///
+	(line p4 vocab_age24 if male == 1, col(green) lpattern(dash)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Vocab Task Age 24") ytitle("Predicted probability") ///
+	legend(order(1 "Female - Never" 2 "Male - Never" 3 "Female - Occasionally" ///
+	4 "Male - Occasionally" 5 "Female - 1/Yr" 6 "Male - 1/Yr" ///
+	7 "Female - 1/Mth" 8 "Male - 1/Mth") cols(2) size(small)) ///
+	name(vocab24_attend_int, replace)
+	
+	
+* Combine these plots together
+graph combine vocab24_belief_int vocab24_relig_int vocab24_attend_int, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G1_vocab24PredProbs_sexInt_combined.pdf", replace
+
+graph close _all
+
+
+
+*** Repeat for agreeableness at age 13
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum agreeableness_age13 
+
+mlogit YPG3000 ageAt28 male agreeableness_age13, rrr baseoutcome(3)
+margins, at(agreeableness_age13 = (15(1)50))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen agreeableness_age13 = fill(15 16)
+gen prob_yes = .
+gen lci_yes = .
+gen uci_yes = .
+gen prob_notSure = .
+gen lci_notSure = .
+gen uci_notSure = .
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+
+forvalues i = 1(1)`n' {
+	replace prob_yes = res[1,`i'] if _n == `i'
+	replace lci_yes = res[5,`i'] if _n == `i'
+	replace uci_yes = res[6,`i'] if _n == `i'
+	replace prob_notSure = res[1,`n' + `i'] if _n == `i'
+	replace lci_notSure = res[5,`n' + `i'] if _n == `i'
+	replace uci_notSure = res[6,`n' + `i'] if _n == `i'
+	replace prob_no = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_no = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_no = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_yes agreeableness_age13, col(black)) ///
+	(rarea lci_yes uci_yes agreeableness_age13, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_notSure agreeableness_age13, col(red)) ///
+	(rarea lci_notSure uci_notSure agreeableness_age13, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_no agreeableness_age13, col(blue)) ///
+	(rarea lci_no uci_no agreeableness_age13, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(15 50)) xlabel(15(5)50, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Agreeableness Age 13") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious belief", size(large)) ///
+	legend(order(1 "Yes" 3 "Not sure" 5 "No") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(agree13_bel, replace)
+	
+	
+** Repeat for other RSBB outcomes and combine plots together
+
+* Religious affiliation
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit YPG3040_grp ageAt28 male agreeableness_age13, rrr baseoutcome(3)
+margins, at(agreeableness_age13 = (15(1)50))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen agreeableness_age13 = fill(15 16)
+gen prob_xian = .
+gen lci_xian = .
+gen uci_xian = .
+gen prob_other = .
+gen lci_other = .
+gen uci_other = .
+gen prob_none = .
+gen lci_none = .
+gen uci_none = .
+
+forvalues i = 1(1)`n' {
+	replace prob_xian = res[1,`i'] if _n == `i'
+	replace lci_xian = res[5,`i'] if _n == `i'
+	replace uci_xian = res[6,`i'] if _n == `i'
+	replace prob_other = res[1,`n' + `i'] if _n == `i'
+	replace lci_other = res[5,`n' + `i'] if _n == `i'
+	replace uci_other = res[6,`n' + `i'] if _n == `i'
+	replace prob_none = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_none = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_none = res[6,`n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_xian agreeableness_age13, col(black)) ///
+	(rarea lci_xian uci_xian agreeableness_age13, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_other agreeableness_age13, col(red)) ///
+	(rarea lci_other uci_other agreeableness_age13, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_none agreeableness_age13, col(blue)) ///
+	(rarea lci_none uci_none agreeableness_age13, lcol(black) lwidth(vthin) fcol(blue%20)), ///
+	xscale(range(15 16)) xlabel(15(5)50, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Agreeableness Age 13") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious affiliation", size(large)) ///
+	legend(order(1 "Christian" 3 "Other" 5 "None") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(agree13_relig, replace)
+	
+	
+* Attend church
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+mlogit YPG3080_rev ageAt28 male agreeableness_age13, rrr baseoutcome(0)
+margins, at(agreeableness_age13 = (15(1)50))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen agreeableness_age13 = fill(15 16)
+gen prob_no = .
+gen lci_no = .
+gen uci_no = .
+gen prob_yr = .
+gen lci_yr = .
+gen uci_yr = .
+gen prob_mth = .
+gen lci_mth = .
+gen uci_mth = .
+gen prob_wk = .
+gen lci_wk = .
+gen uci_wk = .
+
+forvalues i = 1(1)`n' {
+	replace prob_no = res[1,`i'] if _n == `i'
+	replace lci_no = res[5,`i'] if _n == `i'
+	replace uci_no = res[6,`i'] if _n == `i'
+	replace prob_yr = res[1,`n' + `i'] if _n == `i'
+	replace lci_yr = res[5,`n' + `i'] if _n == `i'
+	replace uci_yr = res[6,`n' + `i'] if _n == `i'
+	replace prob_mth = res[1,`n' + `n' + `i'] if _n == `i'
+	replace lci_mth = res[5,`n' + `n' + `i'] if _n == `i'
+	replace uci_mth = res[6,`n' + `n' + `i'] if _n == `i'
+	replace prob_wk = res[1,`n' + `n' + `n' + `i'] if _n == `i'
+	replace lci_wk = res[5,`n' + `n' + `n' + `i'] if _n == `i'
+	replace uci_wk = res[6,`n' + `n' + `n' + `i'] if _n == `i'
+}
+
+list, clean
+
+twoway (line prob_no agreeableness_age13, col(black)) ///
+	(rarea lci_no uci_no agreeableness_age13, lcol(black) lwidth(vthin) fcol(black%20)) ///
+	(line prob_yr agreeableness_age13, col(red)) ///
+	(rarea lci_yr uci_yr agreeableness_age13, lcol(black) lwidth(vthin) fcol(red%20)) ///
+	(line prob_mth agreeableness_age13, col(blue)) ///
+	(rarea lci_mth uci_mth agreeableness_age13, lcol(black) lwidth(vthin) fcol(blue%20)) ///
+	(line prob_wk agreeableness_age13, col(green)) ///
+	(rarea lci_wk uci_wk agreeableness_age13, lcol(black) lwidth(vthin) fcol(green%20)), ///
+	xscale(range(15 50)) xlabel(15(5)50, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Agreeableness Age 13") ytitle("Predicted probability") yscale(titlegap(2)) ///
+	title("Religious attendance", size(large)) ///
+	legend(order(1 "Not at all" 3 "Occasionally" 5 "1/yr" 7 "1/mth") ///
+	rows(1) size(small) symxsize(*0.5)) ///
+	name(agree13_attend, replace)
+	
+	
+* Combine these plots together
+graph combine agree13_bel agree13_relig agree13_attend, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G1_agree13PredProbs_combined.pdf", replace
+
+graph close _all
+
+
+** Also plot interaction between sex and vocab score at age 24 - Start with religious belief
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum agreeableness_age13
+sum ageAt28
+local age = r(mean)
+
+mlogit YPG3000 ageAt28 i.male##c.agreeableness_age13, rrr baseoutcome(3)
+margins, at(agreeableness_age13 = (15(1)50) male = (0 1))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageAt28 = fill(`age' `age')
+egen male = fill(0 1 0 1)
+egen agreeableness_age13 = fill(15 15 16 16)
+gen YPG3000 = 1
+predict p1, outcome(1)
+sum p1
+
+replace YPG3000 = 2
+predict p2, outcome(2)
+sum p1 p2
+
+replace YPG3000 = 3
+predict p3, outcome(3)
+sum p1 p2 p3
+
+twoway (line p1 agreeableness_age13 if male == 0, col(black)) ///
+	(line p1 agreeableness_age13 if male == 1, col(black) lpattern(dash)) ///
+	(line p2 agreeableness_age13 if male == 0, col(red)) ///
+	(line p2 agreeableness_age13 if male == 1, col(red) lpattern(dash)) ///
+	(line p3 agreeableness_age13 if male == 0, col(blue)) ///
+	(line p3 agreeableness_age13 if male == 1, col(blue) lpattern(dash)), ///
+	xscale(range(15 50)) xlabel(15(5)50, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Agreeableness Age 13") ytitle("Predicted probability") ///
+	legend(order(1 "Female - Yes" 2 "Male - Yes" 3 "Female - Not sure" ///
+	4 "Male - Not sure" 5 "Female - No" 6 "Male - No") cols(2) size(small)) ///
+	name(agree13_belief_int, replace)
+
+	
+* Religious affiliation
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum agreeableness_age13
+sum ageAt28
+local age = r(mean)
+
+mlogit YPG3040_grp ageAt28 i.male##c.agreeableness_age13, rrr baseoutcome(3)
+margins, at(agreeableness_age13 = (15(1)50) male = (0 1))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/3
+
+clear 
+set obs `n'
+egen ageAt28 = fill(`age' `age')
+egen male = fill(0 1 0 1)
+egen agreeableness_age13 = fill(15 15 16 16)
+gen YPG3040_grp = 1
+predict p1, outcome(1)
+sum p1
+
+replace YPG3040_grp = 2
+predict p2, outcome(2)
+sum p1 p2
+
+replace YPG3040_grp = 3
+predict p3, outcome(3)
+sum p1 p2 p3
+
+twoway (line p1 agreeableness_age13 if male == 0, col(black)) ///
+	(line p1 agreeableness_age13 if male == 1, col(black) lpattern(dash)) ///
+	(line p2 agreeableness_age13 if male == 0, col(red)) ///
+	(line p2 agreeableness_age13 if male == 1, col(red) lpattern(dash)) ///
+	(line p3 agreeableness_age13 if male == 0, col(blue)) ///
+	(line p3 agreeableness_age13 if male == 1, col(blue) lpattern(dash)), ///
+	xscale(range(15 50)) xlabel(15(5)50, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Agreeableness Age 13") ytitle("Predicted probability") ///
+	legend(order(1 "Female - Christian" 2 "Male - Christian" 3 "Female - Other" ///
+	4 "Male - Other" 5 "Female - None" 6 "Male - None") cols(2) size(small)) ///
+	name(agree13_relig_int, replace)
+	
+
+* Religious attendance
+use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
+
+sum agreeableness_age13
+sum ageAt28
+local age = r(mean)
+
+mlogit YPG3080_rev ageAt28 i.male##c.agreeableness_age13, rrr baseoutcome(0)
+margins, at(agreeableness_age13 = (15(1)50) male = (0 1))
+
+matrix res = r(table)
+matrix list res
+
+local n = colsof(res)/4
+
+clear 
+set obs `n'
+egen ageAt28 = fill(`age' `age')
+egen male = fill(0 1 0 1)
+egen agreeableness_age13 = fill(15 15 16 16)
+gen YPG3080_rev = 0
+predict p1, outcome(0)
+sum p1
+
+replace YPG3080_rev = 1
+predict p2, outcome(1)
+sum p1 p2
+
+replace YPG3080_rev = 2
+predict p3, outcome(2)
+sum p1 p2 p3
+
+replace YPG3080_rev = 3
+predict p4, outcome(3)
+sum p1 p2 p3 p4
+
+twoway (line p1 agreeableness_age13 if male == 0, col(black)) ///
+	(line p1 agreeableness_age13 if male == 1, col(black) lpattern(dash)) ///
+	(line p2 agreeableness_age13 if male == 0, col(red)) ///
+	(line p2 agreeableness_age13 if male == 1, col(red) lpattern(dash)) ///
+	(line p3 agreeableness_age13 if male == 0, col(blue)) ///
+	(line p3 agreeableness_age13 if male == 1, col(blue) lpattern(dash)) ///
+	(line p4 agreeableness_age13 if male == 0, col(green)) ///
+	(line p4 agreeableness_age13 if male == 1, col(green) lpattern(dash)), ///
+	xscale(range(15 50)) xlabel(15(5)50, labsize(small)) ylabel(, labsize(small)) ///
+	xtitle("Agreeableness Age 13") ytitle("Predicted probability") ///
+	legend(order(1 "Female - Never" 2 "Male - Never" 3 "Female - Occasionally" ///
+	4 "Male - Occasionally" 5 "Female - 1/Yr" 6 "Male - 1/Yr" ///
+	7 "Female - 1/Mth" 8 "Male - 1/Mth") cols(2) size(small)) ///
+	name(agree13_attend_int, replace)
+	
+	
+* Combine these plots together
+graph combine agree13_belief_int agree13_relig_int agree13_attend_int, iscale(0.5) rows(2)
+
+graph export ".\Cognitive_Results\G1_agree13PredProbs_sexInt_combined.pdf", replace
+
+graph close _all
+
+
+
