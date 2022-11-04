@@ -30,6 +30,8 @@ log using ".\Cognitive_Results\Desc_RSBB_B3911_CognitiveAnalysis_log", replace t
 **** Start with the G0 mother's analysis
 use "G0Mother_PredictorsOfRSBB_B3911.dta", clear
 
+* Drop if not enrolled during pregnancy
+drop if in_core == 2
 
 *** Descriptive statistics
 
@@ -567,6 +569,8 @@ save ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", 
 **** Now onto the G0 partner/fathers's analysis
 use "G0Partner_PredictorsOfRSBB_B3911.dta", clear
 
+* Drop if mother not enrolled during pregnancy
+drop if in_core == 2
 
 *** Descriptive statistics
 
@@ -1224,7 +1228,7 @@ rename fg7360 extraversion_age13
 rename fg7361 agreeableness_age13
 rename fg7362 conscientiousness_age13
 rename fg7363 emotionalStab_age13
-rename fg7364 Openess_age13
+rename fg7364 Openness_age13
 rename f8lc125 loc_age8
 rename FJCQ1001 negCogStyles_age17
 rename f8dv440a emoRec_faces_age8
@@ -2519,12 +2523,8 @@ use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", c
 
 sum intel_factor
 
-local cog_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
-local cog_mean = round(r(mean), 0.01)
-local cog_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
-
 mlogit d810 c.ageAtBirth##c.intel_factor, rrr baseoutcome(3)
-margins, at(intel_factor = (`cog_minus2SD' `cog_mean' `cog_plus2SD') ageAtBirth = (15(1)44))
+margins, at(intel_factor = (-5(1)5) ageAtBirth = (20 30 40))
 
 matrix res = r(table)
 matrix list res
@@ -2533,9 +2533,8 @@ local n = colsof(res)/3
 
 clear 
 set obs `n'
-egen ageAtBirth = fill(15 15 15 16 16 16)
-egen intel_factor = fill(`cog_minus2SD' `cog_mean' `cog_plus2SD' `cog_minus2SD' `cog_mean' `cog_plus2SD')
-replace intel_factor = round(intel_factor, 0.01)
+egen ageAtBirth = fill(20 30 40 20 30 40)
+egen intel_factor = fill(-5 -5 -5 -4 -4 -4)
 gen d810 = 1
 predict p1, outcome(1)
 sum p1
@@ -2548,21 +2547,22 @@ replace d810 = 3
 predict p3, outcome(3)
 sum p1 p2 p3
 
-twoway (line p1 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(black)) ///
-	(line p1 ageAtBirth if intel_factor == float(`cog_mean'), col(black) lpattern(longdash)) ///
-	(line p1 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(black) lpattern(shortdash)) ///
-	(line p2 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(red)) ///
-	(line p2 ageAtBirth if intel_factor == float(`cog_mean'), col(red) lpattern(longdash)) ///
-	(line p2 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(red) lpattern(shortdash)) ///
-	(line p3 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(blue)) ///
-	(line p3 ageAtBirth if intel_factor == float(`cog_mean'), col(blue) lpattern(longdash)) ///
-	(line p3 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(blue) lpattern(shortdash)), ///
-	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Age at birth") ytitle("Predicted probability") ///
-	legend(order(1 "Cog minus 2 SD - yes" 2 "Mean cog - yes" ///
-	3 "Cog plus 2 SD - yes" 4 "Cog minus 2 SD - not sure" 5 "Mean cog - not sure" ///
-	6 "Cog plus 2 SD - not sure" 7 "Cog minus 2 SD - no" 8 "Mean cog - no" ///
-	9 "Cog plus 2 SD - no") cols(3) size(vsmall)) ///
+twoway (line p1 intel_factor if ageAtBirth == 20, col(black)) ///
+	(line p1 intel_factor if ageAtBirth == 30, col(black) lpattern(dash)) ///
+	(line p1 intel_factor if ageAtBirth == 40, col(black) lpattern(shortdash)) ///
+	(line p2 intel_factor if ageAtBirth == 20, col(red)) ///
+	(line p2 intel_factor if ageAtBirth == 30, col(red) lpattern(dash)) ///
+	(line p2 intel_factor if ageAtBirth == 40, col(red) lpattern(shortdash)) ///
+	(line p3 intel_factor if ageAtBirth == 20, col(blue)) ///
+	(line p3 intel_factor if ageAtBirth == 30, col(blue) lpattern(dash)) ///
+	(line p3 intel_factor if ageAtBirth == 40, col(blue) lpattern(shortdash)), ///
+	xscale(range(-5 5)) xlabel(-5(1)5, labsize(small)) ylabel(, labsize(small)) ///
+	title("Religious belief", size(large)) ///
+	xtitle("Cognitive Ability Factor") ytitle("Predicted probability", margin(small)) ///
+	legend(order(1 "Age 20 - Yes" 2 "Age 30 - Yes" 3 "Age 40 - Yes" ///
+	4 "Age 20 - Not sure" 5 "Age 30 - Not sure" 6 "Age 40 - Not sure"  ///
+	7 "Age 20 - No" 8 "Age 30 - No" 9 "Age 40 - No") cols(3) ///
+	colgap(*.5) keygap(*.5) size(vsmall)) ///
 	name(cog_belief_int, replace)
 
 	
@@ -2571,12 +2571,8 @@ use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", c
 
 sum intel_factor
 
-local cog_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
-local cog_mean = round(r(mean), 0.01)
-local cog_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
-
 mlogit d813_grp c.ageAtBirth##c.intel_factor, rrr baseoutcome(3)
-margins, at(intel_factor = (`cog_minus2SD' `cog_mean' `cog_plus2SD') ageAtBirth = (15(1)44))
+margins, at(intel_factor = (-5(1)5) ageAtBirth = (20 30 40))
 
 matrix res = r(table)
 matrix list res
@@ -2585,9 +2581,8 @@ local n = colsof(res)/3
 
 clear 
 set obs `n'
-egen ageAtBirth = fill(15 15 15 16 16 16)
-egen intel_factor = fill(`cog_minus2SD' `cog_mean' `cog_plus2SD' `cog_minus2SD' `cog_mean' `cog_plus2SD')
-replace intel_factor = round(intel_factor, 0.01)
+egen ageAtBirth = fill(20 30 40 20 30 40)
+egen intel_factor = fill(-5 -5 -5 -4 -4 -4)
 gen d813_grp = 1
 predict p1, outcome(1)
 sum p1
@@ -2600,21 +2595,22 @@ replace d813_grp = 3
 predict p3, outcome(3)
 sum p1 p2 p3
 
-twoway (line p1 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(black)) ///
-	(line p1 ageAtBirth if intel_factor == float(`cog_mean'), col(black) lpattern(longdash)) ///
-	(line p1 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(black) lpattern(shortdash)) ///
-	(line p2 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(red)) ///
-	(line p2 ageAtBirth if intel_factor == float(`cog_mean'), col(red) lpattern(longdash)) ///
-	(line p2 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(red) lpattern(shortdash)) ///
-	(line p3 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(blue)) ///
-	(line p3 ageAtBirth if intel_factor == float(`cog_mean'), col(blue) lpattern(longdash)) ///
-	(line p3 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(blue) lpattern(shortdash)), ///
-	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Age at birth") ytitle("Predicted probability") ///
-	legend(order(1 "Cog minus 2 SD - Christian" 2 "Mean cog - Christian" ///
-	3 "Cog plus 2 SD - Christian" 4 "Cog minus 2 SD - Other" 5 "Mean cog - Other" ///
-	6 "Cog plus 2 SD - Other" 7 "Cog minus 2 SD - None" 8 "Mean cog - None" ///
-	9 "Cog plus 2 SD - None") cols(3) size(vsmall)) ///
+twoway (line p1 intel_factor if ageAtBirth == 20, col(black)) ///
+	(line p1 intel_factor if ageAtBirth == 30, col(black) lpattern(dash)) ///
+	(line p1 intel_factor if ageAtBirth == 40, col(black) lpattern(shortdash)) ///
+	(line p2 intel_factor if ageAtBirth == 20, col(red)) ///
+	(line p2 intel_factor if ageAtBirth == 30, col(red) lpattern(dash)) ///
+	(line p2 intel_factor if ageAtBirth == 40, col(red) lpattern(shortdash)) ///
+	(line p3 intel_factor if ageAtBirth == 20, col(blue)) ///
+	(line p3 intel_factor if ageAtBirth == 30, col(blue) lpattern(dash)) ///
+	(line p3 intel_factor if ageAtBirth == 40, col(blue) lpattern(shortdash)), ///
+	xscale(range(-5 5)) xlabel(-5(1)5, labsize(small)) ylabel(, labsize(small)) ///
+	title("Religious affiliation", size(large)) ///
+	xtitle("Cognitive Ability Factor") ytitle("Predicted probability", margin(small)) ///
+	legend(order(1 "Age 20 - Christian" 2 "Age 30 - Christian" 3 "Age 40 - Christian" ///
+	4 "Age 20 - Other" 5 "Age 30 - Other" 6 "Age 40 - Other"  ///
+	7 "Age 20 - None" 8 "Age 30 - None" 9 "Age 40 - None") cols(3) ///
+	colgap(*.5) keygap(*.5) size(vsmall)) ///
 	name(cog_relig_int, replace)
 	
 
@@ -2623,12 +2619,8 @@ use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", c
 
 sum intel_factor
 
-local cog_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
-local cog_mean = round(r(mean), 0.01)
-local cog_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
-
 mlogit d816_rev c.ageAtBirth##c.intel_factor, rrr baseoutcome(0)
-margins, at(intel_factor = (`cog_minus2SD' `cog_mean' `cog_plus2SD') ageAtBirth = (15(1)44))
+margins, at(intel_factor = (-5(1)5) ageAtBirth = (20 30 40))
 
 matrix res = r(table)
 matrix list res
@@ -2637,9 +2629,8 @@ local n = colsof(res)/4
 
 clear 
 set obs `n'
-egen ageAtBirth = fill(15 15 15 16 16 16)
-egen intel_factor = fill(`cog_minus2SD' `cog_mean' `cog_plus2SD' `cog_minus2SD' `cog_mean' `cog_plus2SD')
-replace intel_factor = round(intel_factor, 0.01)
+egen ageAtBirth = fill(20 30 40 20 30 40)
+egen intel_factor = fill(-5 -5 -5 -4 -4 -4)
 gen d816_rev = 0
 predict p1, outcome(0)
 sum p1
@@ -2656,28 +2647,29 @@ replace d816_rev = 3
 predict p4, outcome(3)
 sum p1 p2 p3 p4
 
-twoway (line p1 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(black)) ///
-	(line p1 ageAtBirth if intel_factor == float(`cog_mean'), col(black) lpattern(longdash)) ///
-	(line p1 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(black) lpattern(shortdash)) ///
-	(line p2 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(red)) ///
-	(line p2 ageAtBirth if intel_factor == float(`cog_mean'), col(red) lpattern(longdash)) ///
-	(line p2 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(red) lpattern(shortdash)) ///
-	(line p3 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(blue)) ///
-	(line p3 ageAtBirth if intel_factor == float(`cog_mean'), col(blue) lpattern(longdash)) ///
-	(line p3 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(blue) lpattern(shortdash)) ///
-	(line p4 ageAtBirth if intel_factor == float(`cog_minus2SD'), col(green)) ///
-	(line p4 ageAtBirth if intel_factor == float(`cog_mean'), col(green) lpattern(longdash)) ///
-	(line p4 ageAtBirth if intel_factor == float(`cog_plus2SD'), col(green) lpattern(shortdash)), ///
-	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Age at birth") ytitle("Predicted probability") ///
-	legend(order(1 "Cog minus 2 SD - Never" 2 "Mean cog - Never" ///
-	3 "Cog plus 2 SD - Never" 4 "Cog minus 2 SD - 1/Yr" 5 "Mean cog - 1/Yr" ///
-	6 "Cog plus 2 SD - 1/Yr" 7 "Cog minus 2 SD - 1/Mth" 8 "Mean cog - 1/Mth" ///
-	9 "Cog plus 2 SD - 1/Mth" 10 "Cog minus 2 SD - 1/Wk" 11 "Mean cog - 1/Wk" ///
-	12 "Cog plus 2 SD - 1/Wk") cols(3) size(vsmall)) ///
+twoway (line p1 intel_factor if ageAtBirth == 20, col(black)) ///
+	(line p1 intel_factor if ageAtBirth == 30, col(black) lpattern(dash)) ///
+	(line p1 intel_factor if ageAtBirth == 40, col(black) lpattern(shortdash)) ///
+	(line p2 intel_factor if ageAtBirth == 20, col(red)) ///
+	(line p2 intel_factor if ageAtBirth == 30, col(red) lpattern(dash)) ///
+	(line p2 intel_factor if ageAtBirth == 40, col(red) lpattern(shortdash)) ///
+	(line p3 intel_factor if ageAtBirth == 20, col(blue)) ///
+	(line p3 intel_factor if ageAtBirth == 30, col(blue) lpattern(dash)) ///
+	(line p3 intel_factor if ageAtBirth == 40, col(blue) lpattern(shortdash)) ///
+	(line p4 intel_factor if ageAtBirth == 20, col(green)) ///
+	(line p4 intel_factor if ageAtBirth == 30, col(green) lpattern(dash)) ///
+	(line p4 intel_factor if ageAtBirth == 40, col(green) lpattern(shortdash)), ///
+	xscale(range(-5 5)) xlabel(-5(1)5, labsize(small)) ylabel(, labsize(small)) ///
+	title("Religious attendance", size(large)) ///
+	xtitle("Cognitive Ability Factor") ytitle("Predicted probability", margin(small)) ///
+	legend(order(1 "Age 20 - Never" 2 "Age 30 - Never" 3 "Age 40 - Never" ///
+	4 "Age 20 - 1/Yr" 5 "Age 30 - 1/Yr" 6 "Age 40 - 1/Yr"  ///
+	7 "Age 20 - 1/Mth" 8 "Age 30 - 1/Mth" 9 "Age 40 - 1/Mth" ///
+	7 "Age 20 - 1/Wk" 8 "Age 30 - 1/Wk" 9 "Age 40 - 1/Wk") cols(3) ///
+	colgap(*.5) keygap(*.5) size(vsmall)) ///
 	name(cog_attend_int, replace)
-	
-	
+
+
 * Combine these plots together
 graph combine cog_belief_int cog_relig_int cog_attend_int, iscale(0.5) rows(2)
 
@@ -2865,12 +2857,8 @@ use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", c
 
 sum LoC_external
 
-local loc_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
-local loc_mean = round(r(mean), 0.01)
-local loc_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
-
 mlogit d810 c.ageAtBirth##c.LoC_external, rrr baseoutcome(3)
-margins, at(LoC_external = (`loc_minus2SD' `loc_mean' `loc_plus2SD') ageAtBirth = (15(1)44))
+margins, at(LoC_external = (0(1)12) ageAtBirth = (20 30 40))
 
 matrix res = r(table)
 matrix list res
@@ -2879,9 +2867,8 @@ local n = colsof(res)/3
 
 clear 
 set obs `n'
-egen ageAtBirth = fill(15 15 15 16 16 16)
-egen LoC_external = fill(`loc_minus2SD' `loc_mean' `loc_plus2SD' `loc_minus2SD' `loc_mean' `loc_plus2SD')
-replace LoC_external = round(LoC_external, 0.01)
+egen ageAtBirth = fill(20 30 40 20 30 40)
+egen LoC_external = fill(0 0 0 1 1 1)
 gen d810 = 1
 predict p1, outcome(1)
 sum p1
@@ -2894,21 +2881,22 @@ replace d810 = 3
 predict p3, outcome(3)
 sum p1 p2 p3
 
-twoway (line p1 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(black)) ///
-	(line p1 ageAtBirth if LoC_external == float(`loc_mean'), col(black)  lpattern(longdash)) ///
-	(line p1 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(black) lpattern(shortdash)) ///
-	(line p2 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(red)) ///
-	(line p2 ageAtBirth if LoC_external == float(`loc_mean'), col(red) lpattern(longdash)) ///
-	(line p2 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(red) lpattern(shortdash)) ///
-	(line p3 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(blue)) ///
-	(line p3 ageAtBirth if LoC_external == float(`loc_mean'), col(blue) lpattern(longdash)) ///
-	(line p3 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(blue) lpattern(shortdash)), ///
-	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Age at birth") ytitle("Predicted probability") ///
-	legend(order(1 "LoC minus 2 SD - yes" 2 "Mean LoC - yes" ///
-	3 "LoC plus 2 SD - yes" 4 "LoC minus 2 SD - not sure" 5 "Mean LoC - not sure" ///
-	6 "LoC plus 2 SD - not sure" 7 "LoC minus 2 SD - no" 8 "Mean LoC - no" ///
-	9 "LoC plus 2 SD - no") cols(3) size(vsmall)) ///
+twoway (line p1 LoC_external if ageAtBirth == 20, col(black)) ///
+	(line p1 LoC_external if ageAtBirth == 30, col(black) lpattern(dash)) ///
+	(line p1 LoC_external if ageAtBirth == 40, col(black) lpattern(shortdash)) ///
+	(line p2 LoC_external if ageAtBirth == 20, col(red)) ///
+	(line p2 LoC_external if ageAtBirth == 30, col(red) lpattern(dash)) ///
+	(line p2 LoC_external if ageAtBirth == 40, col(red) lpattern(shortdash)) ///
+	(line p3 LoC_external if ageAtBirth == 20, col(blue)) ///
+	(line p3 LoC_external if ageAtBirth == 30, col(blue) lpattern(dash)) ///
+	(line p3 LoC_external if ageAtBirth == 40, col(blue) lpattern(shortdash)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	title("Religious belief", size(large)) ///
+	xtitle("External LoC") ytitle("Predicted probability", margin(small)) ///
+	legend(order(1 "Age 20 - Yes" 2 "Age 30 - Yes" 3 "Age 40 - Yes" ///
+	4 "Age 20 - Not sure" 5 "Age 30 - Not sure" 6 "Age 40 - Not sure"  ///
+	7 "Age 20 - No" 8 "Age 30 - No" 9 "Age 40 - No") cols(3) ///
+	colgap(*.5) keygap(*.5) size(vsmall)) ///
 	name(loc_belief_int, replace)
 
 	
@@ -2917,12 +2905,8 @@ use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", c
 
 sum LoC_external
 
-local loc_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
-local loc_mean = round(r(mean), 0.01)
-local loc_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
-
 mlogit d813_grp c.ageAtBirth##c.LoC_external, rrr baseoutcome(3)
-margins, at(LoC_external = (`loc_minus2SD' `loc_mean' `loc_plus2SD') ageAtBirth = (15(1)44))
+margins, at(LoC_external = (0(1)12) ageAtBirth = (20 30 40))
 
 matrix res = r(table)
 matrix list res
@@ -2931,9 +2915,8 @@ local n = colsof(res)/3
 
 clear 
 set obs `n'
-egen ageAtBirth = fill(15 15 15 16 16 16)
-egen LoC_external = fill(`loc_minus2SD' `loc_mean' `loc_plus2SD' `loc_minus2SD' `loc_mean' `loc_plus2SD')
-replace LoC_external = round(LoC_external, 0.01)
+egen ageAtBirth = fill(20 30 40 20 30 40)
+egen LoC_external = fill(0 0 0 1 1 1)
 gen d813_grp = 1
 predict p1, outcome(1)
 sum p1
@@ -2946,21 +2929,22 @@ replace d813_grp = 3
 predict p3, outcome(3)
 sum p1 p2 p3
 
-twoway (line p1 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(black)) ///
-	(line p1 ageAtBirth if LoC_external == float(`loc_mean'), col(black) lpattern(longdash)) ///
-	(line p1 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(black) lpattern(shortdash)) ///
-	(line p2 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(red) ) ///
-	(line p2 ageAtBirth if LoC_external == float(`loc_mean'), col(red) lpattern(longdash)) ///
-	(line p2 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(red) lpattern(shortdash)) ///
-	(line p3 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(blue)) ///
-	(line p3 ageAtBirth if LoC_external == float(`loc_mean'), col(blue) lpattern(longdash)) ///
-	(line p3 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(blue) lpattern(shortdash)), ///
-	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Age at birth") ytitle("Predicted probability") ///
-	legend(order(1 "LoC minus 2 SD - Christian" 2 "Mean LoC - Christian" ///
-	3 "LoC plus 2 SD - Christian" 4 "LoC minus 2 SD - Other" 5 "Mean LoC - Other" ///
-	6 "LoC plus 2 SD - Other" 7 "LoC minus 2 SD - None" 8 "Mean LoC - None" ///
-	9 "LoC plus 2 SD - None") cols(3) size(vsmall)) ///
+twoway (line p1 LoC_external if ageAtBirth == 20, col(black)) ///
+	(line p1 LoC_external if ageAtBirth == 30, col(black) lpattern(dash)) ///
+	(line p1 LoC_external if ageAtBirth == 40, col(black) lpattern(shortdash)) ///
+	(line p2 LoC_external if ageAtBirth == 20, col(red)) ///
+	(line p2 LoC_external if ageAtBirth == 30, col(red) lpattern(dash)) ///
+	(line p2 LoC_external if ageAtBirth == 40, col(red) lpattern(shortdash)) ///
+	(line p3 LoC_external if ageAtBirth == 20, col(blue)) ///
+	(line p3 LoC_external if ageAtBirth == 30, col(blue) lpattern(dash)) ///
+	(line p3 LoC_external if ageAtBirth == 40, col(blue) lpattern(shortdash)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	title("Religious affiliation", size(large)) ///
+	xtitle("External LoC") ytitle("Predicted probability", margin(small)) ///
+	legend(order(1 "Age 20 - Christian" 2 "Age 30 - Christian" 3 "Age 40 - Christian" ///
+	4 "Age 20 - Other" 5 "Age 30 - Other" 6 "Age 40 - Other"  ///
+	7 "Age 20 - None" 8 "Age 30 - None" 9 "Age 40 - None") cols(3) ///
+	colgap(*.5) keygap(*.5) size(vsmall)) ///
 	name(loc_relig_int, replace)
 	
 
@@ -2969,12 +2953,8 @@ use ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", c
 
 sum LoC_external
 
-local loc_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
-local loc_mean = round(r(mean), 0.01)
-local loc_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
-
 mlogit d816_rev c.ageAtBirth##c.LoC_external, rrr baseoutcome(0)
-margins, at(LoC_external = (`loc_minus2SD' `loc_mean' `loc_plus2SD') ageAtBirth = (15(1)44))
+margins, at(LoC_external = (0(1)12) ageAtBirth = (20 30 40))
 
 matrix res = r(table)
 matrix list res
@@ -2983,9 +2963,8 @@ local n = colsof(res)/4
 
 clear 
 set obs `n'
-egen ageAtBirth = fill(15 15 15 16 16 16)
-egen LoC_external = fill(`loc_minus2SD' `loc_mean' `loc_plus2SD' `loc_minus2SD' `loc_mean' `loc_plus2SD')
-replace LoC_external = round(LoC_external, 0.01)
+egen ageAtBirth = fill(20 30 40 20 30 40)
+egen LoC_external = fill(0 0 0 1 1 1)
 gen d816_rev = 0
 predict p1, outcome(0)
 sum p1
@@ -3002,25 +2981,26 @@ replace d816_rev = 3
 predict p4, outcome(3)
 sum p1 p2 p3 p4
 
-twoway (line p1 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(black)) ///
-	(line p1 ageAtBirth if LoC_external == float(`loc_mean'), col(black) lpattern(longdash)) ///
-	(line p1 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(black) lpattern(shortdash)) ///
-	(line p2 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(red)) ///
-	(line p2 ageAtBirth if LoC_external == float(`loc_mean'), col(red) lpattern(longdash)) ///
-	(line p2 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(red) lpattern(shortdash)) ///
-	(line p3 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(blue)) ///
-	(line p3 ageAtBirth if LoC_external == float(`loc_mean'), col(blue) lpattern(longdash)) ///
-	(line p3 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(blue) lpattern(shortdash)) ///
-	(line p4 ageAtBirth if LoC_external == float(`loc_minus2SD'), col(green)) ///
-	(line p4 ageAtBirth if LoC_external == float(`loc_mean'), col(green) lpattern(longdash)) ///
-	(line p4 ageAtBirth if LoC_external == float(`loc_plus2SD'), col(green) lpattern(shortdash)), ///
-	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Age at birth") ytitle("Predicted probability") ///
-	legend(order(1 "LoC minus 2 SD - Never" 2 "Mean LoC - Never" ///
-	3 "LoC plus 2 SD - Never" 4 "LoC minus 2 SD - 1/Yr" 5 "Mean LoC - 1/Yr" ///
-	6 "LoC plus 2 SD - 1/Yr" 7 "LoC minus 2 SD - 1/Mth" 8 "Mean LoC - 1/Mth" ///
-	9 "LoC plus 2 SD - 1/Mth" 10 "LoC minus 2 SD - 1/Wk" 11 "Mean LoC - 1/Wk" ///
-	12 "LoC plus 2 SD - 1/Wk") cols(3) size(vsmall)) ///
+twoway (line p1 LoC_external if ageAtBirth == 20, col(black)) ///
+	(line p1 LoC_external if ageAtBirth == 30, col(black) lpattern(dash)) ///
+	(line p1 LoC_external if ageAtBirth == 40, col(black) lpattern(shortdash)) ///
+	(line p2 LoC_external if ageAtBirth == 20, col(red)) ///
+	(line p2 LoC_external if ageAtBirth == 30, col(red) lpattern(dash)) ///
+	(line p2 LoC_external if ageAtBirth == 40, col(red) lpattern(shortdash)) ///
+	(line p3 LoC_external if ageAtBirth == 20, col(blue)) ///
+	(line p3 LoC_external if ageAtBirth == 30, col(blue) lpattern(dash)) ///
+	(line p3 LoC_external if ageAtBirth == 40, col(blue) lpattern(shortdash)) ///
+	(line p4 LoC_external if ageAtBirth == 20, col(green)) ///
+	(line p4 LoC_external if ageAtBirth == 30, col(green) lpattern(dash)) ///
+	(line p4 LoC_external if ageAtBirth == 40, col(green) lpattern(shortdash)), ///
+	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
+	title("Religious attendance", size(large)) ///
+	xtitle("External LoC") ytitle("Predicted probability", margin(small)) ///
+	legend(order(1 "Age 20 - Never" 2 "Age 30 - Never" 3 "Age 40 - Never" ///
+	4 "Age 20 - 1/Yr" 5 "Age 30 - 1/Yr" 6 "Age 40 - 1/Yr"  ///
+	7 "Age 20 - 1/Mth" 8 "Age 30 - 1/Mth" 9 "Age 40 - 1/Mth" ///
+	7 "Age 20 - 1/Wk" 8 "Age 30 - 1/Wk" 9 "Age 40 - 1/Wk") cols(3) ///
+	colgap(*.5) keygap(*.5) size(vsmall)) ///
 	name(loc_attend_int, replace)
 	
 	
@@ -3565,6 +3545,33 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == "LoC_externa
 graph export ".\Cognitive_Results\G0Partner_LoCResults.pdf", replace
 
 
+** Plot for self-esteem
+
+* Min and max x-axis values
+sum lci uci if exposure == "selfEsteem" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "selfEsteem", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "selfEsteem", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "selfEsteem", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "selfEsteem", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "selfEsteem", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "selfEsteem", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Self-Esteem and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.97 0.98 0.99 1 1.01, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(esteem, replace)
+		
+graph export ".\Cognitive_Results\G0Partner_selfEsteemResults.pdf", replace
+
+
 *** Also make a few interaction plots
 
 ** Plot for locus of control factor by age interaction
@@ -3777,12 +3784,8 @@ use ".\Cognitive_Results\G0Partner_CogPredictorsOfRSBB_B3911_postAnalysis.dta", 
 
 sum LoC_external
 
-local loc_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
-local loc_mean = round(r(mean), 0.01)
-local loc_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
-
 mlogit pb150 c.ageInPreg##c.LoC_external, rrr baseoutcome(3)
-margins, at(LoC_external = (`loc_minus2SD' `loc_mean' `loc_plus2SD') ageInPreg = (15(1)44))
+margins, at(LoC_external = (0(1)11) ageInPreg = (20 30 40))
 
 matrix res = r(table)
 matrix list res
@@ -3791,36 +3794,36 @@ local n = colsof(res)/3
 
 clear 
 set obs `n'
-egen ageInPreg = fill(15 15 15 16 16 16)
-egen LoC_external = fill(`loc_minus2SD' `loc_mean' `loc_plus2SD' `loc_minus2SD' `loc_mean' `loc_plus2SD')
-replace LoC_external = round(LoC_external, 0.01)
-gen d810 = 1
+egen ageInPreg = fill(20 30 40 20 30 40)
+egen LoC_external = fill(0 0 0 1 1 1)
+gen pb150 = 1
 predict p1, outcome(1)
 sum p1
 
-replace d810 = 2
+replace pb150 = 2
 predict p2, outcome(2)
 sum p1 p2
 
-replace d810 = 3
+replace pb150 = 3
 predict p3, outcome(3)
 sum p1 p2 p3
 
-twoway (line p1 ageInPreg if LoC_external == float(`loc_minus2SD'), col(black)) ///
-	(line p1 ageInPreg if LoC_external == float(`loc_mean'), col(black) lpattern(longdash)) ///
-	(line p1 ageInPreg if LoC_external == float(`loc_plus2SD'), col(black) lpattern(shortdash)) ///
-	(line p2 ageInPreg if LoC_external == float(`loc_minus2SD'), col(red) ) ///
-	(line p2 ageInPreg if LoC_external == float(`loc_mean'), col(red) lpattern(longdash)) ///
-	(line p2 ageInPreg if LoC_external == float(`loc_plus2SD'), col(red) lpattern(shortdash)) ///
-	(line p3 ageInPreg if LoC_external == float(`loc_minus2SD'), col(blue)) ///
-	(line p3 ageInPreg if LoC_external == float(`loc_mean'), col(blue) lpattern(longdash)) ///
-	(line p3 ageInPreg if LoC_external == float(`loc_plus2SD'), col(blue) lpattern(shortdash)), ///
-	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
-	legend(order(1 "LoC minus 2 SD - yes" 2 "Mean LoC - yes" ///
-	3 "LoC plus 2 SD - yes" 4 "LoC minus 2 SD - not sure" 5 "Mean LoC - not sure" ///
-	6 "LoC plus 2 SD - not sure" 7 "LoC minus 2 SD - no" 8 "Mean LoC - no" ///
-	9 "LoC plus 2 SD - no") cols(3) size(vsmall)) ///
+twoway (line p1 LoC_external if ageInPreg == 20, col(black)) ///
+	(line p1 LoC_external if ageInPreg == 30, col(black) lpattern(dash)) ///
+	(line p1 LoC_external if ageInPreg == 40, col(black) lpattern(shortdash)) ///
+	(line p2 LoC_external if ageInPreg == 20, col(red)) ///
+	(line p2 LoC_external if ageInPreg == 30, col(red) lpattern(dash)) ///
+	(line p2 LoC_external if ageInPreg == 40, col(red) lpattern(shortdash)) ///
+	(line p3 LoC_external if ageInPreg == 20, col(blue)) ///
+	(line p3 LoC_external if ageInPreg == 30, col(blue) lpattern(dash)) ///
+	(line p3 LoC_external if ageInPreg == 40, col(blue) lpattern(shortdash)), ///
+	xscale(range(0 11)) xlabel(0(1)11, labsize(small)) ylabel(, labsize(small)) ///
+	title("Religious belief", size(large)) ///
+	xtitle("External LoC") ytitle("Predicted probability", margin(small)) ///
+	legend(order(1 "Age 20 - Yes" 2 "Age 30 - Yes" 3 "Age 40 - Yes" ///
+	4 "Age 20 - Not sure" 5 "Age 30 - Not sure" 6 "Age 40 - Not sure"  ///
+	7 "Age 20 - No" 8 "Age 30 - No" 9 "Age 40 - No") cols(3) ///
+	colgap(*.5) keygap(*.5) size(vsmall)) ///
 	name(loc_belief_int, replace)
 
 	
@@ -3829,12 +3832,8 @@ use ".\Cognitive_Results\G0Partner_CogPredictorsOfRSBB_B3911_postAnalysis.dta", 
 
 sum LoC_external
 
-local loc_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
-local loc_mean = round(r(mean), 0.01)
-local loc_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
-
 mlogit pb153_grp c.ageInPreg##c.LoC_external, rrr baseoutcome(3)
-margins, at(LoC_external = (`loc_minus2SD' `loc_mean' `loc_plus2SD') ageInPreg = (15(1)44))
+margins, at(LoC_external = (0(1)11) ageInPreg = (20 30 40))
 
 matrix res = r(table)
 matrix list res
@@ -3843,9 +3842,8 @@ local n = colsof(res)/3
 
 clear 
 set obs `n'
-egen ageInPreg = fill(15 15 15 16 16 16)
-egen LoC_external = fill(`loc_minus2SD' `loc_mean' `loc_plus2SD' `loc_minus2SD' `loc_mean' `loc_plus2SD')
-replace LoC_external = round(LoC_external, 0.01)
+egen ageInPreg = fill(20 30 40 20 30 40)
+egen LoC_external = fill(0 0 0 1 1 1)
 gen pb153_grp = 1
 predict p1, outcome(1)
 sum p1
@@ -3858,21 +3856,22 @@ replace pb153_grp = 3
 predict p3, outcome(3)
 sum p1 p2 p3
 
-twoway (line p1 ageInPreg if LoC_external == float(`loc_minus2SD'), col(black)) ///
-	(line p1 ageInPreg if LoC_external == float(`loc_mean'), col(black) lpattern(longdash)) ///
-	(line p1 ageInPreg if LoC_external == float(`loc_plus2SD'), col(black)  lpattern(shortdash)) ///
-	(line p2 ageInPreg if LoC_external == float(`loc_minus2SD'), col(red)) ///
-	(line p2 ageInPreg if LoC_external == float(`loc_mean'), col(red) lpattern(longdash)) ///
-	(line p2 ageInPreg if LoC_external == float(`loc_plus2SD'), col(red) lpattern(shortdash)) ///
-	(line p3 ageInPreg if LoC_external == float(`loc_minus2SD'), col(blue)) ///
-	(line p3 ageInPreg if LoC_external == float(`loc_mean'), col(blue) lpattern(longdash)) ///
-	(line p3 ageInPreg if LoC_external == float(`loc_plus2SD'), col(blue) lpattern(shortdash)), ///
-	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
-	legend(order(1 "LoC minus 2 SD - Christian" 2 "Mean LoC - Christian" ///
-	3 "LoC plus 2 SD - Christian" 4 "LoC minus 2 SD - Other" 5 "Mean LoC - Other" ///
-	6 "LoC plus 2 SD - Other" 7 "LoC minus 2 SD - None" 8 "Mean LoC - None" ///
-	9 "LoC plus 2 SD - None") cols(3) size(vsmall)) ///
+twoway (line p1 LoC_external if ageInPreg == 20, col(black)) ///
+	(line p1 LoC_external if ageInPreg == 30, col(black) lpattern(dash)) ///
+	(line p1 LoC_external if ageInPreg == 40, col(black) lpattern(shortdash)) ///
+	(line p2 LoC_external if ageInPreg == 20, col(red)) ///
+	(line p2 LoC_external if ageInPreg == 30, col(red) lpattern(dash)) ///
+	(line p2 LoC_external if ageInPreg == 40, col(red) lpattern(shortdash)) ///
+	(line p3 LoC_external if ageInPreg == 20, col(blue)) ///
+	(line p3 LoC_external if ageInPreg == 30, col(blue) lpattern(dash)) ///
+	(line p3 LoC_external if ageInPreg == 40, col(blue) lpattern(shortdash)), ///
+	xscale(range(0 11)) xlabel(0(1)11, labsize(small)) ylabel(, labsize(small)) ///
+	title("Religious affiliation", size(large)) ///
+	xtitle("External LoC") ytitle("Predicted probability", margin(small)) ///
+	legend(order(1 "Age 20 - Christian" 2 "Age 30 - Christian" 3 "Age 40 - Christian" ///
+	4 "Age 20 - Other" 5 "Age 30 - Other" 6 "Age 40 - Other"  ///
+	7 "Age 20 - None" 8 "Age 30 - None" 9 "Age 40 - None") cols(3) ///
+	colgap(*.5) keygap(*.5) size(vsmall)) ///
 	name(loc_relig_int, replace)
 	
 
@@ -3881,12 +3880,8 @@ use ".\Cognitive_Results\G0Partner_CogPredictorsOfRSBB_B3911_postAnalysis.dta", 
 
 sum LoC_external
 
-local loc_minus2SD = round(r(mean) - (2 * r(sd)), 0.01)
-local loc_mean = round(r(mean), 0.01)
-local loc_plus2SD = round(r(mean) + (2 * r(sd)), 0.01)
-
 mlogit pb155_rev c.ageInPreg##c.LoC_external, rrr baseoutcome(0)
-margins, at(LoC_external = (`loc_minus2SD' `loc_mean' `loc_plus2SD') ageInPreg = (15(1)44))
+margins, at(LoC_external = (0(1)11) ageInPreg = (20 30 40))
 
 matrix res = r(table)
 matrix list res
@@ -3895,9 +3890,8 @@ local n = colsof(res)/4
 
 clear 
 set obs `n'
-egen ageInPreg = fill(15 15 15 16 16 16)
-egen LoC_external = fill(`loc_minus2SD' `loc_mean' `loc_plus2SD' `loc_minus2SD' `loc_mean' `loc_plus2SD')
-replace LoC_external = round(LoC_external, 0.01)
+egen ageInPreg = fill(20 30 40 20 30 40)
+egen LoC_external = fill(0 0 0 1 1 1)
 gen pb155_rev = 0
 predict p1, outcome(0)
 sum p1
@@ -3914,25 +3908,26 @@ replace pb155_rev = 3
 predict p4, outcome(3)
 sum p1 p2 p3 p4
 
-twoway (line p1 ageInPreg if LoC_external == float(`loc_minus2SD'), col(black)) ///
-	(line p1 ageInPreg if LoC_external == float(`loc_mean'), col(black) lpattern(longdash)) ///
-	(line p1 ageInPreg if LoC_external == float(`loc_plus2SD'), col(black) lpattern(shortdash)) ///
-	(line p2 ageInPreg if LoC_external == float(`loc_minus2SD'), col(red)) ///
-	(line p2 ageInPreg if LoC_external == float(`loc_mean'), col(red) lpattern(longdash)) ///
-	(line p2 ageInPreg if LoC_external == float(`loc_plus2SD'), col(red) lpattern(shortdash)) ///
-	(line p3 ageInPreg if LoC_external == float(`loc_minus2SD'), col(blue)) ///
-	(line p3 ageInPreg if LoC_external == float(`loc_mean'), col(blue) lpattern(longdash)) ///
-	(line p3 ageInPreg if LoC_external == float(`loc_plus2SD'), col(blue) lpattern(shortdash)) ///
-	(line p4 ageInPreg if LoC_external == float(`loc_minus2SD'), col(green)) ///
-	(line p4 ageInPreg if LoC_external == float(`loc_mean'), col(green) lpattern(longdash)) ///
-	(line p4 ageInPreg if LoC_external == float(`loc_plus2SD'), col(green) lpattern(shortdash)), ///
-	xscale(range(13 47)) xlabel(15(5)45, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Age in pregnancy") ytitle("Predicted probability") ///
-	legend(order(1 "LoC minus 2 SD - Never" 2 "Mean LoC - Never" ///
-	3 "LoC plus 2 SD - Never" 4 "LoC minus 2 SD - 1/Yr" 5 "Mean LoC - 1/Yr" ///
-	6 "LoC plus 2 SD - 1/Yr" 7 "LoC minus 2 SD - 1/Mth" 8 "Mean LoC - 1/Mth" ///
-	9 "LoC plus 2 SD - 1/Mth" 10 "LoC minus 2 SD - 1/Wk" 11 "Mean LoC - 1/Wk" ///
-	12 "LoC plus 2 SD - 1/Wk") cols(3) size(vsmall)) ///
+twoway (line p1 LoC_external if ageInPreg == 20, col(black)) ///
+	(line p1 LoC_external if ageInPreg == 30, col(black) lpattern(dash)) ///
+	(line p1 LoC_external if ageInPreg == 40, col(black) lpattern(shortdash)) ///
+	(line p2 LoC_external if ageInPreg == 20, col(red)) ///
+	(line p2 LoC_external if ageInPreg == 30, col(red) lpattern(dash)) ///
+	(line p2 LoC_external if ageInPreg == 40, col(red) lpattern(shortdash)) ///
+	(line p3 LoC_external if ageInPreg == 20, col(blue)) ///
+	(line p3 LoC_external if ageInPreg == 30, col(blue) lpattern(dash)) ///
+	(line p3 LoC_external if ageInPreg == 40, col(blue) lpattern(shortdash)) ///
+	(line p4 LoC_external if ageInPreg == 20, col(green)) ///
+	(line p4 LoC_external if ageInPreg == 30, col(green) lpattern(dash)) ///
+	(line p4 LoC_external if ageInPreg == 40, col(green) lpattern(shortdash)), ///
+	xscale(range(0 11)) xlabel(0(1)11, labsize(small)) ylabel(, labsize(small)) ///
+	title("Religious attendance", size(large)) ///
+	xtitle("External LoC") ytitle("Predicted probability", margin(small)) ///
+	legend(order(1 "Age 20 - Never" 2 "Age 30 - Never" 3 "Age 40 - Never" ///
+	4 "Age 20 - 1/Yr" 5 "Age 30 - 1/Yr" 6 "Age 40 - 1/Yr"  ///
+	7 "Age 20 - 1/Mth" 8 "Age 30 - 1/Mth" 9 "Age 40 - 1/Mth" ///
+	10 "Age 20 - 1/Wk" 11 "Age 30 - 1/Wk" 12 "Age 40 - 1/Wk") cols(3) ///
+	colgap(*.5) keygap(*.5) size(vsmall)) ///
 	name(loc_attend_int, replace)
 	
 	
@@ -4099,7 +4094,7 @@ twoway (scatter exp_num logp_main if outcome == "Belief", ///
 	ylabel(1(1)25, valuelabel labsize(small) angle(0)) ///
 	title("Main effects") ///
 	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
-		3 "Religious attendance") rows(1) size(small)) ///
+		3 "Religious attendance") rows(1) colgap(*.5) keygap(*.5) size(small)) ///
 	name(belRelCh_main, replace)
 
 graph export ".\Cognitive_Results\G1_mainEffects_pvalues.pdf", replace
@@ -4120,7 +4115,7 @@ twoway (scatter exp_num logp_int if outcome == "Belief", ///
 	ylabel(1(1)25, valuelabel labsize(small) angle(0)) ///
 	title("Sex interaction") ///
 	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
-		3 "Religious attendance") rows(1) size(small)) ///
+		3 "Religious attendance") rows(1) colgap(*.5) keygap(*.5) size(small)) ///
 	name(belRelCh_int, replace)
 
 graph export ".\Cognitive_Results\G1_sexInt_pvalues.pdf", replace
@@ -4325,7 +4320,7 @@ twoway (scatter exp_num r2_main if outcome == "Belief", ///
 	ylabel(1(1)25, valuelabel labsize(small) angle(0)) ///
 	title("Main effects") ///
 	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
-		3 "Religious attendance") rows(1) size(small)) ///
+		3 "Religious attendance") rows(1) colgap(*.5) keygap(*.5) size(small)) ///
 	name(r2_main, replace)
 
 graph export ".\Cognitive_Results\G1_mainEffects_r2.pdf", replace
@@ -4341,7 +4336,7 @@ twoway (scatter exp_num r2_int if outcome == "Belief", ///
 	ylabel(1(1)25, valuelabel labsize(small) angle(0)) ///
 	title("Sex interaction") ///
 	legend(order(1 "Religious belief" 2 "Religious affiliation" ///
-		3 "Religious attendance") rows(1) size(small)) ///
+		3 "Religious attendance") rows(1) colgap(*.5) keygap(*.5) size(small)) ///
 	name(r2_int, replace)
 
 graph export ".\Cognitive_Results\G1_sexInt_r2.pdf", replace
@@ -4558,27 +4553,27 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == "conscientio
 graph export ".\Cognitive_Results\G1_consc13Results.pdf", replace
 
 
-** Plot for personality trait openess to experience at age 13
+** Plot for personality trait openness to experience at age 13
 
 * Min and max x-axis values
-sum lci uci if exposure == "Openess_age13" & outcome_level != "NA"
+sum lci uci if exposure == "Openness_age13" & outcome_level != "NA"
 
-twoway (scatter level_num coef if outcome == "Belief" & exposure == "Openess_age13", ///
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "Openness_age13", ///
 			col(black) msize(small) msym(D)) ///
-		(rspike lci uci level_num if outcome == "Belief" & exposure == "Openess_age13", ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "Openness_age13", ///
 			horizontal col(black)) ///
-		(scatter level_num coef if outcome == "Relig" & exposure == "Openess_age13", ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "Openness_age13", ///
 			col(black) msize(small) msym(D)) ///
-		(rspike lci uci level_num if outcome == "Relig" & exposure == "Openess_age13", ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "Openness_age13", ///
 			horizontal col(black)) ///
-		(scatter level_num coef if outcome == "Attend" & exposure == "Openess_age13", ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "Openness_age13", ///
 			col(black) msize(small) msym(D)) ///
-		(rspike lci uci level_num if outcome == "Attend" & exposure == "Openess_age13", ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "Openness_age13", ///
 			horizontal col(black)), ///
 		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
 		title("Openness Age 13 and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.94 0.96 0.98 1 1.02 1.04 1.06, labsize(small)) ///
+		xlabel(0.97 0.98 0.99 1 1.01 1.01 1.02 1.03 1.04 1.05, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
 		legend(off) name(open13, replace)
 		
@@ -4666,6 +4661,33 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == "emoRec_tria
 graph export ".\Cognitive_Results\G1_triangles13Results.pdf", replace
 
 
+** Plot for Skuse social cognition at age 8
+
+* Min and max x-axis values
+sum lci uci if exposure == "skuseSocCog_age8" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "skuseSocCog_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "skuseSocCog_age8", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "skuseSocCog_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "skuseSocCog_age8", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "skuseSocCog_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "skuseSocCog_age8", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Social Cognition Age 8 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.96 0.98 1 1.02 1.04 1.06 1.08, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(skuse8, replace)
+		
+graph export ".\Cognitive_Results\G1_skuse8Results.pdf", replace
+
+
 ** Plot for Skuse social cognition at age 16
 
 * Min and max x-axis values
@@ -4693,6 +4715,33 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == "skuseSocCog
 graph export ".\Cognitive_Results\G1_skuse16Results.pdf", replace
 
 
+** Plot for SDQ prosocial sub-scale at age 8
+
+* Min and max x-axis values
+sum lci uci if exposure == "SDQ_prosocial_age8" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "SDQ_prosocial_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "SDQ_prosocial_age8", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "SDQ_prosocial_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "SDQ_prosocial_age8", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "SDQ_prosocial_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "SDQ_prosocial_age8", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("SDQ - Prosocial Age 8 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.9 0.95 1 1.05 1.1, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(prosocial8, replace)
+		
+graph export ".\Cognitive_Results\G1_prosocial8Results.pdf", replace
+
+
 ** Plot for SDQ prosocial sub-scale at age 13
 
 * Min and max x-axis values
@@ -4713,11 +4762,39 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == "SDQ_prosoci
 		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
 		title("SDQ - Prosocial Age 13 and RSBB", size(medium)) ///
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
-		xlabel(0.8 0.9 1.1 1.2 1.3, labsize(small)) ///
+		xlabel(0.9 1 1.1 1.2 1.3, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
 		legend(off) name(prosocial13, replace)
 		
 graph export ".\Cognitive_Results\G1_prosocial13Results.pdf", replace
+
+
+** Plot for SDQ prosocial sub-scale at age 25
+
+* Min and max x-axis values
+sum lci uci if exposure == "SDQ_prosocial_age25" & outcome_level != "NA"
+
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "SDQ_prosocial_age25", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "SDQ_prosocial_age25", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "SDQ_prosocial_age25", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "SDQ_prosocial_age25", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "SDQ_prosocial_age25", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "SDQ_prosocial_age25", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("SDQ - Prosocial Age 25 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.95 1 1.05 1.1 1.15 1.2, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(prosocial25, replace)
+		
+graph export ".\Cognitive_Results\G1_prosocial25Results.pdf", replace
+
 
 
 ** Plot for Bachman self-esteem
@@ -4803,6 +4880,33 @@ twoway (scatter level_num coef_int if outcome == "Belief" & exposure == "vocab_a
 graph export ".\Cognitive_Results\G1_vocab24BySexInt.pdf", replace
 
 
+** Plot for total IQ at age 8 and sex interaction
+
+* Min and max x-axis values
+sum lci_int uci_int if exposure == "totalIQ_age8" & outcome_level != "NA"
+
+twoway (scatter level_num coef_int if outcome == "Belief" & exposure == "totalIQ_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Belief" & exposure == "totalIQ_age8", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Relig" & exposure == "totalIQ_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Relig" & exposure == "totalIQ_age8", ///
+			horizontal col(black)) ///
+		(scatter level_num coef_int if outcome == "Attend" & exposure == "totalIQ_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci_int uci_int level_num if outcome == "Attend" & exposure == "totalIQ_age8", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Total IQ Age 8 by Sex interaction", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.97 0.98 0.99 1 1.01 1.02, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(iq8_int, replace)
+		
+graph export ".\Cognitive_Results\G1_iq8BySexInt.pdf", replace
+
+
 ** Plot for personality agreeableness at age 13 and sex interaction
 
 * Min and max x-axis values
@@ -4825,9 +4929,9 @@ twoway (scatter level_num coef_int if outcome == "Belief" & exposure == "agreeab
 		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
 		xlabel(0.85 0.9 0.95 1, labsize(small)) ///
 		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
-		legend(off) name(vocab24_int, replace)
+		legend(off) name(vocab13_int, replace)
 		
-graph export ".\Cognitive_Results\G1_agree24BySexInt.pdf", replace
+graph export ".\Cognitive_Results\G1_agree13BySexInt.pdf", replace
 
 graph close _all
 
@@ -5221,9 +5325,11 @@ twoway (line p1 totalIQ_age15 if male == 0, col(black)) ///
 	(line p3 totalIQ_age15 if male == 0, col(blue)) ///
 	(line p3 totalIQ_age15 if male == 1, col(blue) lpattern(dash)), ///
 	xscale(range(70 130)) xlabel(70(10)130, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("IQ at Age 15") ytitle("Predicted probability") ///
-	legend(order(1 "Female - Yes" 2 "Male - Yes" 3 "Female - Not sure" ///
-	4 "Male - Not sure" 5 "Female - No" 6 "Male - No") cols(2) size(small)) ///
+	xtitle("IQ at Age 15") ytitle("Predicted probability", margin(small)) ///
+	title("Religious belief", size(large)) ///
+	legend(order(1 "Female - Yes" 3 "Female - Not sure" 5 "Female - No" ///
+	2 "Male - Yes" 4 "Male - Not sure" 6 "Male - No") cols(3) ///
+	colgap(*.5) keygap(*.5)  size(small)) ///
 	name(iq15_belief_int, replace)
 
 	
@@ -5266,9 +5372,11 @@ twoway (line p1 totalIQ_age15 if male == 0, col(black)) ///
 	(line p3 totalIQ_age15 if male == 0, col(blue)) ///
 	(line p3 totalIQ_age15 if male == 1, col(blue) lpattern(dash)), ///
 	xscale(range(70 130)) xlabel(70(10)130, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("IQ at Age 15") ytitle("Predicted probability") ///
-	legend(order(1 "Female - Christian" 2 "Male - Christian" 3 "Female - Other" ///
-	4 "Male - Other" 5 "Female - None" 6 "Male - None") cols(2) size(small)) ///
+	xtitle("IQ at Age 15") ytitle("Predicted probability", margin(small)) ///
+	title("Religious affiliation", size(large)) ///
+	legend(order(1 "Female - Christian" 3 "Female - Other" 5 "Female - None" ///
+	2 "Male - Christian" 4 "Male - Other" 6 "Male - None") cols(3) ///
+	colgap(*.5) keygap(*.5) size(small)) ///
 	name(iq15_relig_int, replace)
 	
 
@@ -5317,10 +5425,12 @@ twoway (line p1 totalIQ_age15 if male == 0, col(black)) ///
 	(line p4 totalIQ_age15 if male == 0, col(green)) ///
 	(line p4 totalIQ_age15 if male == 1, col(green) lpattern(dash)), ///
 	xscale(range(70 130)) xlabel(70(10)130, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("IQ at Age 15") ytitle("Predicted probability") ///
+	xtitle("IQ at Age 15") ytitle("Predicted probability", margin(small)) ///
+	title("Religious attendance", size(large)) ///
 	legend(order(1 "Female - Never" 2 "Male - Never" 3 "Female - Occasionally" ///
 	4 "Male - Occasionally" 5 "Female - 1/Yr" 6 "Male - 1/Yr" ///
-	7 "Female - 1/Mth" 8 "Male - 1/Mth") cols(2) size(small)) ///
+	7 "Female - 1/Mth" 8 "Male - 1/Mth") cols(2) colgap(*.5) ///
+	keygap(*.5) size(small)) ///
 	name(iq15_attend_int, replace)
 	
 	
@@ -5547,9 +5657,11 @@ twoway (line p1 vocab_age24 if male == 0, col(black)) ///
 	(line p3 vocab_age24 if male == 0, col(blue)) ///
 	(line p3 vocab_age24 if male == 1, col(blue) lpattern(dash)), ///
 	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Vocab Task Age 24") ytitle("Predicted probability") ///
-	legend(order(1 "Female - Yes" 2 "Male - Yes" 3 "Female - Not sure" ///
-	4 "Male - Not sure" 5 "Female - No" 6 "Male - No") cols(2) size(small)) ///
+	xtitle("Vocab Task Age 24") ytitle("Predicted probability", margin(small)) ///
+	title("Religious belief", size(large)) ///
+	legend(order(1 "Female - Yes" 3 "Female - Not sure" 5 "Female - No" ///
+	2 "Male - Yes" 4 "Male - Not sure" 6 "Male - No") cols(3) ///
+	colgap(*.5) keygap(*.5) size(small)) ///
 	name(vocab24_belief_int, replace)
 
 	
@@ -5592,9 +5704,11 @@ twoway (line p1 vocab_age24 if male == 0, col(black)) ///
 	(line p3 vocab_age24 if male == 0, col(blue)) ///
 	(line p3 vocab_age24 if male == 1, col(blue) lpattern(dash)), ///
 	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Vocab Task Age 24") ytitle("Predicted probability") ///
-	legend(order(1 "Female - Christian" 2 "Male - Christian" 3 "Female - Other" ///
-	4 "Male - Other" 5 "Female - None" 6 "Male - None") cols(2) size(small)) ///
+	xtitle("Vocab Task Age 24") ytitle("Predicted probability", margin(small)) ///
+	title("Religious affiliation", size(large)) ///
+	legend(order(1 "Female - Christian" 3 "Female - Other" 5 "Female - None" ///
+	2 "Male - Christian" 4 "Male - Other" 6 "Male - None") cols(3) ///
+	colgap(*.5) keygap(*.5) size(small)) ///
 	name(vocab24_relig_int, replace)
 	
 
@@ -5643,10 +5757,12 @@ twoway (line p1 vocab_age24 if male == 0, col(black)) ///
 	(line p4 vocab_age24 if male == 0, col(green)) ///
 	(line p4 vocab_age24 if male == 1, col(green) lpattern(dash)), ///
 	xscale(range(0 12)) xlabel(0(1)12, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Vocab Task Age 24") ytitle("Predicted probability") ///
+	xtitle("Vocab Task Age 24") ytitle("Predicted probability", margin(small)) ///
+	title("Religious attendance", size(large)) ///
 	legend(order(1 "Female - Never" 2 "Male - Never" 3 "Female - Occasionally" ///
 	4 "Male - Occasionally" 5 "Female - 1/Yr" 6 "Male - 1/Yr" ///
-	7 "Female - 1/Mth" 8 "Male - 1/Mth") cols(2) size(small)) ///
+	7 "Female - 1/Mth" 8 "Male - 1/Mth") cols(2) colgap(*.5) keygap(*.5) ///
+	size(small)) ///
 	name(vocab24_attend_int, replace)
 	
 	
@@ -5835,7 +5951,7 @@ graph export ".\Cognitive_Results\G1_agree13PredProbs_combined.pdf", replace
 graph close _all
 
 
-** Also plot interaction between sex and vocab score at age 24 - Start with religious belief
+** Also plot interaction between sex and agreeableness at age 13 - Start with religious belief
 use ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", clear
 
 sum agreeableness_age13
@@ -5874,9 +5990,11 @@ twoway (line p1 agreeableness_age13 if male == 0, col(black)) ///
 	(line p3 agreeableness_age13 if male == 0, col(blue)) ///
 	(line p3 agreeableness_age13 if male == 1, col(blue) lpattern(dash)), ///
 	xscale(range(15 50)) xlabel(15(5)50, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Agreeableness Age 13") ytitle("Predicted probability") ///
-	legend(order(1 "Female - Yes" 2 "Male - Yes" 3 "Female - Not sure" ///
-	4 "Male - Not sure" 5 "Female - No" 6 "Male - No") cols(2) size(small)) ///
+	xtitle("Agreeableness Age 13") ytitle("Predicted probability", margin(small)) ///
+	title("Religious belief", size(large)) ///
+	legend(order(1 "Female - Yes" 3 "Female - Not sure" 5 "Female - No" ///
+	2 "Male - Yes" 4 "Male - Not sure" 6 "Male - No") cols(3) ///
+	colgap(*.5) keygap(*.5) size(small)) ///
 	name(agree13_belief_int, replace)
 
 	
@@ -5919,9 +6037,11 @@ twoway (line p1 agreeableness_age13 if male == 0, col(black)) ///
 	(line p3 agreeableness_age13 if male == 0, col(blue)) ///
 	(line p3 agreeableness_age13 if male == 1, col(blue) lpattern(dash)), ///
 	xscale(range(15 50)) xlabel(15(5)50, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Agreeableness Age 13") ytitle("Predicted probability") ///
-	legend(order(1 "Female - Christian" 2 "Male - Christian" 3 "Female - Other" ///
-	4 "Male - Other" 5 "Female - None" 6 "Male - None") cols(2) size(small)) ///
+	xtitle("Agreeableness Age 13") ytitle("Predicted probability", margin(small)) ///
+	title("Religious affiliation", size(large)) ///
+	legend(order(1 "Female - Christian" 3 "Female - Other" 5 "Female - None" ///
+	2 "Male - Christian" 4 "Male - Other" 6 "Male - None") cols(3) ///
+	colgap(*.5) keygap(*.5) size(small)) ///
 	name(agree13_relig_int, replace)
 	
 
@@ -5970,10 +6090,12 @@ twoway (line p1 agreeableness_age13 if male == 0, col(black)) ///
 	(line p4 agreeableness_age13 if male == 0, col(green)) ///
 	(line p4 agreeableness_age13 if male == 1, col(green) lpattern(dash)), ///
 	xscale(range(15 50)) xlabel(15(5)50, labsize(small)) ylabel(, labsize(small)) ///
-	xtitle("Agreeableness Age 13") ytitle("Predicted probability") ///
+	xtitle("Agreeableness Age 13") ytitle("Predicted probability", margin(small)) ///
+	title("Religious attendance", size(large)) ///
 	legend(order(1 "Female - Never" 2 "Male - Never" 3 "Female - Occasionally" ///
 	4 "Male - Occasionally" 5 "Female - 1/Yr" 6 "Male - 1/Yr" ///
-	7 "Female - 1/Mth" 8 "Male - 1/Mth") cols(2) size(small)) ///
+	7 "Female - 1/Mth" 8 "Male - 1/Mth") cols(2) ///
+	colgap(*.5) keygap(*.5) size(small)) ///
 	name(agree13_attend_int, replace)
 	
 	
