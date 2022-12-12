@@ -163,7 +163,7 @@ rename neighbour_qual neighPercept
 rename FC9992 ageAt28
 
 * Associations between demographic factors (excluding marital status; pa065_grp) - Then make heat map of correlations (heatplot code adapted from: https://www.stata.com/meeting/germany19/slides/germany19_Jann.pdf)
-corr ageInPreg nonWhiteEthnic mobility rural parity
+pwcorr ageInPreg nonWhiteEthnic mobility rural parity
 
 matrix cor_demo = r(C)
 matrix list cor_demo
@@ -202,7 +202,7 @@ restore
 
 
 ** Now repeat for socioeconomic/material insecurity variables (to exclude housing status [housing], as is an unordered categorical variable)
-corr education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept
+pwcorr education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept
 
 matrix cor_socio = r(C)
 
@@ -242,7 +242,7 @@ restore
 
 	
 *** Finally, repeat this on all of the exposures together (excluding unordered cateogorical variables housing status and marital status)
-corr ageInPreg nonWhiteEthnic mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept
+pwcorr ageInPreg nonWhiteEthnic mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept
 
 matrix cor_all = r(C)
 

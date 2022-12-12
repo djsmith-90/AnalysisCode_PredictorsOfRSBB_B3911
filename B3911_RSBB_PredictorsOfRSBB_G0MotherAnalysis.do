@@ -164,7 +164,7 @@ rename partner_ab partnerAbsence
 rename Y9992 ageAt28
 
 * Associations between demographic factors (excluding marital status; a525_grp) - Then make heat map of correlations (heatplot code adapted from: https://www.stata.com/meeting/germany19/slides/germany19_Jann.pdf)
-corr ageAtBirth nonWhiteEthnic mobility rural parity
+pwcorr ageAtBirth nonWhiteEthnic mobility rural parity
 
 matrix cor_demo = r(C)
 matrix list cor_demo
@@ -203,7 +203,7 @@ restore
 
 
 ** Now repeat for socioeconomic/material insecurity variables (to exclude housing status [housing], as is an unordered categorical variable)
-corr education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept partnerAbsence
+pwcorr education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept partnerAbsence
 
 matrix cor_socio = r(C)
 
@@ -243,7 +243,7 @@ restore
 
 	
 *** Finally, repeat this on all of the demographic and SES exposures together (excluding unordered cateogorical variables housing status and marital status)
-corr ageAtBirth nonWhiteEthnic mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept partnerAbsence
+pwcorr ageAtBirth nonWhiteEthnic mobility rural parity education maternalEdu paternalEdu highSocClass highSocClass_mat highSocClass_pat income IMD townsendDep financeDiffs financeDiffsScore poorerChildhood accessToCar crowding neighPercept partnerAbsence
 
 matrix cor_all = r(C)
 
