@@ -1256,6 +1256,13 @@ heatplot cor_cog, color(hcl, diverging intensity(1)) ///
 * Save heatmap
 graph export ".\Cognitive_Results\G1_corr_heatplot.pdf", replace
 
+* And save in .EPS format
+heatplot cor_cog, color(hcl, diverging intensity(1)) ///
+	lower nodiagonal cuts(-1.05(0.1)1.05) xlabel(, angle(45) labsize(vsmall)) ///
+	ylabel(, labsize(vsmall)) legend(subtitle("")) ysize(10) xsize(14)
+	
+graph export ".\Cognitive_Results\G1_corr_heatplot.eps", replace
+
 * Save matrix as Excel file
 putexcel set ".\Cognitive_Results\G1_corrMatrix.xlsx", replace
 putexcel A1=matrix(cor_cog), names
@@ -4126,6 +4133,10 @@ graph combine belRelCh_main belRelCh_int, ysize(3) xsize(6)
 
 graph export ".\Cognitive_Results\G1_allData_pvalues.pdf", replace
 
+* And convert to EPS format for Wellcome Open Research formatting (also have to enlarge size, else resolution is terrible)
+graph combine belRelCh_main belRelCh_int, ysize(10) xsize(20)
+graph export ".\Cognitive_Results\G1_allData_pvalues.eps", replace
+
 graph close _all
 
 
@@ -4347,6 +4358,10 @@ graph combine r2_main r2_int, ysize(3) xsize(6)
 
 graph export ".\Cognitive_Results\G1_allData_r2.pdf", replace
 
+* And convert to EPS format
+graph combine r2_main r2_int, ysize(10) xsize(20)
+graph export ".\Cognitive_Results\G1_allData_r2.eps", replace
+
 graph close _all
 
 
@@ -4443,6 +4458,29 @@ twoway (scatter level_num coef if outcome == "Belief" & exposure == "totalIQ_age
 		legend(off) name(iq8, replace)
 		
 graph export ".\Cognitive_Results\G1_totalIQAge8Results.pdf", replace
+
+
+* And in EPS format
+twoway (scatter level_num coef if outcome == "Belief" & exposure == "totalIQ_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Belief" & exposure == "totalIQ_age8", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Relig" & exposure == "totalIQ_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Relig" & exposure == "totalIQ_age8", ///
+			horizontal col(black)) ///
+		(scatter level_num coef if outcome == "Attend" & exposure == "totalIQ_age8", ///
+			col(black) msize(small) msym(D)) ///
+		(rspike lci uci level_num if outcome == "Attend" & exposure == "totalIQ_age8", ///
+			horizontal col(black)), ///
+		yscale(reverse)	ytitle("") xtitle("Relative risk ratio") ///
+		title("Total IQ age 8 and RSBB", size(medium)) ///
+		xline(1, lcol(black) lpattern(shortdash)) xscale(log) ///
+		xlabel(0.98 0.99 1 1.01 1.02, labsize(small)) ///
+		ylabel(0 1 3 4 6 7 8, valuelabel labsize(small) angle(0)) ///
+		legend(off) name(iq8, replace) ysize(10) xsize(14)
+		
+graph export ".\Cognitive_Results\G1_totalIQAge8Results.eps", replace
 
 
 ** Plot for total IQ at age 15
