@@ -564,6 +564,154 @@ postclose mother_attend_r2
 save ".\Cognitive_Results\G0Mother_CogPredictorsOfRSBB_B3911_postAnalysis.dta", replace
 
 
+*** Testing whether any non-linear associations between religiosity and psychological factors
+
+** Religious belief
+capture postclose mother_belief_quad
+postfile mother_belief_quad str30 exposure double(lr_quad) r2_quad ///
+	using ".\Cognitive_Results\G0Mother_belief_results_quad.dta", replace
+
+foreach var of varlist logicMemory-selfEsteem {
+	
+	// Save the exposure variable as a macro
+	local exp = "`var'"
+		
+	mlogit d810 ageAtBirth `var', baseoutcome(3) rrr
+	local r2_base = e(r2_p)
+	est store base
+	mlogit d810 ageAtBirth c.`var'##c.`var', baseoutcome(3) rrr
+	local r2_quad = e(r2_p) - `r2_base'
+	est store quad
+		
+	lrtest base quad
+	local lr_p_quad = r(p)
+		
+	post mother_belief_quad ("`exp'") (`lr_p_quad') (`r2_quad')
+			
+}
+
+postclose mother_belief_quad
+
+** Most show no improvement at inclusion of quadratic term, but IPSM and LoC do - To explore
+
+*IPSM 
+mlogit d810 ageAtBirth c.IPSM_total##c.IPSM_total, baseoutcome(3) rrr
+
+capture drop p1 p2 p3
+predict p1, outcome(1)
+predict p2, outcome(2)
+predict p3, outcome(3)
+
+twoway (qfit p1 IPSM_total) (qfit p2 IPSM_total) (qfit p3 IPSM_total), ///
+	ytitle("Predicted probability of outcome") xtitle("IPSM total score") ///
+	legend(order(1 "Yes" 2 "Not sure" 3 "No") title("Belief", size(medium))) ///
+	name(belief_ipsm, replace)
+	
+* LoC
+mlogit d810 ageAtBirth c.LoC_external##c.LoC_external, baseoutcome(3) rrr
+
+capture drop p1 p2 p3
+predict p1, outcome(1)
+predict p2, outcome(2)
+predict p3, outcome(3)
+
+twoway (qfit p1 LoC_external) (qfit p2 LoC_external) (qfit p3 LoC_external), ///
+	ytitle("Predicted probability of outcome") xtitle("External LoC score") ///
+	legend(order(1 "Yes" 2 "Not sure" 3 "No") title("Belief", size(medium))) ///
+	name(belief_loc, replace)
+	
+	
+** Religious affiliation
+capture postclose mother_relig_quad
+postfile mother_relig_quad str30 exposure double(lr_quad) r2_quad ///
+	using ".\Cognitive_Results\G0Mother_relig_results_quad.dta", replace
+
+foreach var of varlist logicMemory-selfEsteem {
+	
+	// Save the exposure variable as a macro
+	local exp = "`var'"
+		
+	mlogit d813_grp ageAtBirth `var', baseoutcome(3) rrr
+	local r2_base = e(r2_p)
+	est store base
+	mlogit d813_grp ageAtBirth c.`var'##c.`var', baseoutcome(3) rrr
+	local r2_quad = e(r2_p) - `r2_base'
+	est store quad
+		
+	lrtest base quad
+	local lr_p_quad = r(p)
+		
+	post mother_relig_quad ("`exp'") (`lr_p_quad') (`r2_quad')
+			
+}
+
+postclose mother_relig_quad
+
+** Most show no improvement at inclusion of quadratic term, but LoC does - To explore
+mlogit d813_grp ageAtBirth c.LoC_external##c.LoC_external, baseoutcome(3) rrr
+
+capture drop p1 p2 p3
+predict p1, outcome(1)
+predict p2, outcome(2)
+predict p3, outcome(3)
+
+twoway (qfit p1 LoC_external) (qfit p2 LoC_external) (qfit p3 LoC_external), ///
+	ytitle("Predicted probability of outcome") xtitle("External LoC score") ///
+	legend(order(1 "Christian" 2 "Other" 3 "None") title("Affiliation", size(medium))) ///
+	name(relig_loc, replace)
+
+
+** Religious attendance
+capture postclose mother_attend_quad
+postfile mother_attend_quad str30 exposure double(lr_quad) r2_quad ///
+	using ".\Cognitive_Results\G0Mother_attend_results_quad.dta", replace
+
+foreach var of varlist logicMemory-selfEsteem {
+	
+	// Save the exposure variable as a macro
+	local exp = "`var'"
+		
+	mlogit d816_rev ageAtBirth `var', baseoutcome(0) rrr
+	local r2_base = e(r2_p)
+	est store base
+	mlogit d816_rev ageAtBirth c.`var'##c.`var', baseoutcome(0) rrr
+	local r2_quad = e(r2_p) - `r2_base'
+	est store quad
+		
+	lrtest base quad
+	local lr_p_quad = r(p)
+		
+	post mother_attend_quad ("`exp'") (`lr_p_quad') (`r2_quad')
+			
+}
+
+postclose mother_attend_quad
+
+** Most show no improvement at inclusion of quadratic term, but IPSM does - To explore
+mlogit d816_rev ageAtBirth c.IPSM_total##c.IPSM_total, baseoutcome(0) rrr
+
+capture drop p0
+capture drop p1 p2 p3
+predict p0, outcome(0)
+predict p1, outcome(1)
+predict p2, outcome(2)
+predict p3, outcome(3)
+
+twoway (qfit p0 IPSM_total) (qfit p1 IPSM_total) (qfit p2 IPSM_total) ///
+	(qfit p3 IPSM_total), ///
+	ytitle("Predicted probability of outcome") xtitle("IPSM total score") ///
+	legend(order(1 "Not at all" 2 "Min 1/yr" 3 "Min 1/mth" 4 "Min 1/wk") ///
+	title("Attendance", size(medium))) ///
+	name(attend_ipsm, replace)
+
+
+** Combine all graphs together and export
+graph combine belief_ipsm belief_loc relig_loc attend_ipsm
+
+graph export ".\Cognitive_Results\G0Mother_nonLinearResults.pdf", replace
+
+graph close _all
+	
 
 **********************************************************************************
 **** Now onto the G0 partner/fathers's analysis
@@ -1095,6 +1243,160 @@ postclose partner_attend_r2
 
 * Save this file if we want to use it later
 save ".\Cognitive_Results\G0Partner_CogPredictorsOfRSBB_B3911_postAnalysis.dta", replace
+
+
+
+*** Testing whether any non-linear associations between religiosity and psychological factors
+
+** Religious belief
+capture postclose partner_belief_quad
+postfile partner_belief_quad str30 exposure double(lr_quad) r2_quad ///
+	using ".\Cognitive_Results\G0Partner_belief_results_quad.dta", replace
+
+foreach var of varlist IPSM_interpAware-selfEsteem {
+	
+	// Save the exposure variable as a macro
+	local exp = "`var'"
+		
+	mlogit pb150 ageInPreg `var', baseoutcome(3) rrr
+	local r2_base = e(r2_p)
+	est store base
+	mlogit pb150 ageInPreg c.`var'##c.`var', baseoutcome(3) rrr
+	local r2_quad = e(r2_p) - `r2_base'
+	est store quad
+		
+	lrtest base quad
+	local lr_p_quad = r(p)
+		
+	post partner_belief_quad ("`exp'") (`lr_p_quad') (`r2_quad')
+			
+}
+
+postclose partner_belief_quad
+
+** Most show no improvement at inclusion of quadratic term, but LoC does - To explore
+mlogit pb150 ageInPreg c.LoC_external##c.LoC_external, baseoutcome(3) rrr
+
+capture drop p1 p2 p3
+predict p1, outcome(1)
+predict p2, outcome(2)
+predict p3, outcome(3)
+
+twoway (qfit p1 LoC_external) (qfit p2 LoC_external) (qfit p3 LoC_external), ///
+	ytitle("Predicted probability of outcome") xtitle("External LoC score") ///
+	legend(order(1 "Yes" 2 "Not sure" 3 "No") title("Belief", size(medium))) ///
+	name(belief_loc, replace)
+	
+	
+** Religious affiliation
+capture postclose partner_relig_quad
+postfile partner_relig_quad str30 exposure double(lr_quad) r2_quad ///
+	using ".\Cognitive_Results\G0Partner_relig_results_quad.dta", replace
+
+foreach var of varlist IPSM_interpAware-selfEsteem {
+	
+	// Save the exposure variable as a macro
+	local exp = "`var'"
+		
+	mlogit pb153_grp ageInPreg `var', baseoutcome(3) rrr
+	local r2_base = e(r2_p)
+	est store base
+	mlogit pb153_grp ageInPreg c.`var'##c.`var', baseoutcome(3) rrr
+	local r2_quad = e(r2_p) - `r2_base'
+	est store quad
+		
+	lrtest base quad
+	local lr_p_quad = r(p)
+		
+	post partner_relig_quad ("`exp'") (`lr_p_quad') (`r2_quad')
+			
+}
+
+postclose partner_relig_quad
+
+** Most show no improvement at inclusion of quadratic term, but IPSM does - To explore
+mlogit pb153_grp ageInPreg c.IPSM_total##c.IPSM_total, baseoutcome(3) rrr
+
+capture drop p1 p2 p3
+predict p1, outcome(1)
+predict p2, outcome(2)
+predict p3, outcome(3)
+
+twoway (qfit p1 IPSM_total) (qfit p2 IPSM_total) (qfit p3 IPSM_total), ///
+	ytitle("Predicted probability of outcome") xtitle("IPSM total score") ///
+	legend(order(1 "Christian" 2 "Other" 3 "None") title("Affiliation", size(medium))) ///
+	name(relig_ipsm, replace)
+
+
+** Religious attendance
+capture postclose partner_attend_quad
+postfile partner_attend_quad str30 exposure double(lr_quad) r2_quad ///
+	using ".\Cognitive_Results\G0Partner_attend_results_quad.dta", replace
+
+foreach var of varlist IPSM_interpAware-selfEsteem {
+	
+	// Save the exposure variable as a macro
+	local exp = "`var'"
+		
+	mlogit pb155_rev ageInPreg `var', baseoutcome(0) rrr
+	local r2_base = e(r2_p)
+	est store base
+	mlogit pb155_rev ageInPreg c.`var'##c.`var', baseoutcome(0) rrr
+	local r2_quad = e(r2_p) - `r2_base'
+	est store quad
+		
+	lrtest base quad
+	local lr_p_quad = r(p)
+		
+	post partner_attend_quad ("`exp'") (`lr_p_quad') (`r2_quad')
+			
+}
+
+postclose partner_attend_quad
+
+** Most show no improvement at inclusion of quadratic term, but IPSM and self-esteem do - To explore
+
+* IPSM
+mlogit pb155_rev ageInPreg c.IPSM_total##c.IPSM_total, baseoutcome(0) rrr
+
+capture drop p0
+capture drop p1 p2 p3
+predict p0, outcome(0)
+predict p1, outcome(1)
+predict p2, outcome(2)
+predict p3, outcome(3)
+
+twoway (qfit p0 IPSM_total) (qfit p1 IPSM_total) (qfit p2 IPSM_total) ///
+	(qfit p3 IPSM_total), ///
+	ytitle("Predicted probability of outcome") xtitle("IPSM total score") ///
+	legend(order(1 "Not at all" 2 "Min 1/yr" 3 "Min 1/mth" 4 "Min 1/wk") ///
+	title("Attendance", size(medium))) ///
+	name(attend_ipsm, replace)
+	
+* Self-esteem
+mlogit pb155_rev ageInPreg c.selfEsteem##c.selfEsteem, baseoutcome(0) rrr
+
+capture drop p0
+capture drop p1 p2 p3
+predict p0, outcome(0)
+predict p1, outcome(1)
+predict p2, outcome(2)
+predict p3, outcome(3)
+
+twoway (qfit p0 selfEsteem) (qfit p1 selfEsteem) (qfit p2 selfEsteem) ///
+	(qfit p3 selfEsteem), ///
+	ytitle("Predicted probability of outcome") xtitle("Self-esteem score") ///
+	legend(order(1 "Not at all" 2 "Min 1/yr" 3 "Min 1/mth" 4 "Min 1/wk") ///
+	title("Attendance", size(medium))) ///
+	name(attend_est, replace)
+
+
+** Combine all graphs together and export
+graph combine belief_loc relig_ipsm attend_ipsm attend_est
+
+graph export ".\Cognitive_Results\G0Partner_nonLinearResults.pdf", replace
+
+graph close _all
 
 
 **********************************************************************************
@@ -1668,6 +1970,115 @@ postclose G1_attend_r2
 
 * Save this file if we want to use it later
 save ".\Cognitive_Results\G1_CogPredictorsOfRSBB_B3911_postAnalysis.dta", replace
+
+
+
+*** Testing whether any non-linear associations between religiosity and psychological factors
+
+** Religious belief
+capture postclose G1_belief_quad
+postfile G1_belief_quad str30 exposure double(lr_quad) r2_quad ///
+	using ".\Cognitive_Results\G1_belief_results_quad.dta", replace
+
+foreach var of varlist verbalIQ_age8-negCogStyles_age17 emoRec_triangles_age13-globalEsteem_age8 {
+	
+	// Save the exposure variable as a macro
+	local exp = "`var'"
+		
+	mlogit YPG3000 ageAt28 male `var', baseoutcome(3) rrr
+	local r2_base = e(r2_p)
+	est store base
+	mlogit YPG3000 ageAt28 male c.`var'##c.`var', baseoutcome(3) rrr
+	local r2_quad = e(r2_p) - `r2_base'
+	est store quad
+		
+	lrtest base quad
+	local lr_p_quad = r(p)
+		
+	post G1_belief_quad ("`exp'") (`lr_p_quad') (`r2_quad')
+			
+}
+
+postclose G1_belief_quad
+
+** No strong improvement at inclusion of quadratic term
+
+
+** Religious affiliation
+capture postclose G1_relig_quad
+postfile G1_relig_quad str30 exposure double(lr_quad) r2_quad ///
+	using ".\Cognitive_Results\G1_relig_results_quad.dta", replace
+
+foreach var of varlist verbalIQ_age8-negCogStyles_age17 emoRec_triangles_age13-globalEsteem_age8 {
+	
+	// Save the exposure variable as a macro
+	local exp = "`var'"
+		
+	mlogit YPG3040_grp ageAt28 male `var', baseoutcome(3) rrr
+	local r2_base = e(r2_p)
+	est store base
+	mlogit YPG3040_grp ageAt28 male c.`var'##c.`var', baseoutcome(3) rrr
+	local r2_quad = e(r2_p) - `r2_base'
+	est store quad
+		
+	lrtest base quad
+	local lr_p_quad = r(p)
+		
+	post G1_relig_quad ("`exp'") (`lr_p_quad') (`r2_quad')
+			
+}
+
+postclose G1_relig_quad
+
+** Most show no improvement at inclusion of quadratic term, but emotional stability does - To explore
+mlogit YPG3040_grp ageAt28 male c.emotionalStab_age13##c.emotionalStab_age13, baseoutcome(3) rrr
+
+capture drop p1 p2 p3
+predict p1, outcome(1)
+predict p2, outcome(2)
+predict p3, outcome(3)
+
+twoway (qfit p1 emotionalStab_age13) (qfit p2 emotionalStab_age13) ///
+	(qfit p3 emotionalStab_age13), ///
+	ytitle("Predicted probability of outcome") xtitle("Emotional stability") ///
+	legend(order(1 "Christian" 2 "Other" 3 "None") title("Affiliation", size(medium))) ///
+	name(relig_emoStab, replace)
+
+	
+** Religious attendance
+capture postclose G1_attend_quad
+postfile G1_attend_quad str30 exposure double(lr_quad) r2_quad ///
+	using ".\Cognitive_Results\G1_attend_results_quad.dta", replace
+
+foreach var of varlist verbalIQ_age8-negCogStyles_age17 emoRec_triangles_age13-globalEsteem_age8 {
+	
+	// Save the exposure variable as a macro
+	local exp = "`var'"
+		
+	mlogit YPG3080_rev ageAt28 male `var', baseoutcome(0) rrr
+	local r2_base = e(r2_p)
+	est store base
+	mlogit YPG3080_rev ageAt28 male c.`var'##c.`var', baseoutcome(0) rrr
+	local r2_quad = e(r2_p) - `r2_base'
+	est store quad
+		
+	lrtest base quad
+	local lr_p_quad = r(p)
+		
+	post G1_attend_quad ("`exp'") (`lr_p_quad') (`r2_quad')
+			
+}
+
+postclose G1_attend_quad
+
+** No strong improvement at inclusion of quadratic term
+
+
+** Export graph
+graph export ".\Cognitive_Results\G1_nonLinearResults.pdf", replace
+
+graph close _all
+
 
 * And close the log file
 log close
